@@ -21,8 +21,8 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Floor
-  m_Shader: {fileID: -6465566751694194690, guid: e33e97d057fb43145b0618263bd46c29, type: 3}
-  m_Parent: {fileID: -876546973899608171, guid: e33e97d057fb43145b0618263bd46c29, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: d11f28b54bed35540aa4da760a05022b, type: 3}
+  m_Parent: {fileID: -876546973899608171, guid: d11f28b54bed35540aa4da760a05022b, type: 3}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -43,10 +43,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Fresnel_Power: 2.23
+    - _Fresnel_Threshold: 1.12
     - _Max: 1.47
     - _Min: -1.49
     - _QueueControl: 0
-    - _Shades: 0.06
+    - _Shades: 1.11
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _Tiling: {r: 10, g: 5, b: 0, a: 0}

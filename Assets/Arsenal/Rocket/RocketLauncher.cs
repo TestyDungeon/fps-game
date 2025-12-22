@@ -2,13 +2,15 @@ using UnityEngine;
 
 public class RocketLauncher : Gun
 {
-
+    [Header("Important Setup")]
     [SerializeField] private GameObject rocketPrefab;
+    [SerializeField] private GameObject explosionPrefab;
+
+    [Header("Gun")]
     [SerializeField] private float rocketSpeed = 1f;
     [SerializeField] private float explosionRadius = 10;
     [SerializeField] private float explosionForce = 5;
     [SerializeField] private float explosionForceRB = 5;
-    [SerializeField] private GameObject explosionPrefab;
 
     private GameObject newRocket;
 

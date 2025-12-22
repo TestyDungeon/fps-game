@@ -5,33 +5,43 @@ public class EnemyChaseState : EnemyBaseState
     public override void EnterState(EnemyStateManager enemy)
     {
         Debug.Log("IM A CHASING ENEMY");
-        Vector3 toPlayer = enemy.GetVectorToLastPlayerPosition();
-        enemy.enemyAttack.SetDirection(toPlayer.normalized);
-        enemy.enemyAttack.Attack();
-        enemy.animator.speed = 2;
-        enemy.animator.Play("Walk");
+        if(enemy.animator != null)
+        {
+            enemy.animator.speed = 2;
+            enemy.animator.CrossFade("Walk", 1f, 0, 0);
+        }
         
     }
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
         enemy.UpdateLastPlayerPosition();
-        Vector3 toPlayer = enemy.GetVectorToLastPlayerPosition();
 
-        if (enemy.gravity != 0){
-            enemy.GoInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized * enemy.chaseSpeed);
-            if (Vector3.SignedAngle(enemy.transform.forward, toPlayer, -enemy.transform.right) > 45)
-                enemy.JumpTo(enemy.UpdateLastPlayerPosition());
+        if (enemy.enemyConfig.gravity != 0)
+        {
+            if(enemy.GetVectorToLastPlayerPosition().sqrMagnitude > 81 || !enemy.IsPlayerInSight())
+            {
+                enemy.GoInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized * enemy.enemyConfig.chaseSpeed);
+            }
+            else
+            {
+                enemy.SwitchState(enemy.AttackState);
+            }
+            enemy.RotateInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized);
+            
         }
         else
         {
-            enemy.FlyInDirection(enemy.GetVectorToLastPlayerPosition().normalized * enemy.chaseSpeed + enemy.transform.up * 6);
-            Debug.DrawRay(enemy.transform.position, enemy.GetVectorToLastPlayerPosition().normalized * enemy.chaseSpeed, Color.green);
+            
+            Debug.DrawRay(enemy.transform.position, enemy.GetVectorToLastPlayerPosition().normalized * enemy.enemyConfig.chaseSpeed, Color.green);
+            if(enemy.GetVectorToLastPlayerPosition().sqrMagnitude > 81)
+            {
+                enemy.FlyInDirection(enemy.GetVectorToLastPlayerPosition().normalized * enemy.enemyConfig.chaseSpeed + enemy.transform.up * 3);
+            }
+            else
+                enemy.attackBehavior.ExecuteAttack(enemy, enemy.playerTransform.position);
+            enemy.RotateInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized);
         }
-        
-        //Debug.Log("Angle: " + Vector3.SignedAngle(enemy.transform.forward, toPlayer, -enemy.transform.right));
-        
-        enemy.enemyAttack.SetDirection(toPlayer.normalized);
         
     }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 public class Health : MonoBehaviour
 {
     public event Action OnDeath;
-    [SerializeField] protected int maxHealth = 100;
+    [SerializeField] protected int maxHealth;
     protected int currentHealth;
     protected bool isAlive = true;
     
@@ -14,14 +14,14 @@ public class Health : MonoBehaviour
         currentHealth = maxHealth;
     }
 
-    public void TakeDamage(int damageAmount)
+    public virtual void TakeDamage(int damageAmount)
     {
         Debug.Log("DAMAGE: " + damageAmount);
+        Debug.Log(name + " health: " + currentHealth);
         if (currentHealth <= 0)
             return;
         currentHealth -= damageAmount;
         HealthChanged();
-        Debug.Log(name + " health: " + currentHealth);
 
         if (currentHealth <= 0 && isAlive)
             Death();
@@ -43,5 +43,16 @@ public class Health : MonoBehaviour
         OnDeath?.Invoke();
         Debug.Log(name + " died.");
         //Destroy(gameObject);
+    }
+
+    public bool IsFullHealth()
+    {
+        Debug.Log(currentHealth >= maxHealth);
+        return currentHealth >= maxHealth;
+    }
+
+    public void SetMaxHealth(int maxHealth_)
+    {
+        maxHealth = maxHealth_;
     }
 }

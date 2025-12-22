@@ -9,7 +9,8 @@ public class EnemyDeadState : EnemyBaseState
             enemy.animator.enabled = false;
         enemy.SetRagdollColliders(true);
         enemy.SetRagdollRigidBody(true);
-        enemy.enemyAttack.StopAttack();
+        enemy.audioSource.enabled = false;
+        //enemy.enemyAttack.StopAttack();
     }
 
     public override void FixedUpdateState(EnemyStateManager enemy)

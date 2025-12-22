@@ -11,7 +11,13 @@ public enum SoundType
     ROCKETSHOT,
     ROCKETEXPLODE,
     SHOTGUNSHOT,
-    GRAPPLE
+    GRAPPLE,
+    PICKUP_GRAPPLE,
+    PICKUP_GUNS,
+    PICKUP_MEDKIT,
+    PICKUP_AMMO,
+    ENEMY_ATTACK,
+    FLYING_ENEMY_ATTACK
 }
 
 [RequireComponent(typeof(AudioSource)), ExecuteInEditMode]

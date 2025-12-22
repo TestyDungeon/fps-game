@@ -8,12 +8,13 @@ public class PlayerMovement : MonoBehaviour
     private MovementController movementController;
 
     [SerializeField] private float MAX_SPEED = 0.5f;
-    [SerializeField] private float accel = 11f;
-    [SerializeField] private float friction = 5f;
     [SerializeField] private float speed = 0.35f;
+    [SerializeField] private float accel = 11f;
     [SerializeField] private float airMaxSpeed = 0.1f;
-    [SerializeField] private float jumpStrength = 0.35f;
+    [SerializeField] private float airAccel = 11f;
+    [SerializeField] private float friction = 5f;
     [SerializeField] private float stopSpeed = 0.1f;
+    [SerializeField] private float jumpStrength = 0.35f;
 
     private Vector3 playerVelocity = Vector3.zero;
     private bool isPlayingFootsteps = false;
@@ -112,7 +113,7 @@ public class PlayerMovement : MonoBehaviour
         if (addSpeed <= 0)
             return;
 
-        float accelSpeed = accel * Time.deltaTime * wishSpeed;
+        float accelSpeed = airAccel * Time.deltaTime * wishSpeed;
 
         if (accelSpeed > addSpeed)
             accelSpeed = addSpeed;
@@ -167,15 +168,15 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void OnGUI()
-    {
-        GUI.color = Color.green;
-        var ups = playerVelocity;
-        GUI.Label(new Rect(0, 15, 400, 100),
-        "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
-        "Velocity: " + ups + "\n" +
-        "Grounded: " + movementController.GroundCheck());
-    }
+    //private void OnGUI()
+    //{
+    //    GUI.color = Color.green;
+    //    var ups = playerVelocity;
+    //    GUI.Label(new Rect(0, 15, 400, 100),
+    //    "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
+    //    "Velocity: " + ups + "\n" +
+    //    "Grounded: " + movementController.GroundCheck());
+    //}
 
     IEnumerator PlayFootStepsSound()
     {

@@ -6,8 +6,14 @@ public class CustomTrigger : MonoBehaviour
     [SerializeField] private MonoBehaviour receiver;
     private HashSet<Collider> _currentTriggers = new HashSet<Collider>();
     private ICustomTriggerReceiver _receiver;
+    private CapsuleCollider capsuleCollider;
+    private float capsuleHalfHeight;
 
-    void Awake() {
+    void Awake() 
+    {
+        capsuleCollider = GetComponent<CapsuleCollider>();
+        capsuleHalfHeight = capsuleCollider.height / 2 - capsuleCollider.radius;
+
         if (receiver != null)
             _receiver = receiver as ICustomTriggerReceiver;
     }
@@ -21,7 +27,10 @@ public class CustomTrigger : MonoBehaviour
     {
         _currentTriggers.RemoveWhere(c => c == null);
 
-        Collider[] hits = Physics.OverlapCapsule(transform.position + new Vector3(0, 0.5f, 0), transform.position - new Vector3(0, 0.5f, 0), 0.5f);
+        Collider[] hits = Physics.OverlapCapsule(
+            transform.position + transform.up * capsuleHalfHeight, 
+            transform.position - transform.up * capsuleHalfHeight, 
+            capsuleCollider.radius);
         // Detect enters
         foreach (var hit in hits)
         {

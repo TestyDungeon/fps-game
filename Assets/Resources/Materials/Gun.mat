@@ -40,12 +40,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _Fresnel_Power: 2.73
-    - _Fresnel_Threshold: 0.73
+    - _Fresnel_Threshold: 0.7
     - _Max: 1.18
     - _Min: 0.09
     - _QueueControl: 0
     - _Shades: 0.15
+    - _Smoothness: 0
     m_Colors:
     - _Color: {r: 0.2845319, g: 0.31869054, b: 0.4339623, a: 1}
+    - _Emmision_Color: {r: 0.03773582, g: 0.03773582, b: 0.03773582, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

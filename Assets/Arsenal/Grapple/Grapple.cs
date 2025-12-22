@@ -16,7 +16,6 @@ public class Grapple : Item
     private float g;
 
     private bool grappling = false;
-    private bool grappable;
     private bool swinging;
     private Vector3 grapplePoint;
 

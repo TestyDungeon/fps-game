@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GravityField : MonoBehaviour
 {
-    protected float rbGravity = 20f;
+    protected float rbGravity = 60f;
 
 
     void Start()

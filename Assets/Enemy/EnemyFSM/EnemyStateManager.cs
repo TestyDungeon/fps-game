@@ -1,29 +1,29 @@
 using UnityEngine;
-using UnityEngine.AI;
 
 public class EnemyStateManager : MonoBehaviour
 {
     EnemyBaseState currentState;
     public EnemyIdleState IdleState = new EnemyIdleState();
     public EnemyChaseState ChaseState = new EnemyChaseState();
-    public EnemyFightState FightState = new EnemyFightState();
+    public EnemyAttackState AttackState = new EnemyAttackState();
     public EnemyDeadState DeadState = new EnemyDeadState();
+
+    public EnemyConfig enemyConfig;
+    public Transform bulletStart;
+
+    [HideInInspector] public IAttackBehavior attackBehavior;
+
     [HideInInspector] public MovementController movementController;
 
-    public float chaseSpeed = 7;
-    public float idleSpeed = 7;
     [HideInInspector] public Vector3 idleDir = Vector3.zero;
-    public float rotationSpeed = 7;
-    public float maxJumpDistance = 30;
+    
 
-    [HideInInspector] public float gravity;
-
-    private Transform player;
+    [HideInInspector] public Transform playerTransform;
     private Vector3 lastPlayerPosition = Vector3.zero;
 
     private CapsuleCollider capsuleCollider;
+    [HideInInspector] public AudioSource audioSource;
     [HideInInspector] public float sight;
-    [HideInInspector] public EnemyAttack enemyAttack;
     [HideInInspector] public Animator animator;
     [HideInInspector] public Vector3 randomPosition;
     [HideInInspector] public Vector3 enemyVelocity = Vector3.zero;
@@ -34,15 +34,24 @@ public class EnemyStateManager : MonoBehaviour
 
     private Health enemyHealth;
 
+    public GameObject projectile;
+
     void Awake()
     {
+        audioSource = GetComponentInChildren<AudioSource>();
+        attackBehavior = enemyConfig.GetAttackBehavior();
+
         enemyHealth = GetComponent<Health>();
+        enemyHealth.SetMaxHealth(enemyConfig.maxHealth);
+
         animator = GetComponentInChildren<Animator>();
-        player = GameObject.FindGameObjectWithTag("Player").transform;
-        enemyAttack = GetComponent<EnemyAttack>();
+        playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
+
         capsuleCollider = GetComponent<CapsuleCollider>();
         sight = GetComponentInChildren<SphereCollider>().radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
+        
         movementController = GetComponent<MovementController>();
+        movementController.SetGravity(enemyConfig.gravity);
         
         currentState = IdleState;
         currentState.EnterState(this);
@@ -50,10 +59,9 @@ public class EnemyStateManager : MonoBehaviour
 
     void Start()
     {
-        
+        playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
         rigidbodies = GetComponentsInChildren<Rigidbody>();
         colliders = GetComponentsInChildren<Collider>();
-        gravity = movementController.getGravity();
 
         SetRagdollColliders(false);
         SetRagdollRigidBody(false);
@@ -63,7 +71,6 @@ public class EnemyStateManager : MonoBehaviour
     void FixedUpdate()
     {
         currentState.FixedUpdateState(this);
-
     }
 
     public void SwitchState(EnemyBaseState state)
@@ -80,9 +87,9 @@ public class EnemyStateManager : MonoBehaviour
 
     public bool IsPlayerInSight()
     {
-        if ((player.position - transform.position).sqrMagnitude < sight * sight)
+        if ((playerTransform.position - transform.position).sqrMagnitude < sight * sight)
         {
-            if (Physics.Raycast(transform.position, player.position - transform.position, out RaycastHit hit, 100, ~((1 << 8) | (1 << 6))))
+            if (Physics.Raycast(transform.position, playerTransform.position - transform.position, out RaycastHit hit, 100, ~((1 << 8) | (1 << 6))))
             {
                 if (hit.transform.gameObject.CompareTag("Player"))
                 {
@@ -97,7 +104,7 @@ public class EnemyStateManager : MonoBehaviour
 
     public Vector3 UpdateLastPlayerPosition()
     {
-        if (Physics.Raycast(transform.position, player.position - transform.position, out RaycastHit hit, 100, ~((1 << 8) | (1 << 6) | (1 << 9))))
+        if (Physics.Raycast(transform.position, playerTransform.position - transform.position, out RaycastHit hit, 100, ~((1 << 8) | (1 << 6) | (1 << 9))))
         {
             if (hit.transform.gameObject.CompareTag("Player"))
             {
@@ -119,16 +126,23 @@ public class EnemyStateManager : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.LookRotation(dir, transform.up);
 
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * rotationSpeed);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * enemyConfig.rotationSpeed);
         enemyVelocity = movementController.Move(enemyVelocity);
         Debug.DrawRay(transform.position, enemyVelocity);
+    }
+
+    public void RotateInDirection(Vector3 dir)
+    {
+        Quaternion targetRotation = Quaternion.LookRotation(dir, transform.up);
+
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * enemyConfig.rotationSpeed);
     }
 
     public void FlyInDirection(Vector3 dir)
     {
         Quaternion targetRotation = Quaternion.LookRotation(dir);
 
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * rotationSpeed);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * enemyConfig.rotationSpeed);
         enemyVelocity = movementController.Move(dir);
     }
 
@@ -142,7 +156,7 @@ public class EnemyStateManager : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.LookRotation(dir, transform.up);
 
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * rotationSpeed);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * enemyConfig.rotationSpeed);
         enemyVelocity = movementController.Move(enemyVelocity);
         Debug.DrawRay(transform.position, enemyVelocity);
     }
@@ -152,10 +166,10 @@ public class EnemyStateManager : MonoBehaviour
         if (!movementController.GroundCheck())
             return;
 
-        if ((pos - transform.position).sqrMagnitude > maxJumpDistance * maxJumpDistance)
-            pos = transform.position+(pos - transform.position).normalized * maxJumpDistance;
+        if ((pos - transform.position).sqrMagnitude > enemyConfig.maxJumpDistance * enemyConfig.maxJumpDistance)
+            pos = transform.position+(pos - transform.position).normalized * enemyConfig.maxJumpDistance;
 
-        Vector3 up = player.transform.up;
+        Vector3 up = playerTransform.transform.up;
 
         // Bottom of the player (for reference)
         float height = capsuleCollider.height;
@@ -181,14 +195,14 @@ public class EnemyStateManager : MonoBehaviour
          // positive number, magnitude of downward acceleration
 
         // Vertical velocity to reach apex
-        float velocityY = Mathf.Sqrt(2f * gravity * apexHeight);
+        float velocityY = Mathf.Sqrt(2f * enemyConfig.gravity * apexHeight);
 
         // Time to reach apex
-        float timeUp = velocityY / gravity;
+        float timeUp = velocityY / enemyConfig.gravity;
 
         // Time to fall from apex to target
         float fallHeight = apexHeight - displacementY;
-        float timeDown = Mathf.Sqrt(Mathf.Max(2f * fallHeight / gravity, 0.01f)); // avoid sqrt(0)
+        float timeDown = Mathf.Sqrt(Mathf.Max(2f * fallHeight / enemyConfig.gravity, 0.01f)); // avoid sqrt(0)
 
         float totalTime = timeUp + timeDown;
 
@@ -218,6 +232,11 @@ public class EnemyStateManager : MonoBehaviour
     {
         idleDir = new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), Random.Range(-1f, 1f));
         idleDir = Vector3.ProjectOnPlane(idleDir, transform.up).normalized;
+    }
+
+    public Vector3 GetPlayerPosition()
+    {
+        return playerTransform.transform.position;
     }
     
     public void SetRagdollRigidBody(bool state)

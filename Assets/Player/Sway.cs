@@ -9,15 +9,27 @@ public class Sway : MonoBehaviour
     private Vector3 velocity = Vector3.zero;
     private Vector3 swayPos;
     private Vector3 swayCamPos;
+    private Inventory inventory;
 
 
-    void Update()
+    void Start()
     {
-        transform_ = GetComponent<Inventory>().GetCurrent()?.gameObject.transform;
-        GetInput();
-        GetVelocity();
-        SwayPosition();
-        SwayApply();
+        inventory = GetComponent<Inventory>();
+    }
+
+    void FixedUpdate()
+    {
+        if(inventory.GetCurrent() != null)
+            transform_ = inventory.GetCurrent()?.gameObject.transform;
+
+        if(transform_ != null)
+        {
+            GetInput();
+            GetVelocity();
+            SwayPosition();
+            SwayApply();
+        }
+            
     }
     
     private void GetInput()

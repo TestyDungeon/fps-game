@@ -12,7 +12,7 @@ public class JumpPad : MonoBehaviour
     {
         boxCollider = GetComponentsInChildren<BoxCollider>()[1];
         
-        Debug.Log(boxCollider.name);
+        //Debug.Log(boxCollider.name);
     }
 
     void FixedUpdate()

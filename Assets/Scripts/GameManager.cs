@@ -4,6 +4,9 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private GameObject gameOverUI;
+    [SerializeField] private GameObject grapple;
+    [SerializeField] private GameObject[] itemsPos;
+    [SerializeField] private GameObject[] UI;
 
     void Start()
     {
@@ -23,5 +26,26 @@ public class GameManager : MonoBehaviour
         gameOverUI.SetActive(true);
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+    }
+
+    public void EnableGrapple()
+    {
+        grapple.SetActive(true);
+    }
+
+    public void EnableItems()
+    {
+        foreach(GameObject item in itemsPos)
+        {
+            item.SetActive(true);  
+        }
+    }
+
+    public void EnableUI()
+    {
+        foreach(GameObject item in UI)
+        {
+            item.SetActive(true);  
+        }
     }
 }

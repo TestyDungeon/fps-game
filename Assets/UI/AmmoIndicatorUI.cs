@@ -12,7 +12,18 @@ public class AmmoIndicatorUI : MonoBehaviour
         if (inventory == null)
             inventory = FindAnyObjectByType<Inventory>();
 
+        Debug.Log("Start() " + ammoHandler);
     }
+
+    //void Start()
+    //{
+    //    if(ammoHandler != null)
+    //    {
+    //        //ammoHandler = inventory.GetCurrent() as IAmmoHandler;
+    //        ammoHandler.OnAmmoChanged += OnAmmoChanged;
+    //        OnAmmoChanged(ammoHandler.GetAmmo());
+    //    }
+    //}
 
     void OnEnable()
     {
@@ -41,6 +52,7 @@ public class AmmoIndicatorUI : MonoBehaviour
         {
             ammoHandler = handler;
             ammoHandler.OnAmmoChanged += OnAmmoChanged;
+            Debug.Log("Slot Changed : " + ammoHandler.GetAmmo());
             text.SetText(ammoHandler.GetAmmo().ToString());
         }
         else
@@ -48,11 +60,12 @@ public class AmmoIndicatorUI : MonoBehaviour
             ammoHandler = null;
             text.SetText("");
         }
-        Debug.Log("Slot Changed");
+        
     }
 
     private void OnAmmoChanged(int ammo)
     {
+        Debug.Log("Ammo: " + ammo);
         text.SetText(ammo.ToString());
     }
 }

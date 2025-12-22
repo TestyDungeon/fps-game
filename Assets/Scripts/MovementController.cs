@@ -120,12 +120,11 @@ public class MovementController : MonoBehaviour
 
         float dist = vel.magnitude + offset;
         
-
         if (Physics.CapsuleCast(
             pos + transform.up * (capsuleCollider.height / 2 - capsuleCollider.radius),
             pos - transform.up * (capsuleCollider.height / 2 - capsuleCollider.radius),
             capsuleCollider.radius, vel.normalized, out RaycastHit hit, dist,
-            ~0, QueryTriggerInteraction.Ignore))
+            layerMask, QueryTriggerInteraction.Ignore))
         {
 
             Vector3 newVel = vel.normalized * (hit.distance - offset);
@@ -240,6 +239,11 @@ public class MovementController : MonoBehaviour
     public float getGravity()
     {
         return gravity;
+    }
+
+    public void SetGravity(float gravity_)
+    {
+        gravity = gravity_;
     }
 
     public void setInGravityField(bool x)

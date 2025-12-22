@@ -1,9 +1,10 @@
 using System;
+using GravityGUN.Data;
 
 public interface IAmmoHandler
 {
     public event Action<int> OnAmmoChanged;
-    public void AddAmmo(int ammoAmount);
-    public void SubstractAmmo(int ammoAmount);
     public int GetAmmo();
+    public LootType GetAmmoType();
+    public void AmmoChanged(int amount);
 }
