@@ -19,7 +19,7 @@ public class EnemyAttackState : EnemyBaseState
         AnimatorStateInfo stateInfo = enemy.animator.GetCurrentAnimatorStateInfo(0);
         //enemy.attackBehavior.AnimateAttack(enemy);
         enemy.attackBehavior.ExecuteAttack(enemy, enemy.GetPlayerPosition());
-        if (stateInfo.normalizedTime >= 0.95f && !enemy.animator.IsInTransition(0) && enemy.GetVectorToLastPlayerPosition().sqrMagnitude > 132)
+        if (stateInfo.normalizedTime >= 0.95f && !enemy.animator.IsInTransition(0) && enemy.GetVectorToLastPlayerPosition().sqrMagnitude > enemy.enemyConfig.endAttackRange * enemy.enemyConfig.endAttackRange)
         {
             Debug.Log("SWITCH BACK");
             enemy.SwitchState(enemy.ChaseState);

@@ -168,15 +168,15 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    //private void OnGUI()
-    //{
-    //    GUI.color = Color.green;
-    //    var ups = playerVelocity;
-    //    GUI.Label(new Rect(0, 15, 400, 100),
-    //    "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
-    //    "Velocity: " + ups + "\n" +
-    //    "Grounded: " + movementController.GroundCheck());
-    //}
+    private void OnGUI()
+    {
+        GUI.color = Color.green;
+        var ups = playerVelocity;
+        GUI.Label(new Rect(0, 15, 400, 100),
+        "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
+        "Velocity: " + ups + "\n" +
+        "Grounded: " + movementController.GroundCheck());
+    }
 
     IEnumerator PlayFootStepsSound()
     {

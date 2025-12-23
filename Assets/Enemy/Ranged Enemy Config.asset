@@ -21,6 +21,8 @@ MonoBehaviour:
   gravity: 30
   damage: 5
   attackRange: 100
+  startAttackRange: 9
+  endAttackRange: 12
   attackCooldown: 2
   layerMask:
     serializedVersion: 2

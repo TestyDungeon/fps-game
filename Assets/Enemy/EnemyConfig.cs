@@ -15,6 +15,8 @@ public class EnemyConfig : ScriptableObject
     [Header("Attack")]
     public int damage = 5;
     public float attackRange = 100;
+    public float startAttackRange = 81;
+    public float endAttackRange = 132;
     public float attackCooldown = 2;
     public LayerMask layerMask = 1 << 3;
 

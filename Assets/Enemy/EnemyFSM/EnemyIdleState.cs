@@ -19,7 +19,7 @@ public class EnemyIdleState : EnemyBaseState
         //enemy.GoInDirection(enemy.idleDir * enemy.enemyConfig.idleSpeed);
         if(enemy.animator != null)
             enemy.animator.Play("Idle1");
-        //Debug.Log("IM AN IDLE ENEMY");
+        Debug.Log("IM AN IDLE ENEMY");
         if (enemy.IsPlayerInSight())
         {
             enemy.SwitchState(enemy.ChaseState);

@@ -4,7 +4,6 @@ using UnityEngine;
 public interface IAttackBehavior
 {
     public void ExecuteAttack(EnemyStateManager enemy, Vector3 target);
-    public void AnimateAttack(EnemyStateManager enemy);
     public bool IsInAttackRange(EnemyStateManager enemy, Vector3 target);
     public bool CanAttack(EnemyStateManager enemy);
 }
@@ -16,17 +15,20 @@ public class MeleeAttack : IAttackBehavior
     {
         if(!CanAttack(enemy))
             return;
-        if(Physics.Raycast(enemy.transform.position, enemy.transform.forward, out RaycastHit hit, enemy.enemyConfig.attackRange, 1 << 3, QueryTriggerInteraction.Ignore))
+
+        if(enemy.animator != null)
         {
+            enemy.animator.speed = 2;
+            enemy.animator.CrossFade("Attack", 0.2f, 0, 0);
+        }
+        if(Physics.Raycast(enemy.transform.position, enemy.transform.forward, out RaycastHit hit, enemy.enemyConfig.startAttackRange, 1 << 3, QueryTriggerInteraction.Ignore))
+        {
+            
             hit.transform.GetComponent<PlayerHealth>().TakeDamage(enemy.enemyConfig.damage);
             lastAttackTime = Time.time;
         }
     }
 
-    public void AnimateAttack(EnemyStateManager enemy)
-    {
-        
-    }
 
     public bool IsInAttackRange(EnemyStateManager enemy, Vector3 target)
     {
@@ -70,26 +72,26 @@ public class RangedAttack : IAttackBehavior
         lastAttackTime = Time.time;
     }
 
-    public void AnimateAttack(EnemyStateManager enemy)
-    {
-        //Debug.DrawLine(enemy.transform.position, target, Color.white);
-        if(!CanAttack(enemy))
-            return;
-
-        if(enemy.enemyConfig.timeBetweenShots == 0)
-        {
-            
-        }
-        else
-        {
-            
-            if(enemy.animator != null)
-            {
-                enemy.animator.speed = 1;
-                enemy.animator.CrossFade("Attack", 0.2f, 0, 0);
-            }
-        }
-    }
+    //public void AnimateAttack(EnemyStateManager enemy)
+    //{
+    //    //Debug.DrawLine(enemy.transform.position, target, Color.white);
+    //    if(!CanAttack(enemy))
+    //        return;
+//
+    //    if(enemy.enemyConfig.timeBetweenShots == 0)
+    //    {
+    //        
+    //    }
+    //    else
+    //    {
+    //        
+    //        if(enemy.animator != null)
+    //        {
+    //            enemy.animator.speed = 1;
+    //            enemy.animator.CrossFade("Attack", 0.2f, 0, 0);
+    //        }
+    //    }
+    //}
 
     public bool IsInAttackRange(EnemyStateManager enemy, Vector3 target)
     {

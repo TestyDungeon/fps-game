@@ -19,7 +19,7 @@ public class EnemyChaseState : EnemyBaseState
 
         if (enemy.enemyConfig.gravity != 0)
         {
-            if(enemy.GetVectorToLastPlayerPosition().sqrMagnitude > 81 || !enemy.IsPlayerInSight())
+            if(enemy.GetVectorToLastPlayerPosition().sqrMagnitude > enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange || !enemy.IsPlayerInSight())
             {
                 enemy.GoInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized * enemy.enemyConfig.chaseSpeed);
             }
@@ -34,7 +34,7 @@ public class EnemyChaseState : EnemyBaseState
         {
             
             Debug.DrawRay(enemy.transform.position, enemy.GetVectorToLastPlayerPosition().normalized * enemy.enemyConfig.chaseSpeed, Color.green);
-            if(enemy.GetVectorToLastPlayerPosition().sqrMagnitude > 81)
+            if(enemy.GetVectorToLastPlayerPosition().sqrMagnitude > enemy.enemyConfig.startAttackRange)
             {
                 enemy.FlyInDirection(enemy.GetVectorToLastPlayerPosition().normalized * enemy.enemyConfig.chaseSpeed + enemy.transform.up * 3);
             }
