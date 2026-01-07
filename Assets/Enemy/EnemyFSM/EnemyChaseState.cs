@@ -17,31 +17,23 @@ public class EnemyChaseState : EnemyBaseState
     {
         enemy.UpdateLastPlayerPosition();
 
-        if (enemy.enemyConfig.gravity != 0)
-        {
+        
             if(enemy.GetVectorToLastPlayerPosition().sqrMagnitude > enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange || !enemy.IsPlayerInSight())
             {
-                enemy.GoInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized * enemy.enemyConfig.chaseSpeed);
+                if (enemy.enemyConfig.gravity != 0)
+                {
+                    enemy.GoInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized * enemy.enemyConfig.chaseSpeed);
+                }
+                else
+                {
+                    enemy.FlyInDirection(enemy.GetVectorToLastPlayerPosition().normalized * enemy.enemyConfig.chaseSpeed + enemy.transform.up * 3);
+                }
             }
             else
             {
                 enemy.SwitchState(enemy.AttackState);
             }
             enemy.RotateInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized);
-            
-        }
-        else
-        {
-            
-            Debug.DrawRay(enemy.transform.position, enemy.GetVectorToLastPlayerPosition().normalized * enemy.enemyConfig.chaseSpeed, Color.green);
-            if(enemy.GetVectorToLastPlayerPosition().sqrMagnitude > enemy.enemyConfig.startAttackRange)
-            {
-                enemy.FlyInDirection(enemy.GetVectorToLastPlayerPosition().normalized * enemy.enemyConfig.chaseSpeed + enemy.transform.up * 3);
-            }
-            else
-                enemy.attackBehavior.ExecuteAttack(enemy, enemy.playerTransform.position);
-            enemy.RotateInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized);
-        }
         
     }
 

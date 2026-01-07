@@ -10,6 +10,7 @@ public class EnemyDeadState : EnemyBaseState
         enemy.SetRagdollColliders(true);
         enemy.SetRagdollRigidBody(true);
         enemy.audioSource.enabled = false;
+        GameObject.Destroy(enemy.gameObject, 1);
         //enemy.enemyAttack.StopAttack();
     }
 

@@ -105,6 +105,21 @@ MonoBehaviour:
   - name: GRAPPLE
     sounds:
     - {fileID: 8300000, guid: 3262236d9de55504881ddf539aec9b93, type: 3}
+  - name: PICKUP_GRAPPLE
+    sounds:
+    - {fileID: 8300000, guid: cc2e8778bb8bc7c409f3dc3d4b965fea, type: 3}
+  - name: PICKUP_GUNS
+    sounds:
+    - {fileID: 8300000, guid: fb06a5b878e3fb7468b7027b0607442a, type: 3}
+  - name: PICKUP_MEDKIT
+    sounds: []
+  - name: PICKUP_AMMO
+    sounds: []
+  - name: ENEMY_ATTACK
+    sounds: []
+  - name: FLYING_ENEMY_ATTACK
+    sounds:
+    - {fileID: 8300000, guid: b60928b60bf39ac4b9fb8a590519f8bf, type: 3}
 --- !u!82 &7636616833535133655
 AudioSource:
   m_ObjectHideFlags: 0

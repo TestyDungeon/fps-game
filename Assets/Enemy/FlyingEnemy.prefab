@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1514237354955483197}
   - component: {fileID: 3948157642485315772}
   - component: {fileID: 5454644273867341713}
+  - component: {fileID: 4602446036257962882}
   m_Layer: 8
   m_Name: Body
   m_TagString: Untagged
@@ -82,6 +83,28 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.44
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!95 &4602446036257962882
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794198128538761708}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: b2f6c338b2e4a2f489fa76a43cff5c86, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1634380424796154236
 GameObject:
   m_ObjectHideFlags: 0
@@ -190,11 +213,13 @@ MonoBehaviour:
   movementController: {fileID: 0}
   idleDir: {x: 0, y: 0, z: 0}
   playerTransform: {fileID: 0}
+  audioSource: {fileID: 0}
   sight: 0
   animator: {fileID: 0}
   randomPosition: {x: 0, y: 0, z: 0}
   enemyVelocity: {x: 0, y: 0, z: 0}
   enemyExternalVelocity: {x: 0, y: 0, z: 0}
+  projectile: {fileID: 8304178073877007807, guid: 89fa4283767cf394fbd87b2236eb9052, type: 3}
 --- !u!114 &7040681531250887915
 MonoBehaviour:
   m_ObjectHideFlags: 0

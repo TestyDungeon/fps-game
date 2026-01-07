@@ -45,6 +45,7 @@ Material:
     - _Min: 0.09
     - _QueueControl: 0
     - _Shades: 0.15
+    - _Smoothness: 0
     m_Colors:
     - _Color: {r: 0.4764151, g: 0.9100755, b: 1, a: 1}
   m_BuildTextureStacks: []

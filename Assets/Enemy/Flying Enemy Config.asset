@@ -21,6 +21,8 @@ MonoBehaviour:
   gravity: 0
   damage: 5
   attackRange: 100
+  startAttackRange: 9
+  endAttackRange: 12
   attackCooldown: 1
   layerMask:
     serializedVersion: 2
@@ -28,7 +30,7 @@ MonoBehaviour:
   bulletTrailPrefab: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 04de150e4a1134c45847782808dd5346, type: 3}
   force: 20
-  spread: 1.2
+  spread: 1
   bulletsPerShot: 2
   timeBetweenShots: 0.2
   attackType: 1

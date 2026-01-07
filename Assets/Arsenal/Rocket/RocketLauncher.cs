@@ -9,24 +9,24 @@ public class RocketLauncher : Gun
     [Header("Gun")]
     [SerializeField] private float rocketSpeed = 1f;
     [SerializeField] private float explosionRadius = 10;
-    [SerializeField] private float explosionForce = 5;
     [SerializeField] private float explosionForceRB = 5;
 
     private GameObject newRocket;
 
 
-    protected override void Shoot()
+    protected override void Shoot(Vector3 dir)
     {
         if(itemName == "rocket")
             SoundManager.PlaySound(SoundType.ROCKETSHOT, 0.5f);
         newRocket = Instantiate(rocketPrefab, cameraPivot.position, cameraPivot.rotation);
         Rocket rocketComp =  newRocket.GetComponent<Rocket>();
         rocketComp.rocketStart = cameraPivot;
-        rocketComp.damage = damage;
+        rocketComp.damage = gunConfig.damage;
+        rocketComp.range = gunConfig.range;
         rocketComp.explosionPrefab = explosionPrefab;
         rocketComp.rocketSpeed = rocketSpeed;
         rocketComp.explosionRadius = explosionRadius;
-        rocketComp.explosionForce = explosionForce;
+        rocketComp.explosionForce = gunConfig.force;
         rocketComp.explosionForceRB = explosionForceRB;
         newRocket.GetComponent<MeshRenderer>().enabled = false;
     }

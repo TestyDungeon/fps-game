@@ -10,19 +10,20 @@ public class Rocket : MonoBehaviour
     [HideInInspector] public float explosionForceRB = 5;
     [HideInInspector] public GameObject explosionPrefab;
     [HideInInspector] public Transform rocketStart;
-    private Vector3 pos; 
+    [HideInInspector] public float range;
+    private Vector3 origin; 
     private Vector3 pre_pos;
 
-    int layer_mask;
+    int layerMask;
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
     {
-        //player_camera = GameObject.Find("Camera").GetComponent<Camera>();
+        origin = rocketStart.position;
         pre_pos = transform.position;
-        layer_mask = 1 << 3;
-        layer_mask = ~layer_mask;
+        layerMask = 1 << 3;
+        layerMask = ~layerMask;
     }
 
     // Update is called once per frame
@@ -33,7 +34,8 @@ public class Rocket : MonoBehaviour
             GetComponent<MeshRenderer>().enabled = true;
 
         transform.Translate(transform.forward * rocketSpeed, Space.World);
-        if(Physics.Raycast(pre_pos, transform.forward, Vector3.Distance(pre_pos, transform.position), layer_mask, QueryTriggerInteraction.Ignore)){
+        if(Vector3.Distance(pre_pos, origin) >= range || Physics.Raycast(pre_pos, transform.forward, Vector3.Distance(pre_pos, transform.position), layerMask, QueryTriggerInteraction.Ignore))
+        {
             var surrounding_objects = Physics.OverlapSphere(transform.position, explosionRadius, ~0, QueryTriggerInteraction.Ignore);
             GameObject particles = Instantiate(explosionPrefab, transform.position-transform.forward*0.5f, Quaternion.identity);
             Destroy(particles, 2f);

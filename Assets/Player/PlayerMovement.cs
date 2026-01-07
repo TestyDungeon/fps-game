@@ -7,15 +7,15 @@ public class PlayerMovement : MonoBehaviour
 
     private MovementController movementController;
 
-    [SerializeField] private float MAX_SPEED = 0.5f;
-    [SerializeField] private float speed = 0.35f;
-    [SerializeField] private float accel = 11f;
-    [SerializeField] private float airMaxSpeed = 0.1f;
-    [SerializeField] private float airAccel = 11f;
-    [SerializeField] private float friction = 5f;
-    [SerializeField] private float stopSpeed = 0.1f;
-    [SerializeField] private float jumpStrength = 0.35f;
-
+    //[SerializeField] private float MAX_SPEED = 0.5f;
+    //[SerializeField] private float speed = 0.35f;
+    //[SerializeField] private float accel = 11f;
+    //[SerializeField] private float airMaxSpeed = 0.1f;
+    //[SerializeField] private float airAccel = 11f;
+    //[SerializeField] private float friction = 5f;
+    //[SerializeField] private float stopSpeed = 0.1f;
+    //[SerializeField] private float jumpStrength = 0.35f;
+    [SerializeField] private PlayerConfig playerConfig;
     private Vector3 playerVelocity = Vector3.zero;
     private bool isPlayingFootsteps = false;
 
@@ -61,13 +61,13 @@ public class PlayerMovement : MonoBehaviour
             wishvel[i] = forward[i] * smove + right[i] * fmove;
 
         wishdir = wishvel;
-        wishspeed = wishdir.magnitude * speed;
+        wishspeed = wishdir.magnitude * playerConfig.speed;
         Vector3.Normalize(wishdir);
 
-        if (wishspeed > MAX_SPEED)
+        if (wishspeed > playerConfig.MAX_SPEED)
         {
-            mathlib.VectorScale(wishvel, MAX_SPEED / wishspeed, wishvel);
-            wishspeed = MAX_SPEED;
+            mathlib.VectorScale(wishvel, playerConfig.MAX_SPEED / wishspeed, wishvel);
+            wishspeed = playerConfig.MAX_SPEED;
         }
 
         if (movementController.GroundCheck())
@@ -91,7 +91,7 @@ public class PlayerMovement : MonoBehaviour
         if (addSpeed <= 0)
             return;
 
-        accelSpeed = accel * Time.deltaTime * wishSpeed;
+        accelSpeed = playerConfig.accel * Time.deltaTime * wishSpeed;
 
         if (accelSpeed > addSpeed)
             accelSpeed = addSpeed;
@@ -104,8 +104,8 @@ public class PlayerMovement : MonoBehaviour
     {
         float wishSpd = wishSpeed;
 
-        if (wishSpd > airMaxSpeed)
-            wishSpd = airMaxSpeed;
+        if (wishSpd > playerConfig.airMaxSpeed)
+            wishSpd = playerConfig.airMaxSpeed;
 
         float currentSpeed = Vector3.Dot(playerVelocity, wishDir);
         float addSpeed = wishSpd - currentSpeed;
@@ -113,7 +113,7 @@ public class PlayerMovement : MonoBehaviour
         if (addSpeed <= 0)
             return;
 
-        float accelSpeed = airAccel * Time.deltaTime * wishSpeed;
+        float accelSpeed = playerConfig.airAccel * Time.deltaTime * wishSpeed;
 
         if (accelSpeed > addSpeed)
             accelSpeed = addSpeed;
@@ -139,8 +139,8 @@ public class PlayerMovement : MonoBehaviour
 
         if (movementController.GroundCheck())
         {
-            control = speed < stopSpeed ? stopSpeed : speed;
-            drop += control * friction * Time.deltaTime;
+            control = speed < playerConfig.stopSpeed ? playerConfig.stopSpeed : speed;
+            drop += control * playerConfig.friction * Time.deltaTime;
         }
 
         newspeed = speed - drop;
@@ -163,20 +163,20 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Space))
         {
             playerVelocity -= Vector3.Project(playerVelocity, transform.up);
-            playerVelocity += transform.up * jumpStrength;
+            playerVelocity += transform.up * playerConfig.jumpStrength;
             SoundManager.PlaySound(SoundType.JUMP, 0.4f);
         }
     }
 
-    private void OnGUI()
-    {
-        GUI.color = Color.green;
-        var ups = playerVelocity;
-        GUI.Label(new Rect(0, 15, 400, 100),
-        "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
-        "Velocity: " + ups + "\n" +
-        "Grounded: " + movementController.GroundCheck());
-    }
+    //private void OnGUI()
+    //{
+    //    GUI.color = Color.green;
+    //    var ups = playerVelocity;
+    //    GUI.Label(new Rect(0, 15, 400, 100),
+    //    "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
+    //    "Velocity: " + ups + "\n" +
+    //    "Grounded: " + movementController.GroundCheck());
+    //}
 
     IEnumerator PlayFootStepsSound()
     {
