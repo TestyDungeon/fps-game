@@ -8,7 +8,7 @@ public class EnemyStaggerState : EnemyBaseState
     {
         Debug.Log("IM A FALTERED ENEMY");
         enemy.StopAllCoroutines();
-        enemy.StartCoroutine(enemy.ChangeState(enemy.ChaseState, 5, 5));
+        enemy.StartCoroutine(enemy.SwitchState(enemy.ChaseState, 5, 5));
         
         outline = enemy.smrs[0].materials[1]; 
         foreach (SkinnedMeshRenderer smr in enemy.smrs)

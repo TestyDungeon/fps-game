@@ -8,8 +8,8 @@ public class LevelTrigger : MonoBehaviour
     public Door[] doorsToUnlockOnEnd;
     public Door[] doorsToCloseOnStart;
     public AudioClip soundOnEnter;
+    public bool killOnEnter = false;
     public float volume = 1;
-    private GameObject spawnParticles; 
 
     [System.Serializable]
     public class Encounter
@@ -46,6 +46,8 @@ public class LevelTrigger : MonoBehaviour
     {
         StartCoroutine(StartEncounter());
         PlaySoundOnEnter();
+        if(killOnEnter)
+            PlayerHitResponder.Instance.TakeDamage(transform, 10000);
     }
 
     private void PlaySoundOnEnter()

@@ -12,7 +12,7 @@ public class EnemyFalterState : EnemyBaseState
         //GameObject.Destroy(enemy.gameObject, 1);
         //enemy.enemyAttack.StopAttack();
         //enemy.SetNavmeshAgent(false);
-        enemy.StartCoroutine(enemy.ChangeState(enemy.ChaseState, enemy.enemyConfig.falterDuration, enemy.enemyConfig.falterDuration));
+        enemy.StartCoroutine(enemy.SwitchState(enemy.ChaseState, enemy.enemyConfig.falterDuration, enemy.enemyConfig.falterDuration));
         Object.Destroy(Object.Instantiate(enemy.enemyConfig.falterParticlesPrefab, enemy.transform.position + enemy.transform.up * (enemy.height / 2), Quaternion.identity, enemy.transform), enemy.enemyConfig.falterDuration);
     }
 

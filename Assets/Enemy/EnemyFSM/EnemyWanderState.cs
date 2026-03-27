@@ -6,13 +6,12 @@ public class EnemyWanderState : EnemyBaseState
     public override void EnterState(EnemyStateManager enemy)
     {
         enemy.SetNavmeshAgent(true);
-        enemy.StartCoroutine(enemy.ChangeState(enemy.AttackState, 0.5f, 0.7f));
+        enemy.StartCoroutine(enemy.SwitchState(enemy.AttackState, 0.5f, 0.7f));
         dest = enemy.GetRandomReachablePointOnNavMesh(10);
     }
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
-        
         enemy.GoToDestination(dest, enemy.enemyConfig.wanderSpeed);
     }
 
@@ -21,5 +20,4 @@ public class EnemyWanderState : EnemyBaseState
         
     }
 
-    
 }
