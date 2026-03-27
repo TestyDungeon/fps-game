@@ -30,7 +30,6 @@ public class AmmoIndicatorUI : MonoBehaviour
         if (inventory != null)
         {
             inventory.OnSlotChanged += OnSlotChanged;
-            Debug.Log("SUBBED INV");
         }
     }
 
@@ -52,7 +51,7 @@ public class AmmoIndicatorUI : MonoBehaviour
         {
             ammoHandler = handler;
             ammoHandler.OnAmmoChanged += OnAmmoChanged;
-            Debug.Log("Slot Changed : " + ammoHandler.GetAmmo());
+            //Debug.Log("Slot Changed : " + ammoHandler.GetAmmo());
             text.SetText(ammoHandler.GetAmmo().ToString());
         }
         else
@@ -63,9 +62,9 @@ public class AmmoIndicatorUI : MonoBehaviour
         
     }
 
-    private void OnAmmoChanged(int ammo)
+    private void OnAmmoChanged(int maxAmmo, int ammo)
     {
-        Debug.Log("Ammo: " + ammo);
+        //Debug.Log("Ammo: " + ammo);
         text.SetText(ammo.ToString());
     }
 }

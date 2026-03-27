@@ -44,7 +44,7 @@ Material:
     - _QueueControl: 0
     - _Shades: 0.22
     m_Colors:
-    - _Color: {r: 1, g: 0.8759048, b: 0, a: 1}
-    - _Emmision_Color: {r: 1, g: 0.30566552, b: 0, a: 0}
+    - _Color: {r: 1, g: 0.1505694, b: 0, a: 1}
+    - _Emmision_Color: {r: 0.5566038, g: 0.17025529, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

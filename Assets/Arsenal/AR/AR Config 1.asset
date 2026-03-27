@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9d1f3a9e35c094e9adfba833efea7b, type: 3}
+  m_Name: AR Config 1
+  m_EditorClassIdentifier: 
+  muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 7703ace7cd973424087b710123029a52, type: 3}
+  bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 32759
+  shootSFX:
+  - {fileID: 8300000, guid: 8687cca4cb5ca034c94c0bc20fe3ea3d, type: 3}
+  volume: 0
+  altStartSFX: []
+  shootAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: 0}
+    _NormalizedStartTime: NaN
+  recoilAmountCamera: 1
+  recoilSpeedCamera: 10
+  returnSpeedCamera: 8
+  allowButtonHold: 1
+  damage: 20
+  ammoType: 0
+  range: 300
+  force: 20
+  knockbackForce: -3
+  spread: 0.01
+  timeBetweenShooting: 0.1
+  bulletsPerShot: 1
+  ammoPerShot: 1
+  timeBetweenShots: 0
+  inputDelay: 0
+  projectilePrefab: {fileID: 0}
+  explosionPrefab: {fileID: 0}
+  projectileSpeed: 1
+  projectileRicoshet: 0
+  gravityMult: 0
+  explosionRadius: 10
+  explosionForceRB: 5
+  explosionDelay: 0
+  altConfig: {fileID: 11400000, guid: d293383d399af4e4fbc34279b5557546, type: 2}
+  references:
+    version: 2
+    RefIds: []

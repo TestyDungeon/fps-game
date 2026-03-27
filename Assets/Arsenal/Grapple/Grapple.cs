@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using DG.Tweening;
 
 public class Grapple : Item
 {
@@ -14,17 +15,19 @@ public class Grapple : Item
 
     [SerializeField] private Transform grappleStart;
     private float g;
-
+    private float speed = 5;
+    private float currentSpeed;
     private bool grappling = false;
     private bool swinging;
     private Vector3 grapplePoint;
-
+    Vector3 velocity;
     private RaycastHit hit;
     private MovementController mc = null;
     private LayerMask layerMask = ~(1 << 9);
 
     void Awake()
     {
+        currentSpeed = speed;
         lr = GetComponent<LineRenderer>();
         lr.enabled = false;
     }
@@ -38,35 +41,42 @@ public class Grapple : Item
     void Update()
     {
         //Debug.Log(swinging);
-        if (Input.GetKeyDown(KeyCode.R))
+        if (Input.GetKeyDown(KeyCode.Q))
         {
             //grappling = true;
             StartGrapple();
-            
-            
+            //player.GetComponent<MovementController>().resetVelocity();
+            velocity = mc.getVelocity();
+            currentSpeed = Vector3.Dot((grapplePoint - player.transform.position).normalized, velocity);
         }
         
+        if (Input.GetKey(KeyCode.Q))
+        {
+            LaunchGrapple();
+        }
 
-        if (Input.GetKeyUp(KeyCode.R))
+        if (Input.GetKeyUp(KeyCode.Q))
         {
             CancelInvoke();
             if (grappling)
             {
-                Invoke(nameof(LaunchGrapple), grappleDelay);
                 grappling = false;
-            }
-            if (swinging)
-            {
-                swinging = false;
-                StartCoroutine(AnimateLineOut(grapplePoint, grappleStart.position));
+                StartCoroutine(AnimateLineOut(lr.GetPosition(1), grappleStart.position));
                 lr.enabled = false;
+                //Invoke(nameof(LaunchGrapple), grappleDelay);
             }
+            //if (swinging)
+            //{
+            //    swinging = false;
+            //    StartCoroutine(AnimateLineOut(grapplePoint, grappleStart.position));
+            //    lr.enabled = false;
+            //}
         }
 
-        if (swinging)
-        {
-            Swing();
-        }
+        //if (swinging)
+        //{
+        //    Swing();
+        //}
         
     }
 
@@ -96,7 +106,7 @@ public class Grapple : Item
             grapplePoint = hit.point;
             lr.enabled = true;
             grappling = true;
-            Invoke("StopGrappling", timeWindow);
+            //Invoke("StopGrappling", timeWindow);
             StartCoroutine(AnimateLineOut(grappleStart.position, grapplePoint));
 
             
@@ -110,9 +120,12 @@ public class Grapple : Item
     {
         //player.GetComponent<PlayerMovement>().append_vel(Vector3.up * 10);\
         //CancelInvoke();
-        player.GetComponent<MovementController>().resetVelocity();
-        player.GetComponent<MovementController>().addVelocity(CalculateVelocity(cameraPivot.position, grapplePoint));
-        StartCoroutine(AnimateLineOut(lr.GetPosition(1), grappleStart.position));
+        //player.GetComponent<MovementController>().resetVelocity();
+        //player.GetComponent<MovementController>().addVelocity((grapplePoint - player.transform.position).normalized * 0.6f - (grapplePoint - player.transform.position) * 0.6f);
+        //player.GetComponent<MovementController>().SetVelocitySpeed(15);
+        currentSpeed += 20 * Time.deltaTime;
+        velocity = Vector3.Lerp(velocity, (grapplePoint - player.transform.position).normalized * currentSpeed, Time.deltaTime * 10);
+        player.GetComponent<MovementController>().setVelocityDir(velocity);
 
     }
 
@@ -130,7 +143,7 @@ public class Grapple : Item
 
             yield return null;
         }
-        if(!grappling && !swinging)
+        if(!grappling)
             lr.enabled = false;
     }
 

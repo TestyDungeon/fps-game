@@ -3,10 +3,20 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance { get; private set; }
     [SerializeField] private GameObject gameOverUI;
     [SerializeField] private GameObject grapple;
     [SerializeField] private GameObject[] itemsPos;
     [SerializeField] private GameObject[] UI;
+    public GameObject decalParticles;
+    public GameObject enemySpawnParticles;
+    public GameObject bloodParticles;
+
+    void Awake()
+    {
+        if(Instance == null)
+            Instance = this;    
+    }
 
     void Start()
     {
@@ -39,6 +49,11 @@ public class GameManager : MonoBehaviour
         {
             item.SetActive(true);  
         }
+    }
+
+    public void EnableItem(string name)
+    {
+        PlayerHitResponder.Instance.GetComponent<Inventory>().EnableItem(name);
     }
 
     public void EnableUI()

@@ -18,10 +18,16 @@ public class PlayerMovement2 : MonoBehaviour
     [SerializeField] private PlayerConfig playerConfig;
     private Vector3 playerVelocity = Vector3.zero;
     private bool isPlayingFootsteps = false;
+    private bool jumped = false;
+    private float slopeSticking = 0.9f;
+    float traceDistance;
+    private float frictionMult = 1;
+    private Vector3 wishdir;
 
     private void Awake()
     {
         movementController = GetComponent<MovementController>();
+        //traceDistance = movementController.capsuleCollider.height/2 + slopeSticking;
     }
 
     private void Update()
@@ -37,9 +43,24 @@ public class PlayerMovement2 : MonoBehaviour
             StartCoroutine(PlayFootStepsSound());
     }
 
+    private void GroundMove()
+    {
+    
+        if (Physics.Raycast(transform.position, -Vector3.up, out RaycastHit hit, traceDistance, movementController.layerMask))
+        {
+            if (hit.normal.y >= 0.7f)
+            {
+                float dropDistance = hit.distance;
+                transform.position += -transform.up * dropDistance;
+                //playerVelocity += -transform.up * dropDistance;
+            }
+        }
+
+    }
+
     private void AirMove()
     {
-        Vector3 wishdir;
+        
         Vector3 wishvel = new Vector3();
         float wishspeed;
 
@@ -73,7 +94,8 @@ public class PlayerMovement2 : MonoBehaviour
         if (movementController.GroundCheck())
         {
             Friction();
-            Accelerate(wishdir);
+            Accelerate(wishdir, wishspeed);
+            //GroundMove();
         }
         else
         {
@@ -81,20 +103,45 @@ public class PlayerMovement2 : MonoBehaviour
         }
     }
 
-    private void Accelerate(Vector3 wishDir)
+    private void Accelerate(Vector3 wishDir, float wishSpeed)
     {
-        if(playerVelocity.sqrMagnitude >= playerConfig.MAX_SPEED * playerConfig.MAX_SPEED)
+        float currentSpeed, addSpeed, accelSpeed;
+
+        currentSpeed = Vector3.Dot(playerVelocity, wishDir);
+        addSpeed = wishSpeed - currentSpeed;
+
+        if (addSpeed <= 0)
             return;
+
+        accelSpeed = playerConfig.accel * Time.deltaTime * wishSpeed;
+
+        if (accelSpeed > addSpeed)
+            accelSpeed = addSpeed;
+
         for (int i = 0; i < 3; i++)
-            playerVelocity[i] += wishDir[i] * playerConfig.accel;
+            playerVelocity[i] += wishDir[i] * accelSpeed;
     }
 
     private void AirAccelerate(Vector3 wishDir, float wishSpeed)
     {
-        if(playerVelocity.sqrMagnitude >= playerConfig.airMaxSpeed * playerConfig.airMaxSpeed)
+        float wishSpd = wishSpeed;
+
+        if (wishSpd > playerConfig.airMaxSpeed)
+            wishSpd = playerConfig.airMaxSpeed;
+
+        float currentSpeed = Vector3.Dot(playerVelocity, wishDir);
+        float addSpeed = wishSpd - currentSpeed;
+
+        if (addSpeed <= 0)
             return;
+
+        float accelSpeed = playerConfig.airAccel * Time.deltaTime * wishSpd;
+
+        if (accelSpeed > addSpeed)
+            accelSpeed = addSpeed;
+
         for (int i = 0; i < 3; i++)
-            playerVelocity[i] += wishDir[i] * playerConfig.airAccel;
+            playerVelocity[i] += wishDir[i] * accelSpeed;
     }
 
     private void Friction()
@@ -123,9 +170,10 @@ public class PlayerMovement2 : MonoBehaviour
             newspeed = 0;
         newspeed /= speed;
 
-        playerVelocity[0] *= newspeed;
-        playerVelocity[1] *= newspeed;
-        playerVelocity[2] *= newspeed;
+
+        playerVelocity[0] *= newspeed * frictionMult;
+        playerVelocity[1] *= newspeed * frictionMult;
+        playerVelocity[2] *= newspeed * frictionMult;
     }
 
     private void JumpButton()
@@ -134,9 +182,14 @@ public class PlayerMovement2 : MonoBehaviour
         {
             return;
         }
+        else
+        {
+            jumped = false;
+        }
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
+            jumped = true;
             playerVelocity -= Vector3.Project(playerVelocity, transform.up);
             playerVelocity += transform.up * playerConfig.jumpStrength;
             SoundManager.PlaySound(SoundType.JUMP, 0.4f);
@@ -160,7 +213,19 @@ public class PlayerMovement2 : MonoBehaviour
             
         isPlayingFootsteps = true;
         SoundManager.PlaySound(SoundType.FOOTSTEP, 0.2f);
-        yield return new WaitForSeconds(0.25f);
+        yield return new WaitForSeconds(0.8f);
         isPlayingFootsteps = false;
+    }
+
+    public Vector3 GetWishDir()
+    {
+        return wishdir;
+    }
+
+    public IEnumerator ChangeFriction(float mult, float dur)
+    {
+        frictionMult = mult;
+        yield return new WaitForSeconds(dur);
+        frictionMult = 1;
     }
 }

@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9d1f3a9e35c094e9adfba833efea7b, type: 3}
+  m_Name: Shotgun Config 1
+  m_EditorClassIdentifier: 
+  muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 22606562c1e5d614a81d3fa5597226ea, type: 3}
+  bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 32759
+  shootSFX:
+  - {fileID: 8300000, guid: a7ab22dbe2a16a346bd73125e47bf7cc, type: 3}
+  volume: 0.6
+  altStartSFX:
+  - {fileID: 8300000, guid: da0e8d5de5adbed4eaed37a8a4b0e52c, type: 3}
+  shootAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: 0}
+    _NormalizedStartTime: NaN
+  recoilAmountCamera: 3
+  recoilSpeedCamera: 20
+  returnSpeedCamera: 5
+  allowButtonHold: 1
+  damage: 30
+  ammoType: 2
+  range: 30
+  force: 20
+  knockbackForce: 0
+  spread: 0.05
+  timeBetweenShooting: 0.7
+  bulletsPerShot: 1
+  ammoPerShot: 1
+  timeBetweenShots: 0
+  inputDelay: 0
+  projectilePrefab: {fileID: 5265528337465247437, guid: 8a24adf620c07b94c949e1e1f6682c6a, type: 3}
+  explosionPrefab: {fileID: 1062242034823215121, guid: a8d859e0cbe6b5041b6c42665b0d6142, type: 3}
+  projectileSpeed: 0.7
+  projectileRicoshet: 0
+  gravityMult: 0.05
+  explosionRadius: 2
+  explosionForceRB: 5
+  explosionDelay: 0
+  altConfig: {fileID: 11400000, guid: fed73bf97b2525b4494a519342879878, type: 2}
+  references:
+    version: 2
+    RefIds: []

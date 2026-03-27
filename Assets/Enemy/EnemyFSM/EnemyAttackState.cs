@@ -3,33 +3,44 @@ using UnityEngine;
 
 public class EnemyAttackState : EnemyBaseState
 {
+    Coroutine attackCor;
+
     public override void EnterState(EnemyStateManager enemy)
     {
         Debug.Log("IM AN ATTACKING ENEMY");
+        enemy.canAttack = true; // Ensure we can attack when entering this state
+        //enemy.StartCoroutine(enemy.ChangeState(enemy.WanderState, 3, 5));
     }
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
-        if(!enemy.IsPlayerInSight())
-            enemy.SwitchState(enemy.ChaseState);
-            
-        enemy.UpdateLastPlayerPosition();
-        enemy.movementController.Move(Vector3.zero);
-        enemy.RotateInDirection(Vector3.ProjectOnPlane(enemy.GetVectorToLastPlayerPosition(), enemy.transform.up).normalized);
-        AnimatorStateInfo stateInfo = enemy.animator.GetCurrentAnimatorStateInfo(0);
-        //enemy.attackBehavior.AnimateAttack(enemy);
-        enemy.attackBehavior.ExecuteAttack(enemy, enemy.GetPlayerPosition());
-        if (stateInfo.normalizedTime >= 0.95f && !enemy.animator.IsInTransition(0) && enemy.GetVectorToLastPlayerPosition().sqrMagnitude > enemy.enemyConfig.endAttackRange * enemy.enemyConfig.endAttackRange)
+
+        if (enemy.GetVectorToTarget().sqrMagnitude > enemy.enemyConfig.endAttackRange * enemy.enemyConfig.endAttackRange || !enemy.IsTargetInSight())
         {
-            Debug.Log("SWITCH BACK");
-            enemy.SwitchState(enemy.ChaseState);
+            if (enemy.canAttack)
+            {
+                Debug.Log("SWITCH BACK");
+                enemy.SwitchState(enemy.ChaseState);
+            }
+            
         }
+        else if (enemy.canAttack)
+        {
+            enemy.canAttack = false;
+            Debug.Log("Attac");
+            enemy.lookDir = enemy.GetVectorToTarget();
+            enemy.attackBehavior.ExecuteRangedAttack(enemy);
+        }
+
+        
     }
 
-    public override void OnCollisionEnter(EnemyStateManager enemy)
+    public override void ExitState(EnemyStateManager enemy)
     {
-
+        enemy.animancer.Stop();
+        enemy.StopCoroutine(enemy.ResetAttack());
+        Debug.Log("True");
+        enemy.canAttack = true;
     }
 
-    
 }

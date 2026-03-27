@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e418edc69801dff46935680310e60aca, type: 3}
+  m_Name: Ranged Enemy Config
+  m_EditorClassIdentifier: 
+  idleAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: -8886876057350898493, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
+    _NormalizedStartTime: NaN
+  walkAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: 7400000, guid: 5696a5215f6521349b5087459ed8cd3d, type: 2}
+    _NormalizedStartTime: NaN
+  attackAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: 1021806162419773930, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
+    _NormalizedStartTime: NaN
+  enemyName: Ranged Enemy
+  maxHealth: 120
+  chaseSpeed: 5
+  wanderSpeed: 4
+  rotationSpeed: 6
+  maxJumpDistance: 30
+  gravity: 20
+  falterDuration: 0.8
+  falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
+  damage: 5
+  attackRange: 100
+  startAttackRange: 30
+  endAttackRange: 35
+  meleeAttackRange: 3
+  attackCooldown: 0.1
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 8
+  projectile: {fileID: 8304178073877007807, guid: 654ad15eb3b06334db576c48f205db1e, type: 3}
+  bulletTrailPrefab: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
+  muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 6eb69f3faf2c4fd43b7907d196fdba20, type: 3}
+  deathParticle: {fileID: 1257824197082757075, guid: b91937c9fe829214dbcaef4bbddedc33, type: 3}
+  force: 20
+  spread: 0
+  bulletsPerShot: 1
+  timeBetweenShots: 0
+  attackType: 1
+  traversalType: 1
+  preAttackSFX:
+  - {fileID: 8300000, guid: 9a4291407cdf88a458f0710e848acbcd, type: 3}
+  attackSFX:
+  - {fileID: 8300000, guid: 60c394c1a4decf04f825b94129d6b552, type: 3}
+  hurtSFX:
+  - {fileID: 8300000, guid: 3f78793aff513414a9714f65b74908e5, type: 3}
+  deathSFX:
+  - {fileID: 8300000, guid: 93927255ccad83e4e971f796b204ac3a, type: 3}
+  staggerMaterial: {fileID: 2100000, guid: eda80e8ba2a7b3b4e865ef9341aef92b, type: 2}
+  healthOrb: {fileID: 7767593974562298775, guid: 20505471413c58c458e99127037c9606, type: 3}
+  ammoOrb: {fileID: 0}
+  references:
+    version: 2
+    RefIds: []

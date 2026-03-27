@@ -3,38 +3,44 @@ using UnityEngine;
 
 public class Health : MonoBehaviour
 {
+    public event Action<float, float> OnHealthChanged;
     public event Action OnDeath;
-    [SerializeField] protected int maxHealth;
-    protected int currentHealth;
-    protected bool isAlive = true;
+    [SerializeField] private int maxHealth;
+    [HideInInspector] public int health;
+    [HideInInspector] public bool isAlive = true;
+    private float maxPosture = 100;
+    private float posture;
     
 
     void Awake()
     {
-        currentHealth = maxHealth;
+        health = maxHealth;
+        posture = maxPosture;
     }
 
-    public virtual void TakeDamage(int damageAmount)
+    public virtual void TakeDamage(int damageAmount, Vector3 damagePoint = default, Vector3 normal = default)
     {
         Debug.Log("DAMAGE: " + damageAmount);
-        Debug.Log(name + " health: " + currentHealth);
-        if (currentHealth <= 0)
+        Debug.Log(name + " health: " + health);
+        if (health <= 0)
             return;
-        currentHealth -= damageAmount;
+        health -= damageAmount;
         HealthChanged();
 
-        if (currentHealth <= 0 && isAlive)
+        if (health <= 0 && isAlive)
             Death();
     }
 
     public void Heal(int healAmount)
     {
-        currentHealth += Mathf.Clamp(healAmount, 0, maxHealth - currentHealth);
+        Debug.Log("Heal " + healAmount);
+        health += Mathf.Clamp(healAmount, 0, maxHealth - health);
         HealthChanged();
     }
 
-    virtual protected void HealthChanged()
+    public void HealthChanged()
     {
+        OnHealthChanged?.Invoke(health, maxHealth);
         
     }
 
@@ -45,14 +51,58 @@ public class Health : MonoBehaviour
         //Destroy(gameObject);
     }
 
+
+
+
     public bool IsFullHealth()
     {
-        Debug.Log(currentHealth >= maxHealth);
-        return currentHealth >= maxHealth;
+        Debug.Log(health >= maxHealth);
+        return health >= maxHealth;
+    }
+
+    public int GetMaxHealth()
+    {
+        return maxHealth;
     }
 
     public void SetMaxHealth(int maxHealth_)
     {
         maxHealth = maxHealth_;
     }
+
+    public int GetHealth()
+    {
+        return health;
+    }
+
+    public void SetHealth(int health_)
+    {
+        health = health_;
+    }
+
+
+
+    public float GetMaxPosture()
+    {
+        return maxPosture;
+    }
+
+    public void SetMaxPosture(int maxPosture_)
+    {
+        maxPosture = maxPosture_;
+    }
+
+    public float GetPosture()
+    {
+        return posture;
+    }
+
+    public void SetPosture(float posture_)
+    {
+        posture = posture_;
+    }
+
+    
+
+    
 }

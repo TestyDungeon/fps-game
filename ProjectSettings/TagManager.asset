@@ -10,6 +10,7 @@ TagManager:
   - EnemySight
   - JumpPad
   - Pusher
+  - Bullet
   layers:
   - Default
   - TransparentFX
@@ -22,10 +23,10 @@ TagManager:
   - Enemy
   - GravityField
   - Pickup
-  - 
-  - 
-  - 
-  - 
+  - Shield
+  - Corpse
+  - LevelTrigger
+  - Interactable
   - 
   - 
   - 

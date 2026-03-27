@@ -3,13 +3,13 @@ using UnityEngine;
 
 public class HealthBarUI : MonoBehaviour
 {
-    private PlayerHealth playerHealth;
+    private Health playerHealth;
     [SerializeField] private Image fill;
 
     void Awake()
     {
         if (playerHealth == null)
-            playerHealth = FindAnyObjectByType<PlayerHealth>();
+            playerHealth = FindAnyObjectByType<PlayerHitResponder>().gameObject.GetComponent<Health>();
 
     }
 
@@ -18,7 +18,6 @@ public class HealthBarUI : MonoBehaviour
         if (playerHealth != null)
         {
             playerHealth.OnHealthChanged += OnHealthChanged;
-            Debug.Log("SUBBED");
         }
     }
 
@@ -31,6 +30,5 @@ public class HealthBarUI : MonoBehaviour
     private void OnHealthChanged(float currentHealth, float maxHealth)
     {
         fill.fillAmount = currentHealth / maxHealth;
-        Debug.Log("Health Changed");
     }
 }

@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e418edc69801dff46935680310e60aca, type: 3}
+  m_Name: Piggy Enemy Config
+  m_EditorClassIdentifier: 
+  idleAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: 7400000, guid: 8f912d03672b8cb4a8a9309bf703be69, type: 2}
+    _NormalizedStartTime: NaN
+  walkAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: 7400000, guid: ce4ee7cad4b8f8041ad3bc9c896d7567, type: 2}
+    _NormalizedStartTime: NaN
+  attackAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: 7400000, guid: ca39e6c2eaa037748857c64ce04ca250, type: 2}
+    _NormalizedStartTime: NaN
+  enemyName: Melee Enemy
+  maxHealth: 400
+  chaseSpeed: 10
+  wanderSpeed: 7
+  rotationSpeed: 3
+  maxJumpDistance: 30
+  gravity: 30
+  falterDuration: 1
+  falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
+  damage: 20
+  attackRange: 3
+  startAttackRange: 2.5
+  endAttackRange: 3
+  meleeAttackRange: 3
+  attackCooldown: 0.2
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 8
+  bulletTrailPrefab: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
+  muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 04de150e4a1134c45847782808dd5346, type: 3}
+  deathParticle: {fileID: 1257824197082757075, guid: b91937c9fe829214dbcaef4bbddedc33, type: 3}
+  healthOrb: {fileID: 7767593974562298775, guid: 20505471413c58c458e99127037c9606, type: 3}
+  force: 20
+  spread: 0.3
+  bulletsPerShot: 3
+  timeBetweenShots: 0.2
+  attackType: 3
+  traversalType: 0
+  attackSFX: {fileID: 0}
+  hurtSFX: {fileID: 0}
+  deathSFX: {fileID: 8300000, guid: 3f78793aff513414a9714f65b74908e5, type: 3}
+  references:
+    version: 2
+    RefIds: []

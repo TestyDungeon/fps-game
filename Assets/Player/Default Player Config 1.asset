@@ -12,11 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f8fb536fd5f9349a4de724be763bee, type: 3}
   m_Name: Default Player Config 1
   m_EditorClassIdentifier: 
-  MAX_SPEED: 15
-  speed: 18
-  accel: 1
-  airMaxSpeed: 15
-  airAccel: 2
-  friction: 6
-  stopSpeed: 0.1
-  jumpStrength: 10
+  MAX_SPEED: 50
+  speed: 10
+  accel: 11
+  airMaxSpeed: 13
+  airAccel: 9
+  friction: 10
+  stopSpeed: 0.8
+  jumpsAmount: 1
+  jumpStrength: 8
+  dashAmount: 0
+  dashCooldown: 0.8

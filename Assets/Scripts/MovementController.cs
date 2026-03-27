@@ -1,3 +1,5 @@
+using System.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class MovementController : MonoBehaviour
@@ -5,6 +7,8 @@ public class MovementController : MonoBehaviour
 
     //private Transform transform;
     private CapsuleCollider capsuleCollider;
+    private float capsuleColliderRadius;
+    private float capsuleColliderHeight;
     [SerializeField] private bool GravityEnabled = true;
     [SerializeField] private bool GlobalGravityEnabled = true;
     [SerializeField] private float gravity;
@@ -16,22 +20,24 @@ public class MovementController : MonoBehaviour
     private int maxRecursion = 3;
     private int recursionDepth;
     float offset = 0.01f;
+    private float stepHeight = 0.25f;
+    private float stepOffset;
+    
+    private Vector3 dashDir;
+    private float dashSpeed;
+    private bool dashing = false;
 
-    Vector3 gravityVelocity;
     Vector3 externalVelocity = Vector3.zero;
     Vector3 vel = Vector3.zero;
     Vector3 gravityVec = Vector3.down;
     Vector3 changedDir = Vector3.zero;
 
-    int layerMaskEnemy = ~(1 << 6);
-    int layerMaskPlayer = ~(1 << 3 | 1 << 6);
-    int layerMask;
+    int layerMaskEnemy = ~(1 << 6 | 1 << 12 | 1 << 10);
+    int layerMaskPlayer = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10);
+    int layerMaskPlayerDash = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10 | 1 << 8);
+    public int layerMask;
 
-    //public MovementController(Transform transform_, CapsuleCollider capsuleCollider_)
-    //{
-    //    transform = transform_;
-    //    capsuleCollider = capsuleCollider_;
-    //}
+    
 
     void Awake()
     {
@@ -44,18 +50,47 @@ public class MovementController : MonoBehaviour
             layerMask = layerMaskEnemy;
         }
         capsuleCollider = GetComponent<CapsuleCollider>();
+        capsuleColliderRadius = capsuleCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
+        capsuleColliderHeight = capsuleCollider.height * transform.lossyScale.y;
+        stepOffset = -(capsuleColliderHeight / 2) + stepHeight;
     }
 
     public Vector3 Move(Vector3 velocity)
     {
+        bool wasGrounded = GroundCheck();
+        if (dashing)
+        {
+            if(GroundCheck(out RaycastHit hit))
+            {
+                if(Vector3.Angle(hit.normal, dashDir) >= 90 && Vector3.Angle(transform.up, hit.normal) < maxClimbAngle)
+                    dashDir = mathlib.ProjectOnPlaneOblique(dashDir, hit.normal, -transform.up);
+            }
+            Vector3 dashMove = CollideAndSlide(transform.position, dashDir * dashSpeed * Time.fixedDeltaTime, false);
+            Collider[] cols = Physics.OverlapCapsule(
+            transform.position + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
+            transform.position - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
+            capsuleColliderRadius,
+            dashing ? layerMaskPlayerDash : layerMask, QueryTriggerInteraction.Ignore);
+
+            foreach(Collider col in cols)
+            {
+                
+            }
+        
+            transform.position += dashMove;
+            externalVelocity = Vector3.zero;
+            vel = Vector3.zero;
+
+            return vel;
+        }
+
         if (changedDir != Vector3.zero)
         {
-            velocity = changedDir * velocity.magnitude;
+            velocity = changedDir;
             changedDir = Vector3.zero;
         }
         if (GravityEnabled)
         {
-            // 1. Apply gravity (acceleration integration)
             if (!InGravityField && GlobalGravityEnabled)
                 gravityVec = Vector3.down;
             if (!InGravityField && !GlobalGravityEnabled)
@@ -64,29 +99,30 @@ public class MovementController : MonoBehaviour
             //if (InGravityField)
             velocity += gravityVec * gravity * Time.fixedDeltaTime;
 
-            // 2. Rotate character toward gravity vector
             GravityOrientation();
             ResolvePenetration();
         }
 
         velocity += externalVelocity;
         externalVelocity = Vector3.zero;
-        // 3. Split displacement into lateral and vertical parts
+        
         Vector3 displacement = velocity * Time.fixedDeltaTime;
 
-        // Separate into components relative to "up" (gravity opposite)
         Vector3 up = transform.up;
         Vector3 verticalDisp = Vector3.Project(displacement, up);
         Vector3 lateralDisp = displacement - verticalDisp;
 
-        // 4. First move laterally (player velocity along ground)
+        
+
         recursionDepth = 0;
         Vector3 resolvedLateral = CollideAndSlide(transform.position, lateralDisp, false);
+        
 
-
-        // 5. Then move vertically (gravity / jump)
         recursionDepth = 0;
         Vector3 resolvedVertical = CollideAndSlide(transform.position + resolvedLateral, verticalDisp, true);
+        ResolvePenetration();
+        
+        
 
         Vector3 pusherVelocity = Vector3.zero;
 
@@ -102,10 +138,13 @@ public class MovementController : MonoBehaviour
                 }
             }
         }
+        Vector3 slopeSticking = Vector3.zero;
 
-        transform.position += resolvedVertical + resolvedLateral + pusherVelocity;
+        
 
-        // 6. Compute final velocity based on actual movement
+        transform.position += resolvedVertical + resolvedLateral + pusherVelocity + slopeSticking;
+
+        
         Vector3 totalResolved = resolvedLateral + resolvedVertical;
         vel = totalResolved / Time.fixedDeltaTime;
         return vel;
@@ -121,10 +160,10 @@ public class MovementController : MonoBehaviour
         float dist = vel.magnitude + offset;
         
         if (Physics.CapsuleCast(
-            pos + transform.up * (capsuleCollider.height / 2 - capsuleCollider.radius),
-            pos - transform.up * (capsuleCollider.height / 2 - capsuleCollider.radius),
-            capsuleCollider.radius, vel.normalized, out RaycastHit hit, dist,
-            layerMask, QueryTriggerInteraction.Ignore))
+            pos + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
+            pos - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
+            capsuleColliderRadius, vel.normalized, out RaycastHit hit, dist,
+            dashing ? layerMaskPlayerDash : layerMask, QueryTriggerInteraction.Ignore))
         {
 
             Vector3 newVel = vel.normalized * (hit.distance - offset);
@@ -159,10 +198,18 @@ public class MovementController : MonoBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, gravityAlignSpeed);
     }
 
-    private void ResolvePenetration()
+    private void ResolvePenetration(int recursion_ = 0)
     {
+        int recursion = recursion_;
+        if(recursion >= 10)
+            return;
 
-        Collider[] overlap = Physics.OverlapCapsule(transform.position + transform.up * 0.5f, transform.position - transform.up * 0.5f, 0.5f, layerMask, QueryTriggerInteraction.Ignore);
+        Collider[] overlap = Physics.OverlapCapsule(
+            transform.position + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
+            transform.position - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
+            capsuleColliderRadius,
+            layerMask, QueryTriggerInteraction.Ignore);
+            
         if (overlap.Length > 0)
         {
             foreach (Collider x in overlap)
@@ -175,18 +222,26 @@ public class MovementController : MonoBehaviour
                     x, x.transform.position, x.transform.rotation,
                     out Vector3 dir, out float dis))
                 {
-                    transform.position += dir * (dis + 0.01f);
+                    transform.position += dir * (dis + 0.1f);
                 }
             }
+            ResolvePenetration(recursion + 1);
         }
     }
 
-    
+    public IEnumerator Dash(float dur, float postDashSpeed = 0)
+    {
+        dashing = true;
+
+        yield return new WaitForSeconds(dur);
+        dashing = false;
+        addVelocity(dashDir * postDashSpeed);
+    }
 
 
     public bool GroundCheck()
     {
-        if (Physics.SphereCast(transform.position, capsuleCollider.radius, -transform.up, out RaycastHit hit, 0.6f, layerMask, QueryTriggerInteraction.Ignore))
+        if (Physics.SphereCast(transform.position, capsuleColliderRadius, -transform.up, out RaycastHit hit, capsuleColliderHeight/4 + 0.3f, layerMask, QueryTriggerInteraction.Ignore))
         {
             return true;
         }
@@ -194,7 +249,7 @@ public class MovementController : MonoBehaviour
     }
     public bool GroundCheck(out RaycastHit hit)
     {
-        if (Physics.SphereCast(transform.position, capsuleCollider.radius, -transform.up, out hit, 0.6f, layerMask, QueryTriggerInteraction.Ignore))
+        if (Physics.SphereCast(transform.position, capsuleColliderRadius, -transform.up, out hit, capsuleColliderHeight/4 + 0.3f, layerMask, QueryTriggerInteraction.Ignore))
         {
             return true;
         }
@@ -206,6 +261,7 @@ public class MovementController : MonoBehaviour
         externalVelocity += x;
     }
 
+
     public Vector3 getVelocity()
     {
         return vel;
@@ -216,9 +272,21 @@ public class MovementController : MonoBehaviour
         changedDir = x;
     }
 
+    public void SetVelocitySpeed(float x)
+    {
+        vel = vel.normalized * x;
+    }
+
     public void resetVerticalVelocity()
     {
         externalVelocity -= Vector3.Project(vel, transform.up);
+    }
+
+    public void resetNegativeVerticalVelocity()
+    {
+        externalVelocity -= Vector3.Dot(vel, transform.up) < 0 
+        ? Vector3.Project(vel, transform.up) 
+        : Vector3.zero;
     }
 
     public void resetVelocity()
@@ -254,5 +322,17 @@ public class MovementController : MonoBehaviour
     public bool getInGravityField()
     {
         return InGravityField;
+    }
+
+    public void SetDashDir(Vector3 dir)
+    {
+        dashDir = dir;
+    }
+
+    public void Dash(Vector3 dir, float dist, float speed, float postDashSpeed = 0)
+    {
+        SetDashDir(dir.normalized);
+        StartCoroutine(Dash(dist/speed, postDashSpeed));
+        dashSpeed = speed;
     }
 }

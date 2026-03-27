@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using GravityGUN.Data;
 using UnityEngine;
@@ -17,8 +18,12 @@ public class Inventory : MonoBehaviour
 
     [Header("Ammo")]
     [SerializeField] private int maxLightAmmo;
+    [SerializeField] private int maxHeavyAmmo;
     [SerializeField] private int maxShellAmmo;
     [SerializeField] private int maxRocketAmmo;
+    [SerializeField] private int maxMeleeAmmo;
+
+    private int totalMaxAmmo;
 
     private Dictionary<LootType, int> maxAmmoCount = new();
     private Dictionary<LootType, int> ammoCount = new();
@@ -31,22 +36,29 @@ public class Inventory : MonoBehaviour
         maxAmmoCount[LootType.LightAmmo] = maxLightAmmo;
         maxAmmoCount[LootType.ShellAmmo] = maxShellAmmo;
         maxAmmoCount[LootType.RocketAmmo] = maxRocketAmmo;
+        maxAmmoCount[LootType.HeavyAmmo] = maxHeavyAmmo;
+        maxAmmoCount[LootType.MeleeAmmo] = maxMeleeAmmo;
+
+        
+        totalMaxAmmo = maxAmmoCount.Values.Sum() - maxAmmoCount[LootType.MeleeAmmo];
 
         ammoCount[LootType.LightAmmo] = 0;
         ammoCount[LootType.ShellAmmo] = 0;
         ammoCount[LootType.RocketAmmo] = 0;
+        ammoCount[LootType.HeavyAmmo] = 0;
+        ammoCount[LootType.MeleeAmmo] = 0;
 
         
 
         if(slots.Length > 0)
             EquipItem(0);
-        //OnSlotChanged?.Invoke(slots[currentSlot]);
+        
         for (int i = 0; i < slots.Length; i++)
         {
             slots[i].player = gameObject;
             slots[i].cameraPivot = cameraPivot;
         }
-        Debug.Log("ALWAYS: "+alwaysOnSlots.Length);
+        
         for (int i = 0; i < alwaysOnSlots.Length; i++)
         {
             alwaysOnSlots[i].player = gameObject;
@@ -57,9 +69,11 @@ public class Inventory : MonoBehaviour
 
     void Start()
     {
-        AddAmmo(LootType.LightAmmo, maxAmmoCount[LootType.LightAmmo]);
-        AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo]);
-        AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo]);
+        //AddAmmo(LootType.LightAmmo, maxAmmoCount[LootType.LightAmmo]);
+        //AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo]);
+        //AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo]);
+        //AddAmmo(LootType.HeavyAmmo, maxAmmoCount[LootType.HeavyAmmo]);
+        AddAmmo(LootType.MeleeAmmo, maxAmmoCount[LootType.MeleeAmmo]);
     }
 
     void Update()
@@ -77,7 +91,7 @@ public class Inventory : MonoBehaviour
 
     private void EquipItem(int slot)
     {
-        if (slot == currentSlot || slot < 0 || slot > slots.Length)
+        if (slot == currentSlot || slot < 0 || slot > slots.Length || !slots[slot].transform.parent.gameObject.activeSelf)
             return;
 
         Vector3 pos = Vector3.zero;
@@ -91,7 +105,7 @@ public class Inventory : MonoBehaviour
         currentSlot = slot;
         slots[currentSlot].transform.localPosition = pos;
         
-        // Set inventory reference for guns
+        
         if (slots[currentSlot] is Gun gun)
         {
             gun.SetInventory(this);
@@ -100,12 +114,37 @@ public class Inventory : MonoBehaviour
         OnSlotChanged?.Invoke(slots[currentSlot]);
     }
 
+    public void EnableItem(string name)
+    {
+        for(int i = 0; i < slots.Length; i++)
+        {
+            if(slots[i].name == name)
+            {
+                slots[i].transform.parent.gameObject.SetActive(true);
+                EquipItem(i);
+                return;
+            }
+        }
+    }
+
     public Item GetCurrent()
     {
         if(slots.Length <= 0)
             return null;
-        return slots[currentSlot];
+        if(slots[currentSlot] != null)
+            return slots[currentSlot];
+        else
+            return null;
     }
+
+    public Item[] GetAlwaysOn()
+    {
+        if(alwaysOnSlots.Length <= 0)
+            return null;
+        return alwaysOnSlots;
+    }
+
+    
 
     public void AddAmmo(LootType lootType, int amount)
     {
@@ -130,6 +169,16 @@ public class Inventory : MonoBehaviour
         return ammoCount.ContainsKey(lootType) ? ammoCount[lootType] : 0;
     }
 
+    public int GetTotalAmmo()
+    {
+        return ammoCount.Values.Sum() - ammoCount[LootType.MeleeAmmo];
+    }
+
+    public bool IsAmmoFull()
+    {
+        return GetTotalAmmo() >= totalMaxAmmo;
+    }
+
     public int GetMaxAmmo(LootType lootType)
     {
         return maxAmmoCount.ContainsKey(lootType) ? maxAmmoCount[lootType] : 0;
@@ -142,7 +191,15 @@ public class Inventory : MonoBehaviour
             if (slot is IAmmoHandler gun && gun.GetAmmoType() == lootType)
             {
                 //Debug.Log("Ammo: "+ammoCount[lootType]);
-                gun.AmmoChanged(ammoCount[lootType]);
+                gun.AmmoChanged(maxAmmoCount[lootType], ammoCount[lootType]);
+            }
+        }
+        foreach (var slot in alwaysOnSlots)
+        {
+            if (slot is IAmmoHandler gun && gun.GetAmmoType() == lootType)
+            {
+                //Debug.Log("Ammo: "+ammoCount[lootType]);
+                gun.AmmoChanged(maxAmmoCount[lootType], ammoCount[lootType]);
             }
         }
     }

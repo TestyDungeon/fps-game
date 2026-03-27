@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class CustomTrigger : MonoBehaviour
 {
     [SerializeField] private MonoBehaviour receiver;
+    [SerializeField] private LayerMask layermsk = ~0;
     private HashSet<Collider> _currentTriggers = new HashSet<Collider>();
     private ICustomTriggerReceiver _receiver;
     private CapsuleCollider capsuleCollider;
@@ -30,8 +31,8 @@ public class CustomTrigger : MonoBehaviour
         Collider[] hits = Physics.OverlapCapsule(
             transform.position + transform.up * capsuleHalfHeight, 
             transform.position - transform.up * capsuleHalfHeight, 
-            capsuleCollider.radius);
-        // Detect enters
+            capsuleCollider.radius, layermsk);
+
         foreach (var hit in hits)
         {
             if (!hit.isTrigger)
@@ -40,23 +41,18 @@ public class CustomTrigger : MonoBehaviour
             if (_currentTriggers.Add(hit))
             {
                 _receiver?.OnCustomTriggerEnter(hit);
-                //OnCustomTriggerEnter(hit);
             }
             else
             {
-                // Was already in set → staying
                 _receiver?.OnCustomTriggerStay(hit);
-                //OnCustomTriggerStay(hit);
             }
         }
 
-        // Detect exits
         _currentTriggers.RemoveWhere(c =>
         {
             if (!System.Array.Exists(hits, h => h == c))
             {
                 _receiver?.OnCustomTriggerExit(c);
-                //OnCustomTriggerExit(c);
                 return true;
             }
             return false;

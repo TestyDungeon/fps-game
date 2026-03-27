@@ -27,7 +27,7 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
                 mc.setInGravityField(true);
                 mc.setGravityAlignSpeed(0.02f);
                 mc.setGravityVec(other.GetComponent<GravityField>().CalculateGravityVector(transform));
-                Debug.Log("Prioritizing GravityField at " + other.transform.position);
+                //Debug.Log("Prioritizing GravityField at " + other.transform.position);
             }
 
         }

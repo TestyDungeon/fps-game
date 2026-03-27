@@ -23,7 +23,7 @@ public class JumpPad : MonoBehaviour
             {
                 if (c != null)
                 {
-                    c.gameObject.GetComponent<MovementController>().resetVerticalVelocity();
+                    c.gameObject.GetComponent<MovementController>().resetNegativeVerticalVelocity();
                     c.gameObject.GetComponent<MovementController>().addVelocity(force * transform.up);
                 }
             }

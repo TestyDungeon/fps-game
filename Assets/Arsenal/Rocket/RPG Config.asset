@@ -14,19 +14,46 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 7703ace7cd973424087b710123029a52, type: 3}
   bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
-  recoilAmount: 40
-  recoilSpeed: 4
-  returnSpeed: 2
-  recoilAmountCamera: 10
-  recoilSpeedCamera: 1
-  returnSpeedCamera: 5
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 32759
+  shootSFX:
+    audio: {fileID: 8300000, guid: 39bd5d7999b58334f99dc4df184ddda2, type: 3}
+    volume: 0.5
+  altStartSFX:
+    audio: {fileID: 0}
+    volume: 0
+  shootAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: 0}
+    _NormalizedStartTime: NaN
+  recoilAmountCamera: 15
+  recoilSpeedCamera: 2
+  returnSpeedCamera: 10
   allowButtonHold: 0
-  damage: 49
-  ammoType: 2
+  damage: 150
+  ammoType: 3
   range: 300
-  force: 30
+  force: 3
   knockbackForce: 0
-  spread: 20
-  timeBetweenShooting: 1.5
+  spread: 0
+  timeBetweenShooting: 1
   bulletsPerShot: 1
+  ammoPerShot: 1
   timeBetweenShots: 0
+  inputDelay: 0
+  projectilePrefab: {fileID: 5265528337465247437, guid: 8a24adf620c07b94c949e1e1f6682c6a, type: 3}
+  explosionPrefab: {fileID: 1062242034823215121, guid: a8d859e0cbe6b5041b6c42665b0d6142, type: 3}
+  projectileSpeed: 0.36
+  gravityMult: 0
+  explosionRadius: 4
+  explosionForceRB: 5
+  altConfig: {fileID: 11400000}
+  references:
+    version: 2
+    RefIds: []

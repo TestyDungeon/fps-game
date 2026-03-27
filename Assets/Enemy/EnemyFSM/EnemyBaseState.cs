@@ -6,6 +6,6 @@ public abstract class EnemyBaseState
     
     public abstract void FixedUpdateState(EnemyStateManager enemy);
     
-    public abstract void OnCollisionEnter(EnemyStateManager enemy);
+    public abstract void ExitState(EnemyStateManager enemy);
     
 }

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 6498527365979501423}
   - component: {fileID: 1696804878492394234}
   - component: {fileID: 2485930340086158546}
+  - component: {fileID: 8354342659164644537}
   m_Layer: 0
   m_Name: JumpPad
   m_TagString: Untagged
@@ -123,6 +124,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   force: 25
+--- !u!208 &8354342659164644537
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1764671110297663896}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 0.5, y: 0.5, z: 0.5}
+  m_MoveThreshold: 0.1
+  m_Carve: 0
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 0, z: 0}
+  m_TimeToStationary: 0.5
 --- !u!1 &6652422323170519065
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,8 +3,8 @@ using GravityGUN.Data;
 
 public interface IAmmoHandler
 {
-    public event Action<int> OnAmmoChanged;
+    public event Action<int, int> OnAmmoChanged;
     public int GetAmmo();
     public LootType GetAmmoType();
-    public void AmmoChanged(int amount);
+    public void AmmoChanged(int maxAmount, int amount);
 }

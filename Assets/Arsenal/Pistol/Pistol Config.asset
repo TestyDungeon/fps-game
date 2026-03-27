@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9d1f3a9e35c094e9adfba833efea7b, type: 3}
+  m_Name: Pistol Config
+  m_EditorClassIdentifier: 
+  muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 7703ace7cd973424087b710123029a52, type: 3}
+  bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 32759
+  shootSFX:
+  - {fileID: 8300000, guid: d4a2dbea9276c0f4c8fee94fa3b2bf32, type: 3}
+  volume: 0.3
+  altStartSFX: []
+  shootAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: -7453387558714718212, guid: 8ac583e55987f614caa1f3cfa168f648, type: 3}
+    _NormalizedStartTime: NaN
+  recoilAmountCamera: 1
+  recoilSpeedCamera: 14
+  returnSpeedCamera: 15
+  allowButtonHold: 1
+  damage: 19
+  ammoType: 0
+  range: 300
+  force: 20
+  knockbackForce: 0
+  spread: 0
+  timeBetweenShooting: 0.5
+  bulletsPerShot: 1
+  ammoPerShot: 1
+  timeBetweenShots: 0
+  inputDelay: 0
+  projectilePrefab: {fileID: 0}
+  explosionPrefab: {fileID: 0}
+  projectileSpeed: 1
+  projectileRicoshet: 0
+  gravityMult: 0
+  explosionRadius: 10
+  explosionForceRB: 5
+  explosionDelay: 0
+  altConfig: {fileID: 11400000, guid: 473fbef404961414cae890cf168a4824, type: 2}
+  references:
+    version: 2
+    RefIds: []

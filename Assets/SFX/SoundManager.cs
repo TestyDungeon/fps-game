@@ -6,18 +6,35 @@ public enum SoundType
     FOOTSTEP,
     JUMP,
     HURT,
-    HURTENEMY,
-    SMGSHOT,
-    ROCKETSHOT,
+    ENEMY_SPAWN,
+    LANDING,
+    FALLING,
     ROCKETEXPLODE,
-    SHOTGUNSHOT,
+    PICKUP_KEY,
     GRAPPLE,
     PICKUP_GRAPPLE,
     PICKUP_GUNS,
     PICKUP_MEDKIT,
     PICKUP_AMMO,
-    ENEMY_ATTACK,
-    FLYING_ENEMY_ATTACK
+    SHIELD_BLOCK,
+    DASH,
+    REVOLVERSHOT,
+    DASH_RECHARGE,
+    KICK,
+    AIR_WHOOSH,
+    RIFLE_SHOT,
+    MELEE_ENEMY_ATTACK,
+    SUPER_SHOTGUN_SHOT,
+    DEFLECT,
+    SHOTGUN_PUMP,
+    GREATSWORD_SWOOSH,
+    DOOR_OPEN
+}
+
+[System.Serializable]
+public struct Sounds
+{
+    [SerializeField] private AudioClip[] sounds;
 }
 
 [RequireComponent(typeof(AudioSource)), ExecuteInEditMode]
@@ -45,13 +62,85 @@ public class SoundManager : MonoBehaviour
         instance.audioSource.PlayOneShot(randomClip, volume);
     }
 
-    public static void PlaySound(SoundType sound, Vector3 position, float volume = 1)
+    public static void PlaySound(AudioClip sound, float volume = 1)
+    {
+        instance.audioSource.PlayOneShot(sound, volume);
+    }
+
+    public static void PlaySound(AudioClip[] sounds, float volume = 1)
+    {
+        if(sounds.Length <= 0)
+            return;
+        AudioClip[] clips = sounds;
+        AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+
+        instance.audioSource.PlayOneShot(randomClip, volume);
+    }
+
+    public static void PlaySound(SoundType sound, Vector3 position, float volume = 1, float spatialBlend = 1f)
     {
         AudioClip[] clips = instance.soundList[(int)sound].Sounds;
         AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
 
-        AudioSource.PlayClipAtPoint(randomClip, position, volume);
+        //AudioSource.PlayClipAtPoint(randomClip, position, volume);
+
+        GameObject tempAudio = new GameObject("TempAudio");
+        tempAudio.transform.position = position;
+        AudioSource source = tempAudio.AddComponent<AudioSource>();
+
+        source.clip = randomClip;
+        source.volume = volume;
+        source.spatialBlend = spatialBlend; // fully 3D
+        source.minDistance = 3f;
+        source.maxDistance = 50f;
+        source.rolloffMode = AudioRolloffMode.Logarithmic;
+
+        source.Play();
+        Destroy(tempAudio, randomClip.length);
     }
+
+    public static void PlaySound(AudioClip sound, Vector3 position, float volume = 1, float spatialBlend = 1f)
+    {
+        GameObject tempAudio = new GameObject("TempAudio");
+        tempAudio.transform.position = position;
+        AudioSource source = tempAudio.AddComponent<AudioSource>();
+
+        source.clip = sound;
+        source.volume = volume;
+        source.spatialBlend = spatialBlend; // fully 3D
+        source.minDistance = 3f;
+        source.maxDistance = 50f;
+        source.rolloffMode = AudioRolloffMode.Logarithmic;
+
+        source.Play();
+        Destroy(tempAudio, sound.length);
+    }
+
+    public static void PlaySound(AudioClip[] sounds, Vector3 position, float volume = 1, float spatialBlend = 1f)
+    {
+        if(sounds.Length <= 0)
+            return;
+        AudioClip[] clips = sounds;
+        AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+
+        //AudioSource.PlayClipAtPoint(randomClip, position, volume);
+
+        GameObject tempAudio = new GameObject("TempAudio");
+        tempAudio.transform.position = position;
+        AudioSource source = tempAudio.AddComponent<AudioSource>();
+
+        source.clip = randomClip;
+        source.volume = volume;
+        source.spatialBlend = spatialBlend; // fully 3D
+        source.minDistance = 3f;
+        source.maxDistance = 50f;
+        source.rolloffMode = AudioRolloffMode.Logarithmic;
+
+        source.Play();
+        Destroy(tempAudio, randomClip.length);
+    }
+
+
 #if UNITY_EDITOR
     private void OnEnable()
     {
