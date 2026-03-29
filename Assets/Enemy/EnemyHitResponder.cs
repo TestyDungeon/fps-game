@@ -52,23 +52,15 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         else
             enemyHealth.TakeDamage(damageAmount);
 
-        //if(enemyHealth.GetHealth() <= 0)
-        //    Destroy(gameObject);
 
         if(Time.time - lastFalter > 4)
             enemyHealth.SetPosture(enemyHealth.GetPosture() - damageAmount * 2);
         
-        //if(damageAmount >= enemyHealth.GetMaxHealth() * 0.33f ||
-        //enemyHealth.GetMaxHealth() * 0.33f - (preHealth % (enemyHealth.GetMaxHealth() * 0.33f)) < damageAmount)
-        //{
-        //    state.SwitchState(state.FalterState);
-        //    
-        //}
 
-        //if(enemyHealth.GetHealth() < enemyHealth.GetMaxHealth() * 0.4)
-        //{
-        //    state.SwitchState(state.StaggerState);
-        //}
+        if(enemyHealth.GetHealth() < enemyHealth.GetMaxHealth() * 0.4)
+        {
+            state.SwitchState(state.StaggerState);
+        }
 
         
 
@@ -92,7 +84,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
     {
         if(state.GetCurrentState() is EnemyStaggerState)
         {
-            GameObject orb = Instantiate(state.enemyConfig.healthOrb, transform.position, Quaternion.identity);
+            GameObject orb = Instantiate(GameManager.Instance.healthOrb, transform.position, Quaternion.identity);
             orb.GetComponent<Rigidbody>().AddForce(Vector3.up * 1, ForceMode.Force);
             Destroy(orb, 8);
             enemyHealth.TakeDamage(enemyHealth.GetMaxHealth());

@@ -47,7 +47,7 @@ public class EnemyStateManager : MonoBehaviour
     private float avoidanceRadius = 2;
     private float avoidanceForce = 1;
 
-    private Rigidbody[] rigidbodies;
+    [HideInInspector] public Rigidbody[] rigidbodies;
     private Collider[] colliders;
 
     private Health enemyHealth;
@@ -72,7 +72,7 @@ public class EnemyStateManager : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         agent.updatePosition = false;
         agent.updateRotation = false;
-        //staggerMat = Resources.Load<Material>("StaggerMaterial");
+
         smrs = GetComponentsInChildren<SkinnedMeshRenderer>();
         animancer = GetComponentInChildren<AnimancerComponent>();
         audioSource = GetComponentInChildren<AudioSource>();
@@ -101,6 +101,7 @@ public class EnemyStateManager : MonoBehaviour
 
     void Start()
     {
+        // Debug ui above enemy, for health, posture, current state, etc,
         text = GetComponentInChildren<TextMeshProUGUI>();
         if(text != null)
         {

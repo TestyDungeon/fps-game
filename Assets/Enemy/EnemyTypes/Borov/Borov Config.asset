@@ -40,40 +40,42 @@ MonoBehaviour:
     _Clip: {fileID: -6464178533435968529, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
     _NormalizedStartTime: NaN
   enemyName: Borov
-  maxHealth: 200
+  maxHealth: 300
   chaseSpeed: 4
   wanderSpeed: 4
   rotationSpeed: 5
   maxJumpDistance: 30
   gravity: 30
-  falterDuration: 0.8
+  falterDuration: 1
   falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
   damage: 5
   attackRange: 100
   startAttackRange: 30
   endAttackRange: 35
   meleeAttackRange: 3
-  attackCooldown: 1
+  attackCooldown: 0.1
   layerMask:
     serializedVersion: 2
     m_Bits: 8
   projectile: {fileID: 8304178073877007807, guid: 654ad15eb3b06334db576c48f205db1e, type: 3}
   bulletTrailPrefab: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 04de150e4a1134c45847782808dd5346, type: 3}
-  deathParticle: {fileID: 1257824197082757075, guid: b91937c9fe829214dbcaef4bbddedc33, type: 3}
+  deathParticle: {fileID: 1257824197082757075, guid: 9da7d6d6616b57e409c5840fbfa18c06, type: 3}
   force: 20
   spread: 1
   bulletsPerShot: 1
   timeBetweenShots: 0
   attackType: 2
   traversalType: 1
-  preAttackSFX: {fileID: 0}
-  attackSFX: {fileID: 8300000, guid: b60928b60bf39ac4b9fb8a590519f8bf, type: 3}
-  hurtSFX: {fileID: 8300000, guid: 3f78793aff513414a9714f65b74908e5, type: 3}
-  deathSFX: {fileID: 8300000, guid: 3f78793aff513414a9714f65b74908e5, type: 3}
+  preAttackSFX:
+  - {fileID: 8300000, guid: 9a4291407cdf88a458f0710e848acbcd, type: 3}
+  attackSFX:
+  - {fileID: 8300000, guid: 60c394c1a4decf04f825b94129d6b552, type: 3}
+  hurtSFX:
+  - {fileID: 8300000, guid: 3f78793aff513414a9714f65b74908e5, type: 3}
+  deathSFX:
+  - {fileID: 8300000, guid: 93927255ccad83e4e971f796b204ac3a, type: 3}
   staggerMaterial: {fileID: 2100000, guid: eda80e8ba2a7b3b4e865ef9341aef92b, type: 2}
-  healthOrb: {fileID: 7767593974562298775, guid: 20505471413c58c458e99127037c9606, type: 3}
-  ammoOrb: {fileID: 0}
   references:
     version: 2
     RefIds: []

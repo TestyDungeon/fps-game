@@ -3,16 +3,16 @@ using UnityEngine;
 
 public class MeleeBarUI : MonoBehaviour
 {
-    private Shield shield;
+    private Kick melee;
     private IAmmoHandler ammoHandler;
     [SerializeField] private Image fill;
 
     void Awake()
     {
-        if (shield == null)
-            shield = FindAnyObjectByType<Shield>();
+        if (melee == null)
+            melee = FindAnyObjectByType<Kick>();
 
-        shield.OnAmmoChanged += OnAmmoChanged;
+        melee.OnAmmoChanged += OnAmmoChanged;
     }
 
 

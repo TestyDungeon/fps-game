@@ -11,6 +11,9 @@ public class GameManager : MonoBehaviour
     public GameObject decalParticles;
     public GameObject enemySpawnParticles;
     public GameObject bloodParticles;
+    [Header("Drops")]
+    public GameObject healthOrb;
+    public GameObject ammoOrb;
 
     void Awake()
     {

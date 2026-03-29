@@ -71,7 +71,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lootType: 2
-  amount: 4
+  amount: 2
   item: {fileID: 0}
   rotationSpeed: 0
   amplitude: 0

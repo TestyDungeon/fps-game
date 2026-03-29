@@ -4,17 +4,13 @@ using UnityEngine;
 using Animancer;
 using GravityGUN.Data;
 
-public class Shield : Item, IAmmoHandler
+public class Kick : Item, IAmmoHandler
 {
     public event Action<int, int> OnAmmoChanged;
     [SerializeField] private int damage = 10;
-    private int meleeAmount;
-    private int meleeLeft;
     [SerializeField] private float meleeRechargeCooldown = 12f;
     [SerializeField] private float meleeCooldown = 0.25f;
     private bool canMelee = true;
-
-    [SerializeField] private GameObject drop;
 
     private BoxCollider shieldCollider;
     private Vector3 shieldSize;
@@ -27,7 +23,6 @@ public class Shield : Item, IAmmoHandler
 
     private MovementController mc;
     private PlayerMovement pm;
-    //Vector3 startPos;
     Vector3 targetPos = new Vector3(0.5f, 0, -0.18f);
     private int layerMask = 1 << 6;
     private int swordLayerMask = (1 << 8);
@@ -60,19 +55,18 @@ public class Shield : Item, IAmmoHandler
 
     void Update()
     {
-        //Debug.Log(swinging);
         bool stagger = CheckStagger();
 
         if (Input.GetKeyDown(KeyCode.E) && ((canMelee && inventory.GetAmmo(LootType.MeleeAmmo) > 0) || stagger))
         {
             canMelee = false;
             StartCoroutine(ExecuteAttack(stagger));
-            StartCoroutine(MeleeAttack());
+            StartCoroutine(AttackReset());
             
             if(!IsInvoking("RechargeMelee"))
                 Invoke("RechargeMelee", meleeRechargeCooldown);
             
-            IEnumerator MeleeAttack()
+            IEnumerator AttackReset()
             {
                 yield return new WaitForSeconds(meleeCooldown);
                 canMelee = true;
@@ -174,11 +168,7 @@ public class Shield : Item, IAmmoHandler
         {
             groundCheckPreDash = mc.GroundCheck();
             //mc.Dash(!groundCheckPreDash ? transform.forward : Vector3.ProjectOnPlane(transform.forward, player.transform.up).normalized, Mathf.Clamp((cols[0].transform.position - transform.position).magnitude - 0.5f, 0, 100), 30, 0);
-            if (stagger)
-            {
-                
-            }
-            else
+            if (!stagger)
             {
                 inventory.ConsumeAmmo(LootType.MeleeAmmo, 1);
             }
@@ -194,27 +184,16 @@ public class Shield : Item, IAmmoHandler
                     Time.timeScale = 0.5f;
                     StartCoroutine(TimeReset());
                     EnemyHitResponder ehr = col.GetComponent<EnemyHitResponder>();
-                    ehr.CheckStaggerKill();
                     ehr.TakeDamage(player.transform, damage, col.transform.position, col.transform.up);
-                    if(Vector3.SignedAngle(transform.forward, Vector3.ProjectOnPlane(transform.forward, player.transform.up), transform.right) > 20)
-                    {
-                        esm.SwitchState(esm.FalterState);
-                        //esm.SwitchState(esm.AirFalterState);
-                    }
-                    else
-                    {
-                        esm.SwitchState(esm.FalterState);
-                        
-                    }
-                    GameObject orb = Instantiate(drop, col.transform.position, Quaternion.identity);
-                    orb.GetComponent<Rigidbody>().AddForce(Vector3.up * 1, ForceMode.Force);
-                    Destroy(orb, 8);
+                    ehr.CheckStaggerKill();
+                    esm.SwitchState(esm.FalterState);
+                    
+                    Destroy(Instantiate(GameManager.Instance.ammoOrb, col.transform.position, Quaternion.identity), 8);
                 }
                 if(col.tag == "Bullet")
                 {
                     Debug.Log("Deflect");
                     float timeScale = 0.1f;
-                    //Time.timeScale = timeScale;
                     EnemyProjectile proj = col.GetComponent<EnemyProjectile>();
                     proj.Deflected(transform.position, transform.forward);
                     if (!mc.GroundCheck())
@@ -225,16 +204,12 @@ public class Shield : Item, IAmmoHandler
                         pm.AddJump(1);
                     }
                     yield return new WaitForSeconds(0.15f * timeScale);
-                    //Time.timeScale = 1;
                 }
             }
-            //mc.Dash(-(!groundCheckPreDash ? transform.forward : Vector3.ProjectOnPlane(transform.forward, player.transform.up).normalized), 1, 30, groundCheckPreDash ? 20 : 12);
             mc.resetVerticalVelocity();
             mc.addVelocity(!groundCheckPreDash ? -transform.forward * 10 : -Vector3.ProjectOnPlane(transform.forward, player.transform.up).normalized * 5);
         }
         yield return new WaitForSeconds(0.1f);
-        //if(Time.timeScale != 0)
-        //    Time.timeScale = 1f;
     }
 
     private bool CheckStagger()

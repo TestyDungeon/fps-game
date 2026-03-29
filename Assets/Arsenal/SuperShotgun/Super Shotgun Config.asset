@@ -34,7 +34,7 @@ MonoBehaviour:
   recoilSpeedCamera: 7
   returnSpeedCamera: 5
   allowButtonHold: 0
-  damage: 15
+  damage: 20
   ammoType: 2
   range: 30
   force: 20

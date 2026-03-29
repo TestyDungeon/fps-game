@@ -41,7 +41,7 @@ public class PickupCollector : MonoBehaviour
                     && (pckp.lootType == LootType.LightAmmo || pckp.lootType == LootType.HeavyAmmo || pckp.lootType == LootType.ShellAmmo || pckp.lootType == LootType.RocketAmmo)
                     && pckp.lootType != LootType.MeleeAmmo)
                     {
-                        rb?.AddForce((transform.position - hit.transform.position) * 60, ForceMode.Acceleration);
+                        rb.AddForce((transform.position - hit.transform.position) * 60, ForceMode.Acceleration);
                     }
                 }
             }
@@ -55,7 +55,6 @@ public class PickupCollector : MonoBehaviour
             capsuleCollider.radius, layerMask, QueryTriggerInteraction.Collide);
         if(hits.Length > 0)
         {
-            Debug.Log("Pickup");
             foreach(Collider hit in hits)
             {
                 foreach (Pickup pickup in hit.GetComponents<Pickup>())
@@ -81,7 +80,7 @@ public class PickupCollector : MonoBehaviour
             case LootType.ShellAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
-                    SoundManager.PlaySound(SoundType.PICKUP_MEDKIT, 0.2f);
+                    SoundManager.PlaySound(SoundType.PICKUP_AMMO, 0.2f);
                     inventory.AddAmmo(lootType, amount);
                     return true;
                 }
@@ -89,6 +88,7 @@ public class PickupCollector : MonoBehaviour
             case LootType.RocketAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
+                    SoundManager.PlaySound(SoundType.PICKUP_AMMO, 0.2f);
                     inventory.AddAmmo(lootType, amount);
                     return true;
                 }
@@ -96,6 +96,7 @@ public class PickupCollector : MonoBehaviour
             case LootType.HeavyAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
+                    SoundManager.PlaySound(SoundType.PICKUP_AMMO, 0.2f);
                     inventory.AddAmmo(lootType, amount);
                     return true;
                 }
@@ -103,6 +104,7 @@ public class PickupCollector : MonoBehaviour
             case LootType.MeleeAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
+                    SoundManager.PlaySound(SoundType.PICKUP_AMMO, 0.2f);
                     inventory.AddAmmo(lootType, amount);
                     return true;
                 }
@@ -110,8 +112,8 @@ public class PickupCollector : MonoBehaviour
             case LootType.Health:
                 if (!playerHealth.IsFullHealth())
                 {
-                    playerHealth.Heal(amount);
                     SoundManager.PlaySound(SoundType.PICKUP_MEDKIT, 0.4f);
+                    playerHealth.Heal(amount);
                     return true;
                 }      
                 break;

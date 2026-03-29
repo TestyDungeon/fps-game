@@ -1,12 +1,12 @@
 using System.Collections;
 using UnityEngine;
+using DG.Tweening;
 
 public class Item : MonoBehaviour
 {
     [HideInInspector] public GameObject player;
     [HideInInspector] public Transform cameraPivot;
-    protected Vector3 startPos = new Vector3(0, -0.5f, 0f);
-    Vector3 startRot = new Vector3(50, 0, 0);
+    protected Vector3 startPos = new Vector3(0, -1f, 0f);
     public string itemName;
     protected Inventory inventory;
 
@@ -18,6 +18,8 @@ public class Item : MonoBehaviour
         canUse = false;
         gameObject.SetActive(true);
         StartCoroutine(EquipAnimation());
+
+        transform.DOKill();
     }
 
     public void OnUnequip()
@@ -32,9 +34,7 @@ public class Item : MonoBehaviour
     {
         
         transform.localPosition = startPos;
-        //transform.localEulerAngles = startRot;
         Vector3 targetPos = Vector3.zero;
-        //Vector3 targetRot = Vector3.zero;
         float duration = 0.1f;
         float elapsed = 0f;
 
@@ -44,7 +44,6 @@ public class Item : MonoBehaviour
             float t = elapsed / duration;
             t = Mathf.Sin(t * Mathf.PI * 0.5f);
             transform.localPosition = Vector3.Lerp(startPos, targetPos, t);
-            //transform.localEulerAngles = Vector3.Lerp(startRot, targetRot, t);
             yield return null;
         }
         canUse = true;

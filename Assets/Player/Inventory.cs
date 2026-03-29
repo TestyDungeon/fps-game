@@ -69,10 +69,10 @@ public class Inventory : MonoBehaviour
 
     void Start()
     {
-        //AddAmmo(LootType.LightAmmo, maxAmmoCount[LootType.LightAmmo]);
-        //AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo]);
-        //AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo]);
-        //AddAmmo(LootType.HeavyAmmo, maxAmmoCount[LootType.HeavyAmmo]);
+        AddAmmo(LootType.LightAmmo, maxAmmoCount[LootType.LightAmmo] / 2);
+        AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo] / 2);
+        AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo] / 2);
+        AddAmmo(LootType.HeavyAmmo, maxAmmoCount[LootType.HeavyAmmo] / 2);
         AddAmmo(LootType.MeleeAmmo, maxAmmoCount[LootType.MeleeAmmo]);
     }
 

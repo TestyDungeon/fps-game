@@ -6,7 +6,7 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
     [SerializeField] private Transform playerPivot;
     private Health health;
     private GameManager gameManager;
-    private Shield shield;
+    private Kick melee;
 
     public static PlayerHitResponder Instance { get; private set; }
     
@@ -23,26 +23,20 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
     {
         health = GetComponent<Health>();
         gameManager = FindAnyObjectByType<GameManager>();
-        shield = FindAnyObjectByType<Shield>();
+        melee = FindAnyObjectByType<Kick>();
     }
 
     public void TakeDamage(Transform source, int damageAmount, Vector3 damagePoint = default, Vector3 normal = default)
     {
-        //Debug.Log("DAMAGE: " + damageAmount);
-        //Debug.Log(name + " health: " + currentHealth);
         if (health.GetHealth() <= 0)
             return;
         
-        if(shield.GetBlocking())
+        if(melee.GetBlocking())
         {
             bool isInFront = Vector3.Dot(playerPivot.forward, (damagePoint - transform.position).normalized) > 0;
             if(isInFront)
             {
-                if (shield.GetParrying())
-                {
-                    
-                }
-                else
+                if (!melee.GetParrying())
                     SoundManager.PlaySound(SoundType.SHIELD_BLOCK, 1);
                 return;
             }

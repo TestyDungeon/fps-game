@@ -52,9 +52,7 @@ public class EnemyConfig : ScriptableObject
     [Header("Materials")]
     public Material staggerMaterial;
 
-    [Header("Drops")]
-    public GameObject healthOrb;
-    public GameObject ammoOrb;
+    
 
     public IAttackBehavior GetAttackBehavior()
     {

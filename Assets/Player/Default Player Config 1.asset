@@ -21,5 +21,5 @@ MonoBehaviour:
   stopSpeed: 0.8
   jumpsAmount: 1
   jumpStrength: 8
-  dashAmount: 0
+  dashAmount: 2
   dashCooldown: 0.8

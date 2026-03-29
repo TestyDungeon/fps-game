@@ -40,7 +40,7 @@ MonoBehaviour:
     _Clip: {fileID: 1021806162419773930, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
     _NormalizedStartTime: NaN
   enemyName: Ranged Enemy
-  maxHealth: 120
+  maxHealth: 160
   chaseSpeed: 5
   wanderSpeed: 4
   rotationSpeed: 6
@@ -76,8 +76,6 @@ MonoBehaviour:
   deathSFX:
   - {fileID: 8300000, guid: 93927255ccad83e4e971f796b204ac3a, type: 3}
   staggerMaterial: {fileID: 2100000, guid: eda80e8ba2a7b3b4e865ef9341aef92b, type: 2}
-  healthOrb: {fileID: 7767593974562298775, guid: 20505471413c58c458e99127037c9606, type: 3}
-  ammoOrb: {fileID: 0}
   references:
     version: 2
     RefIds: []

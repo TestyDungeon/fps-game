@@ -48,57 +48,31 @@ MonoBehaviour:
   soundList:
   - name: FOOTSTEP
     sounds:
-    - {fileID: 8300000, guid: 486036207b2990c47991e22850b581d8, type: 3}
-    - {fileID: 8300000, guid: 5b647c201dc6d5c40aac5043688fee4a, type: 3}
-    - {fileID: 8300000, guid: 930970c744103d04f82bd98d239fbada, type: 3}
-    - {fileID: 8300000, guid: 690e36041268f314088b83e1c983ddb7, type: 3}
-    - {fileID: 8300000, guid: 0a3f2f71b8899c84082204c3bbdf86df, type: 3}
-    - {fileID: 8300000, guid: f81de1391b46f1a4d9a3da8695597636, type: 3}
-    - {fileID: 8300000, guid: a82c96f0bd23c5243bb5aeb066224f39, type: 3}
-    - {fileID: 8300000, guid: 3d3b5a6c841940f47958a0426d47c73a, type: 3}
-    - {fileID: 8300000, guid: e2044e8d780c98044b27bf7fb9854ec7, type: 3}
-    - {fileID: 8300000, guid: 86e7f3075f5c8f5418487b1a445712fb, type: 3}
-    - {fileID: 8300000, guid: dca67332477e9694181c3a64da0cfdbf, type: 3}
-    - {fileID: 8300000, guid: 87b244eec2fdad34583b966b719c4437, type: 3}
-    - {fileID: 8300000, guid: b5549dee74780b24eb95946a00e1e848, type: 3}
-    - {fileID: 8300000, guid: d3a27ab413bdec74aa376d21e32fdee9, type: 3}
-    - {fileID: 8300000, guid: a20957d8dbc5169468c4150187a1d55a, type: 3}
-    - {fileID: 8300000, guid: 0ccf13ede69ed974c91190421997d34c, type: 3}
-    - {fileID: 8300000, guid: 93f81ac17de89f64495b161b7f6c89d5, type: 3}
-    - {fileID: 8300000, guid: ef65cb9cfeae6464cbe20e37465c9cf7, type: 3}
-    - {fileID: 8300000, guid: afbf5a369faf38945aeacc37be7fba5b, type: 3}
-    - {fileID: 8300000, guid: e0c46fa3f8b79944b91308031895a134, type: 3}
-    - {fileID: 8300000, guid: 19465817a2fbb48469173d8aaf03e5c8, type: 3}
+    - {fileID: 8300000, guid: 578a1bb451d6a49468a2f0d5c2c6aa51, type: 3}
+    - {fileID: 8300000, guid: 70ac4fd434ce22f49abc1b17cba2e246, type: 3}
+    - {fileID: 8300000, guid: bc03859e45aed8845b821155f537d1be, type: 3}
+    - {fileID: 8300000, guid: a0e1a30113e79aa459497a801ce13cfa, type: 3}
   - name: JUMP
     sounds:
-    - {fileID: 8300000, guid: 943a81a11efc4f54ba9d3afe81dc13cc, type: 3}
-    - {fileID: 8300000, guid: 4e9a72561b06ef2448eea61712bedb9e, type: 3}
-    - {fileID: 8300000, guid: 8ed48e29a122b454f866637da3b60263, type: 3}
-    - {fileID: 8300000, guid: 793ee88576a7cd34dba47ca403da235f, type: 3}
-    - {fileID: 8300000, guid: ffa9c14aaa932a94b9c5d766b799b675, type: 3}
+    - {fileID: 8300000, guid: a4943b7d8cf7ae241ad7aecfb8aab47d, type: 3}
   - name: HURT
     sounds:
     - {fileID: 8300000, guid: 4c112ff91585f5947a032151a54f8baa, type: 3}
-  - name: HURTENEMY
+  - name: ENEMY_SPAWN
     sounds:
-    - {fileID: 8300000, guid: 3f78793aff513414a9714f65b74908e5, type: 3}
-    - {fileID: 8300000, guid: 15e62ed885799494fa42bb390e72c2b5, type: 3}
-    - {fileID: 8300000, guid: eed8e519be042794dbeb414f61e748c2, type: 3}
-  - name: AR_SHOT
+    - {fileID: 8300000, guid: 051a81582c2c4a648831e7625085b0fe, type: 3}
+  - name: LANDING
     sounds:
-    - {fileID: 8300000, guid: 0ba1cdbeaa0c6b74687fa82cfc348ba0, type: 3}
-  - name: ROCKETSHOT
+    - {fileID: 8300000, guid: cf404e7b6d914ac46804613749e0c046, type: 3}
+  - name: FALLING
     sounds:
-    - {fileID: 8300000, guid: 28e3e9008b093624e83ae6242b0117bd, type: 3}
-    - {fileID: 8300000, guid: 2d71065191a042b41ab87c5b6cc6d96b, type: 3}
-    - {fileID: 8300000, guid: 14f9b7405e3d83c40ac407ccb2108646, type: 3}
-    - {fileID: 8300000, guid: b621a1a2173f7de41ad799e5f6f94945, type: 3}
+    - {fileID: 8300000, guid: df980ced9192d3248b5dd692a11ea84f, type: 3}
   - name: ROCKETEXPLODE
     sounds:
     - {fileID: 8300000, guid: 5b012c590498da44c8671b3eeee6e092, type: 3}
-  - name: SHOTGUN_SHOT
+  - name: PICKUP_KEY
     sounds:
-    - {fileID: 8300000, guid: 23cd2f050e3860041812b256d899e3b9, type: 3}
+    - {fileID: 8300000, guid: 9d9546688feba2145ae0b31504b0573a, type: 3}
   - name: GRAPPLE
     sounds:
     - {fileID: 8300000, guid: 3262236d9de55504881ddf539aec9b93, type: 3}
@@ -148,9 +122,9 @@ MonoBehaviour:
   - name: GREATSWORD_SWOOSH
     sounds:
     - {fileID: 8300000, guid: 8acd39d094cba6746aad0ff13aa111c4, type: 3}
-  - name: GREATSWORD_IMPACT
+  - name: DOOR_OPEN
     sounds:
-    - {fileID: 8300000, guid: 87a9cd0ed032e9144ba18fd5e0bedef3, type: 3}
+    - {fileID: 8300000, guid: 453aa2bab07147c4dbd9c8c09367e4f4, type: 3}
 --- !u!82 &7636616833535133655
 AudioSource:
   m_ObjectHideFlags: 0
