@@ -9,7 +9,7 @@ WIP prototype of retro-inspired first-person shooter with fast-paced combat comb
 
 <div align="center">
 
-## Showcase 👇
+## Video Showcase 👇
 
 [![Video](https://img.youtube.com/vi/DiQ4NzzhUZM/0.jpg)](https://www.youtube.com/watch?v=DiQ4NzzhUZM)
 
