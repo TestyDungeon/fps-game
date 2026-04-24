@@ -1,26 +1,43 @@
 <div align="center">
-<h2> paincore [fps-prototype] </h2>
+<h2> FPS Gameplay Prototype </h2>
 
 </div>
 
 ## 💡 Overview
 
-WIP prototype of retro-inspired first-person shooter with fast-paced combat combining guns and melee. Using custom character controller from my other project: https://github.com/TestyDungeon/gravity-fps-controller.
+A gameplay-focused FPS prototype built in Unity, has fast-paced movement and combat systems combined with RPG-style progression.
+
+The project focuses on designing and implementing interconnected gameplay systems, including a custom character controller, dynamic gravity, combat mechanics, and player progression.
+
+Built using C# with an emphasis on modular and extensible architecture.
 
 <div align="center">
 
 ## Video Showcase 👇
 
-[![Video](https://img.youtube.com/vi/DiQ4NzzhUZM/0.jpg)](https://www.youtube.com/watch?v=DiQ4NzzhUZM)
+[![Video](https://img.youtube.com/vi/M6CxlSu4iV4/0.jpg)](https://www.youtube.com/watch?v=M6CxlSu4iV4)
 
 </div>
 
 ## 🚀 Features
+### Movement System
 - Custom character controller
-- Robust player movement with dash, double jumps, grappling hook
-- Enemy AI with state-based behavior
-- Weapon system (hitscan / projectile), melee, with respective ammo types
-- Health & damage system
-- Enemy encounter system
+- Movement abilities: dash, double jumps, grappling hook
+- Dynamic gravity system allowing non-linear traversal
+
+### Combat System
+- Hybrid combat: ranged (hitscan & projectile) and melee kick
+- Different ammo types
+- Health and damage system
+
+### RPG & Progression
+- Player stat upgrades affecting gameplay
+- Weapon upgrade system, alternative fire modes
+
+### AI System
+- State-based enemy behavior
+- Encounter system for enemy spawning
+
+### Other Systems
 - Sound Manager
-- Level mechanics like doors, jump pads, 
+- Level interaction mechanics (doors, jump pads)
