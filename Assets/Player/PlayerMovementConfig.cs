@@ -1,7 +1,7 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Player Config", menuName = "Player/Player Config")]
-public class PlayerConfig : ScriptableObject
+[CreateAssetMenu(fileName = "Player Movement Config", menuName = "Player/Player Movement Config")]
+public class PlayerMovementConfig : ScriptableObject
 {
     [Header("Movement")]
     public float MAX_SPEED = 30f;

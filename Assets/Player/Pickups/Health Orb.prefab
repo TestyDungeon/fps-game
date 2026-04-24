@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4442594889083079110}
   - component: {fileID: 1137247174785592970}
+  - component: {fileID: 1612028435544757934}
   - component: {fileID: 3849916910002914586}
   - component: {fileID: 7384041205406747937}
   - component: {fileID: 497972762853193020}
@@ -49,8 +50,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05cc6b0ca6ad7e5459ae9da9a0fd3f09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lootType: 5
+  lootType: 4
   amount: 5
+  item: {fileID: 0}
+  rotationSpeed: 0
+  amplitude: 0
+  frequency: 0
+--- !u!114 &1612028435544757934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7767593974562298775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05cc6b0ca6ad7e5459ae9da9a0fd3f09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lootType: 9
+  amount: 1
   item: {fileID: 0}
   rotationSpeed: 0
   amplitude: 0

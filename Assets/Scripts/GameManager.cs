@@ -5,6 +5,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
     [SerializeField] private GameObject gameOverUI;
+    [SerializeField] private GameObject upgradeUI;
     [SerializeField] private GameObject grapple;
     [SerializeField] private GameObject[] itemsPos;
     [SerializeField] private GameObject[] UI;
@@ -14,6 +15,8 @@ public class GameManager : MonoBehaviour
     [Header("Drops")]
     public GameObject healthOrb;
     public GameObject ammoOrb;
+
+    [HideInInspector] public bool inUI = false;
 
     void Awake()
     {
@@ -25,6 +28,24 @@ public class GameManager : MonoBehaviour
     {
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.I) && !inUI)
+        {
+            inUI = true;
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.Confined;
+            upgradeUI.SetActive(true);
+        }
+        else if(Input.GetKeyDown(KeyCode.I) && inUI)
+        {
+            inUI = false;
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            upgradeUI.SetActive(false);
+        }
     }
 
     public void Restart()
@@ -65,5 +86,10 @@ public class GameManager : MonoBehaviour
         {
             item.SetActive(true);  
         }
+    }
+
+    public void PlayUIButtonSound(float volume)
+    {
+        SoundManager.PlaySound(SoundType.UI_BUTTON, volume);
     }
 }

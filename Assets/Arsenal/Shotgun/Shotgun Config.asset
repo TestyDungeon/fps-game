@@ -19,7 +19,7 @@ MonoBehaviour:
     m_Bits: 32759
   shootSFX:
   - {fileID: 8300000, guid: 23cd2f050e3860041812b256d899e3b9, type: 3}
-  volume: 0.8
+  volume: 0.85
   altStartSFX:
   - {fileID: 8300000, guid: da0e8d5de5adbed4eaed37a8a4b0e52c, type: 3}
   shootAnimation:
@@ -36,7 +36,7 @@ MonoBehaviour:
   returnSpeedCamera: 5
   allowButtonHold: 1
   damage: 14
-  ammoType: 2
+  ammoType: 1
   range: 30
   force: 20
   knockbackForce: 0
@@ -46,6 +46,7 @@ MonoBehaviour:
   ammoPerShot: 1
   timeBetweenShots: 0
   inputDelay: 0
+  ricochet: 0
   projectilePrefab: {fileID: 0}
   explosionPrefab: {fileID: 0}
   projectileSpeed: 1
@@ -54,6 +55,8 @@ MonoBehaviour:
   explosionRadius: 10
   explosionForceRB: 5
   explosionDelay: 0
+  ricoshetSpeedLoss: 0
+  mass: 0
   altConfig: {fileID: 11400000, guid: 823b100a84dce514bbde58cf337b0ec3, type: 2}
   references:
     version: 2

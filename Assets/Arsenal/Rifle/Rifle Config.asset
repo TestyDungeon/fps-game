@@ -14,8 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 7703ace7cd973424087b710123029a52, type: 3}
   bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
-  soundType: 19
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 32759
+  shootSFX: []
   volume: 0.3
+  altStartSFX: []
   shootAnimation:
     _FadeDuration: 0.25
     _Speed: 1
@@ -40,6 +44,17 @@ MonoBehaviour:
   ammoPerShot: 1
   timeBetweenShots: 0
   inputDelay: 0
+  ricochet: 0
+  projectilePrefab: {fileID: 0}
+  explosionPrefab: {fileID: 0}
+  projectileSpeed: 1
+  projectileRicoshet: 0
+  gravityMult: 0
+  explosionRadius: 10
+  explosionForceRB: 5
+  explosionDelay: 0
+  ricoshetSpeedLoss: 0
+  mass: 1
   altConfig: {fileID: 11400000}
   references:
     version: 2

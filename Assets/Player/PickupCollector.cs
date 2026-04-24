@@ -38,7 +38,7 @@ public class PickupCollector : MonoBehaviour
                         rb.AddForce((transform.position - hit.transform.position) * 60, ForceMode.Acceleration);
                     }
                     if(!inventory.IsAmmoFull() 
-                    && (pckp.lootType == LootType.LightAmmo || pckp.lootType == LootType.HeavyAmmo || pckp.lootType == LootType.ShellAmmo || pckp.lootType == LootType.RocketAmmo)
+                    && (pckp.lootType == LootType.BulletAmmo || pckp.lootType == LootType.ShellAmmo || pckp.lootType == LootType.RocketAmmo)
                     && pckp.lootType != LootType.MeleeAmmo)
                     {
                         rb.AddForce((transform.position - hit.transform.position) * 60, ForceMode.Acceleration);
@@ -69,7 +69,7 @@ public class PickupCollector : MonoBehaviour
     {
         switch (lootType)
         {
-            case LootType.LightAmmo:
+            case LootType.BulletAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
                     SoundManager.PlaySound(SoundType.PICKUP_MEDKIT, 0.2f);
@@ -93,14 +93,6 @@ public class PickupCollector : MonoBehaviour
                     return true;
                 }
                 break;
-            case LootType.HeavyAmmo:
-                if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
-                {
-                    SoundManager.PlaySound(SoundType.PICKUP_AMMO, 0.2f);
-                    inventory.AddAmmo(lootType, amount);
-                    return true;
-                }
-                break;
             case LootType.MeleeAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
@@ -109,6 +101,12 @@ public class PickupCollector : MonoBehaviour
                     return true;
                 }
                 break;
+            case LootType.UpgradePoint:
+                {
+                    inventory.AddUpgradePoint(amount);
+                    Debug.Log("UPGRADE");
+                    return true;
+                }
             case LootType.Health:
                 if (!playerHealth.IsFullHealth())
                 {
@@ -123,6 +121,7 @@ public class PickupCollector : MonoBehaviour
                     SoundManager.PlaySound(SoundType.PICKUP_KEY, 1f);
                     return true;
                 }
+                
 
             case LootType.Grapple:
                 SoundManager.PlaySound(SoundType.PICKUP_GRAPPLE, 1);

@@ -11,8 +11,6 @@ public class AmmoIndicatorUI : MonoBehaviour
     {
         if (inventory == null)
             inventory = FindAnyObjectByType<Inventory>();
-
-        Debug.Log("Start() " + ammoHandler);
     }
 
     //void Start()

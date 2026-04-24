@@ -35,7 +35,7 @@ MonoBehaviour:
   returnSpeedCamera: 5
   allowButtonHold: 0
   damage: 20
-  ammoType: 2
+  ammoType: 1
   range: 30
   force: 20
   knockbackForce: 0
@@ -45,6 +45,7 @@ MonoBehaviour:
   ammoPerShot: 2
   timeBetweenShots: 0
   inputDelay: 0
+  ricochet: 0
   projectilePrefab: {fileID: 0}
   explosionPrefab: {fileID: 0}
   projectileSpeed: 1
@@ -53,6 +54,8 @@ MonoBehaviour:
   explosionRadius: 10
   explosionForceRB: 5
   explosionDelay: 0
+  ricoshetSpeedLoss: 0
+  mass: 1
   altConfig: {fileID: 11400000}
   references:
     version: 2

@@ -23,6 +23,8 @@ public class Inventory : MonoBehaviour
     [SerializeField] private int maxRocketAmmo;
     [SerializeField] private int maxMeleeAmmo;
 
+    [SerializeField] private int upgradePoints;
+
     private int totalMaxAmmo;
 
     private Dictionary<LootType, int> maxAmmoCount = new();
@@ -33,20 +35,19 @@ public class Inventory : MonoBehaviour
 
     void Awake()
     {
-        maxAmmoCount[LootType.LightAmmo] = maxLightAmmo;
+        maxAmmoCount[LootType.BulletAmmo] = maxLightAmmo;
         maxAmmoCount[LootType.ShellAmmo] = maxShellAmmo;
         maxAmmoCount[LootType.RocketAmmo] = maxRocketAmmo;
-        maxAmmoCount[LootType.HeavyAmmo] = maxHeavyAmmo;
         maxAmmoCount[LootType.MeleeAmmo] = maxMeleeAmmo;
 
         
         totalMaxAmmo = maxAmmoCount.Values.Sum() - maxAmmoCount[LootType.MeleeAmmo];
 
-        ammoCount[LootType.LightAmmo] = 0;
+        ammoCount[LootType.BulletAmmo] = 0;
         ammoCount[LootType.ShellAmmo] = 0;
         ammoCount[LootType.RocketAmmo] = 0;
-        ammoCount[LootType.HeavyAmmo] = 0;
         ammoCount[LootType.MeleeAmmo] = 0;
+        upgradePoints = 0;
 
         
 
@@ -69,10 +70,9 @@ public class Inventory : MonoBehaviour
 
     void Start()
     {
-        AddAmmo(LootType.LightAmmo, maxAmmoCount[LootType.LightAmmo] / 2);
-        AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo] / 2);
-        AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo] / 2);
-        AddAmmo(LootType.HeavyAmmo, maxAmmoCount[LootType.HeavyAmmo] / 2);
+        AddAmmo(LootType.BulletAmmo, maxAmmoCount[LootType.BulletAmmo] / 1);
+        AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo] / 1);
+        AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo] / 1);
         AddAmmo(LootType.MeleeAmmo, maxAmmoCount[LootType.MeleeAmmo]);
     }
 
@@ -202,5 +202,22 @@ public class Inventory : MonoBehaviour
                 gun.AmmoChanged(maxAmmoCount[lootType], ammoCount[lootType]);
             }
         }
+    }
+
+
+
+    public void AddUpgradePoint(int amount)
+    {
+        upgradePoints += amount;
+    }
+
+    public void UseUpgradePoint(int amount)
+    {
+        upgradePoints = Mathf.Max(0, upgradePoints - amount);
+    }
+
+    public int GetUpgradePoint()
+    {
+        return upgradePoints;
     }
 }

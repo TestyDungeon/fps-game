@@ -67,7 +67,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05cc6b0ca6ad7e5459ae9da9a0fd3f09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lootType: 6
+  lootType: 5
   amount: 1
   item: {fileID: 0}
   rotationSpeed: 20

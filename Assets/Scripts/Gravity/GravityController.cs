@@ -20,15 +20,17 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
             if (!gravityFields.Contains(other))
                 gravityFields.Add(other);
 
-            // Prioritize the first field entered
-            if (prioritizedField == null || prioritizedField.GetComponent<GravityFieldSpherical>() != null)
-            {
-                prioritizedField = other;
-                mc.setInGravityField(true);
-                mc.setGravityAlignSpeed(0.02f);
-                mc.setGravityVec(other.GetComponent<GravityField>().CalculateGravityVector(transform));
-                //Debug.Log("Prioritizing GravityField at " + other.transform.position);
-            }
+                // If we don't have a field yet, or the current one is spherical (low priority)
+                // and the new one is non-spherical (high priority), swap it.
+                if (prioritizedField == null || 
+                    (prioritizedField.GetComponent<GravityFieldSpherical>() != null && 
+                     other.GetComponent<GravityFieldSpherical>() == null))
+                {
+                    prioritizedField = other;
+                    mc.setInGravityField(true);
+                    mc.setGravityAlignSpeed(0.02f);
+                    mc.setGravityVec(other.GetComponent<GravityField>().CalculateGravityVector(transform));
+                }
 
         }
     }
@@ -56,7 +58,23 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
                 // Switch to another field if available
                 if (gravityFields.Count > 0)
                 {
-                    prioritizedField = gravityFields[0];
+                    // Find the first non-spherical field
+                    prioritizedField = null;
+                    foreach (Collider col in gravityFields)
+                    {
+                        if (col.GetComponent<GravityFieldSpherical>() == null)
+                        {
+                            prioritizedField = col;
+                            break;
+                        }
+                    }
+
+                    // If no non-spherical field exists, pick the first one from the list (the spherical one)
+                    if (prioritizedField == null)
+                    {
+                        prioritizedField = gravityFields[0];
+                    }
+
                     Debug.Log("Switching priority to GravityField at " + prioritizedField.transform.position);
                     mc.setGravityAlignSpeed(0.02f);
                     mc.setGravityVec(prioritizedField.GetComponent<GravityField>().CalculateGravityVector(transform));

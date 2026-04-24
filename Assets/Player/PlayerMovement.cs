@@ -9,7 +9,7 @@ public class PlayerMovement : MonoBehaviour
 
     private MovementController movementController;
 
-    [SerializeField] private PlayerConfig playerConfig;
+    [SerializeField] private PlayerMovementConfig playerMovementConfig;
     private Vector3 playerVelocity = Vector3.zero;
     private bool isPlayingFootsteps = false;
     private bool jumped = false;
@@ -31,15 +31,18 @@ public class PlayerMovement : MonoBehaviour
     [HideInInspector] public float defaultWeaponFOV;
     [HideInInspector] public float targetWeaponFov;
 
+    private float speedMultiplier = 1f;
+    private float airControlMultiplier = 1f;
+
     private void Awake()
     {
-        dashLeft = playerConfig.dashAmount;
+        dashLeft = playerMovementConfig.dashAmount;
         defaultFOV = playerCamera.fieldOfView;
         targetFov = defaultFOV;
         defaultWeaponFOV = weaponCamera.fieldOfView;
         targetWeaponFov = defaultWeaponFOV;
         movementController = GetComponent<MovementController>();
-        jumpsLeft = playerConfig.jumpsAmount;
+        jumpsLeft = playerMovementConfig.jumpsAmount;
         //traceDistance = movementController.capsuleCollider.height/2 + slopeSticking;
     }
 
@@ -57,9 +60,9 @@ public class PlayerMovement : MonoBehaviour
     private void FixedUpdate()
     {
         SlopeHandling();
-        if(dashLeft < playerConfig.dashAmount && !IsInvoking("ResetDash")/* && movementController.GroundCheck()*/)
+        if(dashLeft < playerMovementConfig.dashAmount && !IsInvoking("ResetDash")/* && movementController.GroundCheck()*/)
         {
-            Invoke("ResetDash", playerConfig.dashCooldown);
+            Invoke("ResetDash", playerMovementConfig.dashCooldown);
             
         }
         
@@ -114,13 +117,13 @@ public class PlayerMovement : MonoBehaviour
 
         wishdir = wishvel;
         wishdir = Vector3.Normalize(wishdir);
-        wishspeed = wishdir.magnitude * (movementController.GroundCheck() ? playerConfig.speed : playerConfig.airMaxSpeed);
+        wishspeed = wishdir.magnitude * (movementController.GroundCheck() ? playerMovementConfig.speed : playerMovementConfig.airMaxSpeed) * speedMultiplier;
         Debug.DrawRay(transform.position, wishdir, Color.yellow);
 
-        if (wishspeed > playerConfig.MAX_SPEED)
+        if (wishspeed > playerMovementConfig.MAX_SPEED)
         {
-            mathlib.VectorScale(wishvel, playerConfig.MAX_SPEED / wishspeed, wishvel);
-            wishspeed = playerConfig.MAX_SPEED;
+            mathlib.VectorScale(wishvel, playerMovementConfig.MAX_SPEED / wishspeed, wishvel);
+            wishspeed = playerMovementConfig.MAX_SPEED;
         }
 
         if (movementController.GroundCheck())
@@ -146,7 +149,7 @@ public class PlayerMovement : MonoBehaviour
         if (addSpeed <= 0)
             return;
 
-        accelSpeed = playerConfig.accel * Time.deltaTime * wishSpeed;
+        accelSpeed = playerMovementConfig.accel * Time.deltaTime * wishSpeed;
 
         if (accelSpeed > addSpeed)
             accelSpeed = addSpeed;
@@ -158,13 +161,13 @@ public class PlayerMovement : MonoBehaviour
 
     private void AirAccelerate(Vector3 wishDir, float wishSpeed)
     {
-        
         float wishSpd = wishSpeed;
 
-        if (wishSpd > playerConfig.airMaxSpeed)
-            wishSpd = playerConfig.airMaxSpeed;
+        if (wishSpd > playerMovementConfig.airMaxSpeed)
+            wishSpd = playerMovementConfig.airMaxSpeed;
 
-        Vector3 currentHorizontalVel = new Vector3(playerVelocity[0], 0, playerVelocity[2]);
+        // PROJECT VELOCITY ONTO THE PLANE PERPENDICULAR TO TRANSFORM.UP (LOCAL GRAVITY UP)
+        Vector3 currentHorizontalVel = Vector3.ProjectOnPlane(playerVelocity, transform.up);
         float currentSpeed = currentHorizontalVel.magnitude;
 
         float targetSpeed = wishSpd;
@@ -172,15 +175,15 @@ public class PlayerMovement : MonoBehaviour
         if(currentSpeed > targetSpeed)
             targetSpeed = currentSpeed;
 
-        if (targetSpeed > playerConfig.airMaxSpeed)
+        if (targetSpeed > playerMovementConfig.airMaxSpeed)
         {
-            targetSpeed = Mathf.Lerp(currentSpeed, playerConfig.airMaxSpeed, Time.deltaTime * 2f);
+            targetSpeed = Mathf.Lerp(currentSpeed, playerMovementConfig.airMaxSpeed, Time.deltaTime * 2f);
         }
 
         if(wishSpd > 0)
         {
-            playerVelocity[0] = Mathf.Lerp(playerVelocity[0], (wishDir * targetSpeed)[0], playerConfig.airAccel * Time.deltaTime);
-            playerVelocity[2] = Mathf.Lerp(playerVelocity[2], (wishDir * targetSpeed)[2], playerConfig.airAccel * Time.deltaTime);
+            // INTERPOLATE THE TOTAL VELOCITY VECTOR TOWARDS THE TARGET DIRECTION
+            playerVelocity = Vector3.Lerp(playerVelocity, wishDir * targetSpeed + (playerVelocity - currentHorizontalVel), playerMovementConfig.airAccel * airControlMultiplier * Time.deltaTime);
         }
     }
 
@@ -201,8 +204,8 @@ public class PlayerMovement : MonoBehaviour
 
         if (movementController.GroundCheck())
         {
-            control = speed < playerConfig.stopSpeed ? playerConfig.stopSpeed : speed;
-            drop += control * playerConfig.friction * Time.deltaTime;
+            control = speed < playerMovementConfig.stopSpeed ? playerMovementConfig.stopSpeed : speed;
+            drop += control * playerMovementConfig.friction * Time.deltaTime;
         }
 
         newspeed = speed - drop;
@@ -210,14 +213,17 @@ public class PlayerMovement : MonoBehaviour
             newspeed = 0;
         newspeed /= speed;
 
+        // Separate vertical and horizontal velocity relative to local up
+        Vector3 verticalVel = Vector3.Project(playerVelocity, transform.up);
+        Vector3 horizontalVel = playerVelocity - verticalVel;
 
-        playerVelocity[0] *= newspeed;
-        playerVelocity[2] *= newspeed;
+        // Apply friction only to horizontal components
+        playerVelocity = (horizontalVel * newspeed) + verticalVel;
     }
 
     private void JumpButton()
     {
-        if (!movementController.GroundCheck() && jumpsLeft <= 0)
+        if ((!movementController.GroundCheck(out RaycastHit hit) || Vector3.Angle(hit.normal, transform.up) > 75) && jumpsLeft <= 0)
         {
             
             return;
@@ -225,7 +231,7 @@ public class PlayerMovement : MonoBehaviour
         else if(movementController.GroundCheck() && !jumped)
         {
             StopCoroutine(CoyoteJump());
-            jumpsLeft = playerConfig.jumpsAmount;
+            jumpsLeft = playerMovementConfig.jumpsAmount;
         }
 
         if (!movementController.GroundCheck() && !jumped && !coyoteUsed)
@@ -237,13 +243,12 @@ public class PlayerMovement : MonoBehaviour
             jumpsLeft--;
             
             movementController.resetVerticalVelocity();
-            playerVelocity += transform.up * playerConfig.jumpStrength;
+            playerVelocity += transform.up * playerMovementConfig.jumpStrength;
             //movementController.addVelocityContextual(transform.up * playerConfig.jumpStrength);
             //if(movementController.GroundCheck())
                 SoundManager.PlaySound(SoundType.JUMP, 0.4f);
         }
 
-        // Reset jumped flag when we're grounded and not pressing jump
         if (movementController.GroundCheck() && !Input.GetKey(KeyCode.Space))
         {
             coyoteUsed = false;
@@ -263,7 +268,7 @@ public class PlayerMovement : MonoBehaviour
     {
         coyoteUsed = true;
         yield return new WaitForSeconds(0.1f);
-        jumpsLeft = playerConfig.jumpsAmount - 1;
+        jumpsLeft = playerMovementConfig.jumpsAmount - 1;
     }
 
     public void AddJump(int j)
@@ -296,14 +301,14 @@ public class PlayerMovement : MonoBehaviour
         movementController.SetDashDir(dir);
         movementController.Dash(dir, 4f, 40, 10);
         
-        movementController.addVelocity(dir * 10);
+        //movementController.addVelocity(dir * 10);
 
 
     }
 
     private void ResetDash()
     {   
-        if(dashLeft < playerConfig.dashAmount)
+        if(dashLeft < playerMovementConfig.dashAmount)
         {
             SoundManager.PlaySound(SoundType.DASH_RECHARGE, 0.1f);
             SetDash(dashLeft + 1);
@@ -313,7 +318,7 @@ public class PlayerMovement : MonoBehaviour
     private void SetDash(int x)
     {
         dashLeft = x;
-        OnDash?.Invoke(playerConfig.dashAmount, dashLeft, playerConfig.dashCooldown);
+        OnDash?.Invoke(playerMovementConfig.dashAmount, dashLeft, playerMovementConfig.dashCooldown);
     }
 
     private void OnGUI()
@@ -374,4 +379,13 @@ public class PlayerMovement : MonoBehaviour
         
     }
 
+    public void SetSpeedMultiplier(float value)
+    {
+        speedMultiplier = value;
+    }
+
+    public void SetAirControlMultiplier(float value)
+    {
+        airControlMultiplier = value;
+    }
 }

@@ -22,7 +22,8 @@ public enum SoundType
     DASH_RECHARGE,
     KICK,
     AIR_WHOOSH,
-    DOOR_OPEN
+    DOOR_OPEN,
+    UI_BUTTON
 }
 
 [System.Serializable]

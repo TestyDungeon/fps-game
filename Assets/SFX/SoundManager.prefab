@@ -86,16 +86,17 @@ MonoBehaviour:
     sounds:
     - {fileID: 8300000, guid: b62398a1c90208546bf5beed9acf761e, type: 3}
   - name: PICKUP_AMMO
-    sounds: []
+    sounds:
+    - {fileID: 8300000, guid: b62398a1c90208546bf5beed9acf761e, type: 3}
   - name: SHIELD_BLOCK
     sounds:
     - {fileID: 8300000, guid: 50da0af51cd508d46911942bc5b5bffa, type: 3}
   - name: DASH
     sounds:
     - {fileID: 8300000, guid: 40c675545c56e3e448e75ee097f78174, type: 3}
-  - name: REVOLVERSHOT
+  - name: DEFLECT
     sounds:
-    - {fileID: 8300000, guid: f7d7baac0aec7104e8ecbc5e587df72e, type: 3}
+    - {fileID: 8300000, guid: d49c9254e79d9a24ca3074f228e43ecd, type: 3}
   - name: DASH_RECHARGE
     sounds:
     - {fileID: 8300000, guid: ee777c61c8f867b41b20bdfde0057073, type: 3}
@@ -105,26 +106,12 @@ MonoBehaviour:
   - name: AIR_WHOOSH
     sounds:
     - {fileID: 8300000, guid: 3aac7ad03c8ccac4aa1a4a00ef3e8fe7, type: 3}
-  - name: RIFLE_SHOT
-    sounds:
-    - {fileID: 8300000, guid: 59b8ef75ec9f917458e0555c566fcbf3, type: 3}
-  - name: MELEE_ENEMY_ATTACK
-    sounds:
-    - {fileID: 8300000, guid: 6978528c40b0c784d9c1f9325df2fddb, type: 3}
-  - name: SUPER_SHOTGUN_SHOT
-    sounds:
-    - {fileID: 8300000, guid: f33b2c6bf77875f4abe27219ff48a9a2, type: 3}
-  - name: DEFLECT
-    sounds:
-    - {fileID: 8300000, guid: d49c9254e79d9a24ca3074f228e43ecd, type: 3}
-  - name: SHOTGUN_PUMP
-    sounds: []
-  - name: GREATSWORD_SWOOSH
-    sounds:
-    - {fileID: 8300000, guid: 8acd39d094cba6746aad0ff13aa111c4, type: 3}
   - name: DOOR_OPEN
     sounds:
     - {fileID: 8300000, guid: 453aa2bab07147c4dbd9c8c09367e4f4, type: 3}
+  - name: UI_BUTTON
+    sounds:
+    - {fileID: 8300000, guid: 5a03f25249787d74a94192c04cce20dc, type: 3}
 --- !u!82 &7636616833535133655
 AudioSource:
   m_ObjectHideFlags: 0

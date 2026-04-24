@@ -5,7 +5,7 @@ public class Health : MonoBehaviour
 {
     public event Action<float, float> OnHealthChanged;
     public event Action OnDeath;
-    [SerializeField] private int maxHealth;
+    private int maxHealth;
     [HideInInspector] public int health;
     [HideInInspector] public bool isAlive = true;
     private float maxPosture = 100;
@@ -20,12 +20,11 @@ public class Health : MonoBehaviour
 
     public virtual void TakeDamage(int damageAmount, Vector3 damagePoint = default, Vector3 normal = default)
     {
-        Debug.Log("DAMAGE: " + damageAmount);
-        Debug.Log(name + " health: " + health);
+        //Debug.Log("DAMAGE: " + damageAmount);
+        //Debug.Log(name + " health: " + health);
         if (health <= 0)
             return;
-        health -= damageAmount;
-        HealthChanged();
+        SetHealth(health - damageAmount);
 
         if (health <= 0 && isAlive)
             Death();
@@ -33,9 +32,9 @@ public class Health : MonoBehaviour
 
     public void Heal(int healAmount)
     {
-        Debug.Log("Heal " + healAmount);
-        health += Mathf.Clamp(healAmount, 0, maxHealth - health);
-        HealthChanged();
+        //Debug.Log("Heal " + healAmount);
+        SetHealth(health + Mathf.Clamp(healAmount, 0, maxHealth - health));
+        
     }
 
     public void HealthChanged()
@@ -68,6 +67,8 @@ public class Health : MonoBehaviour
     public void SetMaxHealth(int maxHealth_)
     {
         maxHealth = maxHealth_;
+        health = maxHealth;
+        HealthChanged();
     }
 
     public int GetHealth()
@@ -78,6 +79,7 @@ public class Health : MonoBehaviour
     public void SetHealth(int health_)
     {
         health = health_;
+        HealthChanged();
     }
 
 

@@ -27,24 +27,37 @@ public class GravityFieldSpherical : GravityField
                 rbs.Add(x.attachedRigidbody);
                 collided = true;
             }
+            Projectile proj = x.GetComponent<Projectile>();
+            if(proj != null)
+            {
+                proj.gravityVec = CalculateGravityVector(x.transform);
+            }
         }
         return collided;
     }
 
-    public override Vector3 CalculateGravityVector(Transform tr)
+    public override Vector3 CalculateGravityVector(Vector3 position)
     {
         Vector3 vec = new Vector3();
         if (!Inversed)
-            vec = (transform.position - tr.position).normalized;
+            vec = (transform.position - position).normalized;
         else
-            vec = -(transform.position - tr.position).normalized;
+            vec = -(transform.position - position).normalized;
 
         return vec;
     }
 
+    public override Vector3 CalculateGravityVector(Transform tr = null)
+    {
+        if (tr != null)
+            return CalculateGravityVector(tr.position);
+        
+        return Vector3.zero;
+    }
+
     protected override void ApplyRigidbodyGravity(Rigidbody rb)
     {
-        rb.AddForce((transform.position - rb.position).normalized * rbGravity);
+        base.ApplyRigidbodyGravity(rb);
     }
 
     public float get_outer_radius()

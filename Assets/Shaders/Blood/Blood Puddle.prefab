@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7523747043526390888}
   - component: {fileID: 5831932618431063977}
   - component: {fileID: 7932087855636216894}
-  m_Layer: 12
+  m_Layer: 0
   m_Name: Blood Puddle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -104,7 +104,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30

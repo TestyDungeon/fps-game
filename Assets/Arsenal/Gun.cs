@@ -12,6 +12,8 @@ public class Gun : Item, IAmmoHandler
     
     public GunConfig gunConfig;
 
+    private float damageMultiplier = 1;
+
     protected bool readyToShoot;
     protected bool readyToShootAlt;
     protected bool shooting;
@@ -36,6 +38,8 @@ public class Gun : Item, IAmmoHandler
     private GameObject newProjectile;
     private Projectile projectileComponent;
 
+    private PlayerStats playerStats;
+
     [SerializeField] protected bool IsReadyToShoot => alt ? readyToShootAlt : readyToShoot;
 
     void OnEnable()
@@ -44,6 +48,7 @@ public class Gun : Item, IAmmoHandler
             animancer.Play(gunConfig.shootAnimation).Time = 1;
         else if(animator != null)
             animator.Play("Shoot", 0, 1);
+        
         SetLights(false);
         OnAltEnd();
     }
@@ -65,6 +70,7 @@ public class Gun : Item, IAmmoHandler
 
     void Start()
     {
+        playerStats = player.GetComponent<PlayerStats>();
         cameraRecoil = player.GetComponentInChildren<CameraRecoil>();
         lights = GetComponentsInChildren<Light>();
         Debug.Log(lights.Length);
@@ -75,6 +81,8 @@ public class Gun : Item, IAmmoHandler
 
     void Update()
     {
+        if(GameManager.Instance.inUI)
+            return;
         GunInput();
         if(altStart)
             OnAltStart();
@@ -246,44 +254,67 @@ public class Gun : Item, IAmmoHandler
 
     virtual protected void Shoot(Vector3 dir)
     {
+        damageMultiplier = playerStats.GetDamageMultiplier(gunConfig.ammoType);
+
         if(gunConfig.projectilePrefab == null)
         {
-            float distance = gunConfig.range;
-            Vector3 target = transform.position + dir * distance;
-
-            if (Physics.Raycast(cameraPivot.position, dir, out RaycastHit hit, gunConfig.range, gunConfig.layerMask, QueryTriggerInteraction.Ignore))
-            {
-                target = hit.point;
-                distance = hit.distance;
-                if (hit.rigidbody)
-                {
-                    hit.rigidbody.AddForceAtPosition(transform.forward * gunConfig.force, hit.point, ForceMode.Impulse);
-                }
-                if (hit.transform.gameObject.GetComponent<IDamageable>() != null)
-                {
-                    hit.transform.gameObject.GetComponent<IDamageable>().TakeDamage(player.transform, gunConfig.damage, hit.point, hit.normal);
-                }
-                else if (hit.transform.gameObject.layer == LayerMask.NameToLayer("Corpse"))
-                {
-                    Destroy(Instantiate(GameManager.Instance.bloodParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
-                }
-                else
-                {
-                    Destroy(Instantiate(GameManager.Instance.decalParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
-                    
-                }
-            }
-            if(gunConfig.bulletTrail != null)
-                StartCoroutine(SpawnBulletTrail(target));
+            HitscanShoot(cameraPivot.position, dir, gunConfig.ricochet);
         }
         else
         {
-            newProjectile = Instantiate(gunConfig.projectilePrefab, cameraPivot.position, Quaternion.LookRotation(dir));
-            projectileComponent = newProjectile.GetComponent<Projectile>();
-            projectileComponent.gunConfig = gunConfig;
-            projectileComponent.projectileStart = cameraPivot;
-            newProjectile.GetComponent<MeshRenderer>().enabled = false;
+            ProjectileShoot(dir);
         }
+    }
+
+    private void HitscanShoot(Vector3 start, Vector3 dir, int ricochetCount = 0)
+    {
+        bool hitSurface = false;
+        float distance = gunConfig.range;
+        Vector3 target = transform.position + dir * distance;
+
+        RaycastHit hit;
+
+        if (Physics.Raycast(start, dir, out hit, gunConfig.range, gunConfig.layerMask, QueryTriggerInteraction.Ignore))
+        {
+            target = hit.point;
+            distance = hit.distance;
+            if (hit.rigidbody)
+            {
+                hit.rigidbody.AddForceAtPosition(transform.forward * gunConfig.force, hit.point, ForceMode.Impulse);
+            }
+
+            if (hit.transform.gameObject.GetComponent<IDamageable>() != null)
+            {
+                hit.transform.gameObject.GetComponent<IDamageable>().TakeDamage(player.transform, Mathf.RoundToInt(gunConfig.damage * damageMultiplier), hit.point, hit.normal);
+            }
+            else if (hit.transform.gameObject.layer == LayerMask.NameToLayer("Corpse"))
+            {
+                Destroy(Instantiate(GameManager.Instance.bloodParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
+            }
+            else
+            {
+                Destroy(Instantiate(GameManager.Instance.decalParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
+                hitSurface = true;
+
+            }
+        }
+        if(gunConfig.bulletTrail != null)
+            StartCoroutine(SpawnBulletTrail(start, target));
+        
+        if(ricochetCount > 0 && hitSurface)
+        {
+            ricochetCount--;
+            HitscanShoot(hit.point, Vector3.Reflect(dir, hit.normal), ricochetCount);
+        }
+    }
+
+    private void ProjectileShoot(Vector3 dir)
+    {
+        newProjectile = Instantiate(gunConfig.projectilePrefab, cameraPivot.position, Quaternion.LookRotation(dir));
+        projectileComponent = newProjectile.GetComponent<Projectile>();
+        projectileComponent.gunConfig = gunConfig;
+        projectileComponent.projectileStart = cameraPivot;
+        newProjectile.GetComponent<MeshRenderer>().enabled = false;
     }
 
     protected virtual void AltShoot()
@@ -352,10 +383,10 @@ public class Gun : Item, IAmmoHandler
 
     
 
-    public IEnumerator SpawnBulletTrail(Vector3 target)
+    public IEnumerator SpawnBulletTrail(Vector3 start, Vector3 target)
     {
         float time = 0;
-        TrailRenderer trail = Instantiate(gunConfig.bulletTrail, bulletStart.position, Quaternion.identity);
+        TrailRenderer trail = Instantiate(gunConfig.bulletTrail, start, Quaternion.identity);
         while (time < 1)
         {
             trail.transform.position += (target - trail.transform.position).normalized * 200 * Time.deltaTime;

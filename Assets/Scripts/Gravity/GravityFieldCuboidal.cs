@@ -24,17 +24,27 @@ public class GravityFieldCuboidal : GravityField
                 rbs.Add(x.attachedRigidbody);
                 collided = true;
             }
+            Projectile proj = x.GetComponent<Projectile>();
+            if(proj != null)
+            {
+                proj.gravityVec = CalculateGravityVector();
+            }
         }
         return collided;
     }
 
     protected override void ApplyRigidbodyGravity(Rigidbody rb)
     {
-        rb.AddForce(-transform.up * rbGravity);
+        base.ApplyRigidbodyGravity(rb);
     }
 
-    public override Vector3 CalculateGravityVector(Transform tr)
+    public override Vector3 CalculateGravityVector(Vector3 position)
     {
         return -transform.up;
+    }
+
+    public override Vector3 CalculateGravityVector(Transform tr = null)
+    {
+        return CalculateGravityVector(Vector3.zero); // For cuboidal it's uniform
     }
 }

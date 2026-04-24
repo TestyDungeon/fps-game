@@ -12,21 +12,24 @@ public class Explosion : MonoBehaviour
     {
 
         var surrounding_objects = Physics.OverlapSphere(transform.position, gunConfig.explosionRadius, ~0, QueryTriggerInteraction.Ignore);
-        SoundManager.PlaySound(SoundType.ROCKETEXPLODE, transform.position, 0.1f);
+        SoundManager.PlaySound(SoundType.ROCKETEXPLODE, transform.position, 0.2f);
         foreach (var obj in surrounding_objects)
         {
             MovementController mc = obj.GetComponent<MovementController>();
-            Rigidbody rb = obj.GetComponent<Rigidbody>();
-            //if (mc != null)
-            //{
-            //    mc.addVelocity(explosionForce * (obj.transform.position - transform.position).normalized);
-            //}
-            IDamageable victim = obj.GetComponent<IDamageable>();
             float dist = (transform.position - obj.transform.position).magnitude;
+            Rigidbody rb = obj.GetComponent<Rigidbody>();
+            if (mc != null)
+            {
+                if(dist > (gunConfig.explosionRadius * 0.5))
+                    mc.addVelocity(gunConfig.force * (obj.transform.position - transform.position).normalized * 0.5f);
+                else
+                    mc.addVelocity(gunConfig.force * (obj.transform.position - transform.position).normalized);
+            }
+            IDamageable victim = obj.GetComponent<IDamageable>();
             if (victim != null && dist <= gunConfig.explosionRadius)
             {
                 if(obj.tag == "Player")
-                    victim.TakeDamage(PlayerHitResponder.Instance.transform, Mathf.FloorToInt(CalculateDamage(gunConfig.explosionRadius, dist) * 0.3f));
+                    victim.TakeDamage(PlayerHitResponder.Instance.transform, Mathf.FloorToInt(CalculateDamage(gunConfig.explosionRadius, dist) * 0.1f));
                 else
                     victim.TakeDamage(PlayerHitResponder.Instance.transform, CalculateDamage(gunConfig.explosionRadius, dist));
             }

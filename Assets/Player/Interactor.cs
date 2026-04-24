@@ -18,6 +18,7 @@ public class Interactor : MonoBehaviour
         {
             if(Physics.Raycast(origin.position, origin.forward, out RaycastHit hit, range, layerMask))
             {
+                Debug.Log("Name: " + hit.transform.name);
                 hit.transform.GetComponent<IInteractable>().Interact();
             }
         }

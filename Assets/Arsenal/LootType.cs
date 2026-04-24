@@ -2,8 +2,7 @@ namespace GravityGUN.Data
 {
     public enum LootType
     {
-        LightAmmo,
-        HeavyAmmo,
+        BulletAmmo,
         ShellAmmo,
         RocketAmmo,
 
@@ -15,6 +14,8 @@ namespace GravityGUN.Data
 
         Grapple,
         Item,
-        Guns
+        Guns,
+
+        UpgradePoint
     }
 }

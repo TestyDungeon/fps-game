@@ -1,10 +1,12 @@
 using UnityEngine.UI;
 using UnityEngine;
+using TMPro;
 
 public class HealthBarUI : MonoBehaviour
 {
     private Health playerHealth;
     [SerializeField] private Image fill;
+    [SerializeField] private TextMeshProUGUI text;
 
     void Awake()
     {
@@ -30,5 +32,6 @@ public class HealthBarUI : MonoBehaviour
     private void OnHealthChanged(float currentHealth, float maxHealth)
     {
         fill.fillAmount = currentHealth / maxHealth;
+        text.SetText(currentHealth.ToString());
     }
 }

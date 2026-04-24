@@ -15,7 +15,7 @@ public class PlayerMovement2 : MonoBehaviour
     //[SerializeField] private float friction = 5f;
     //[SerializeField] private float stopSpeed = 0.1f;
     //[SerializeField] private float jumpStrength = 0.35f;
-    [SerializeField] private PlayerConfig playerConfig;
+    [SerializeField] private PlayerMovementConfig playerConfig;
     private Vector3 playerVelocity = Vector3.zero;
     private bool isPlayingFootsteps = false;
     private bool jumped = false;

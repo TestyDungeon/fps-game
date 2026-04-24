@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: Default Player Config 2
   m_EditorClassIdentifier: 
   MAX_SPEED: 50
-  speed: 10
-  accel: 11
-  airMaxSpeed: 25
-  airAccel: 5
-  friction: 2
+  speed: 9
+  accel: 9
+  airMaxSpeed: 13
+  airAccel: 2
+  friction: 10
   stopSpeed: 0.8
-  jumpsAmount: 2
-  jumpStrength: 10
+  jumpsAmount: 1
+  jumpStrength: 8
   dashAmount: 2
   dashCooldown: 0.8

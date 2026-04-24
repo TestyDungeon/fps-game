@@ -40,7 +40,7 @@ MonoBehaviour:
     _Clip: {fileID: 7400000, guid: 7bdc443654ffcbf45b0f0b86b69d19ee, type: 2}
     _NormalizedStartTime: NaN
   enemyName: Melee Enemy
-  maxHealth: 90
+  maxHealth: 100
   chaseSpeed: 10
   wanderSpeed: 7
   rotationSpeed: 3

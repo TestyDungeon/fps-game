@@ -35,6 +35,7 @@ public class GunConfig : ScriptableObject
     public int ammoPerShot = 1;
     public float timeBetweenShots;
     public float inputDelay = 0f;
+    public int ricochet = 0;
 
     [Header("Projectile")]
     public GameObject projectilePrefab;
@@ -45,6 +46,10 @@ public class GunConfig : ScriptableObject
     public float explosionRadius = 10;
     public float explosionForceRB = 5;
     public float explosionDelay = 0;
+    public float ricoshetSpeedLoss = 0;
+
+    [Header("RigidBody")]
+    public float mass = 1;
 
     [Header("Alt")]
     public GunConfig altConfig;

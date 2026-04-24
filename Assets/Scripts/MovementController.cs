@@ -12,7 +12,7 @@ public class MovementController : MonoBehaviour
     [SerializeField] private bool GravityEnabled = true;
     [SerializeField] private bool GlobalGravityEnabled = true;
     [SerializeField] private float gravity;
-    private float gravityAlignSpeed = 0.05f;
+    private float gravityAlignSpeed = 0.5f;
     [SerializeField] private float gravityAlignStep = 0.01f;
     
     [SerializeField] private float maxClimbAngle = 55;
@@ -35,7 +35,7 @@ public class MovementController : MonoBehaviour
     int layerMaskEnemy = ~(1 << 6 | 1 << 12 | 1 << 10);
     int layerMaskPlayer = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10);
     int layerMaskPlayerDash = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10 | 1 << 8);
-    public int layerMask;
+    [HideInInspector] public int layerMask;
 
     
 
@@ -71,11 +71,6 @@ public class MovementController : MonoBehaviour
             transform.position - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
             capsuleColliderRadius,
             dashing ? layerMaskPlayerDash : layerMask, QueryTriggerInteraction.Ignore);
-
-            foreach(Collider col in cols)
-            {
-                
-            }
         
             transform.position += dashMove;
             externalVelocity = Vector3.zero;
@@ -126,23 +121,17 @@ public class MovementController : MonoBehaviour
 
         Vector3 pusherVelocity = Vector3.zero;
 
-        Collider[] overlap = Physics.OverlapCapsule(transform.position + transform.up * 0.5f, transform.position - transform.up * 0.5f, 0.6f, 1, QueryTriggerInteraction.Ignore);
-
-        if (overlap.Length > 0)
+        if (GroundCheck(out RaycastHit hit1) && hit1.transform.CompareTag("Pusher"))
         {
-            foreach (Collider x in overlap)
-            {
-                if (x.CompareTag("Pusher"))
-                {
-                    pusherVelocity = CollideAndSlide(transform.position + resolvedLateral + resolvedVertical, x.gameObject.GetComponent<Pusher>().getDelta(), false);
-                }
-            }
+            Debug.Log("Pusher");
+            pusherVelocity = CollideAndSlide(transform.position + resolvedLateral + resolvedVertical, hit1.transform.gameObject.GetComponent<Pusher>().getDelta(), false);
         }
-        Vector3 slopeSticking = Vector3.zero;
+        
+        
 
         
 
-        transform.position += resolvedVertical + resolvedLateral + pusherVelocity + slopeSticking;
+        transform.position += resolvedVertical + resolvedLateral + pusherVelocity;
 
         
         Vector3 totalResolved = resolvedLateral + resolvedVertical;
@@ -191,7 +180,7 @@ public class MovementController : MonoBehaviour
     {
         if (gravityAlignSpeed != 0.5)
         {
-            gravityAlignSpeed = Mathf.Lerp(gravityAlignSpeed, 0.5f, gravityAlignStep);
+            gravityAlignSpeed = Mathf.MoveTowards(gravityAlignSpeed, 0.5f, gravityAlignStep * Time.fixedDeltaTime);
         }
 
         Quaternion targetRotation = Quaternion.FromToRotation(transform.up, -gravityVec) * transform.rotation;

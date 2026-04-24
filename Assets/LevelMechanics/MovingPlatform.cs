@@ -1,28 +1,33 @@
 using UnityEngine;
+using DG.Tweening;
 
-public class MovingPlatform : MonoBehaviour
+public class MovingPlatform : MonoBehaviour, IInteractable
 {
     Vector3 start;
-    Vector3 end;
+    public Transform end;
     Vector3 to;
-    [SerializeField] Vector3 direction = Vector3.right;
-    [SerializeField] float distance = 10;
-    [SerializeField] float speed = 1;
+    [SerializeField] float duration = 1;
+
+    private bool dir = true;
 
     void Start()
     {
         start = transform.position;
-        end = start + direction * distance;
     }
 
-    // Update is called once per frame
-    void FixedUpdate()
-    {
-        if ((transform.position-start).sqrMagnitude < 1)
-            to = end;
-        else if ((transform.position-end).sqrMagnitude < 1)
-            to = start;
 
-        transform.position += (to - transform.position).normalized * speed * Time.fixedDeltaTime;
+    public void Interact()
+    {
+        Move(dir);
+        
+        dir = !dir;
+    }
+
+    private void Move(bool x)
+    {
+        if(x)
+            transform.DOMove(end.position, duration);
+        else
+            transform.DOMove(start, duration);
     }
 }

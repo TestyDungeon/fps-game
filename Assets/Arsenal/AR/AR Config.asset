@@ -45,6 +45,7 @@ MonoBehaviour:
   ammoPerShot: 1
   timeBetweenShots: 0
   inputDelay: 0
+  ricochet: 3
   projectilePrefab: {fileID: 0}
   explosionPrefab: {fileID: 0}
   projectileSpeed: 1
@@ -53,6 +54,8 @@ MonoBehaviour:
   explosionRadius: 10
   explosionForceRB: 5
   explosionDelay: 0
+  ricoshetSpeedLoss: 0
+  mass: 1
   altConfig: {fileID: 11400000, guid: 1e22c29b293bff248abcc040135f03c4, type: 2}
   references:
     version: 2
