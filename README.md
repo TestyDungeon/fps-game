@@ -7,7 +7,7 @@
 
 A gameplay-focused FPS prototype built in Unity, has fast-paced movement and combat systems combined with RPG-style progression.
 
-The project focuses on designing and implementing interconnected gameplay systems, including a custom character controller, dynamic gravity, combat mechanics, and player progression.
+It is focused on the design and implemention of interconnected gameplay systems, including a custom character controller, dynamic gravity, combat mechanics, and player progression.
 
 Built using C# with an emphasis on modular and extensible architecture.
 
@@ -26,8 +26,8 @@ Built using C# with an emphasis on modular and extensible architecture.
 - Dynamic gravity system allowing non-linear traversal
 
 ### Combat System
-- Hybrid combat: ranged (hitscan & projectile) and melee kick
-- Different ammo types
+- Hybrid combat: ranged (hitscan & projectile) and melee
+- Modular, data-driven gun system using ScriptableObjects
 - Health and damage system
 
 ### RPG & Progression
