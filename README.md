@@ -7,7 +7,9 @@
 
 A gameplay-focused FPS prototype built in Unity, has fast-paced movement and combat systems combined with RPG-style progression.
 
-It is focused on the design and implemention of interconnected gameplay systems, including a custom character controller, dynamic gravity, combat mechanics, and player progression.
+The idea behind combat loop was to force the player to get closer to the enemy. The player can get health and ammo from the enemies only after they enter a "stagger" state and the player uses melee to finish them off. This discourages the player from playing safely, instead, pushing them forward.
+
+It includes a custom character controller, dynamic gravity, combat mechanics, and player progression.
 
 Built using C# with an emphasis on modular and extensible architecture.
 
