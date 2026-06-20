@@ -411,6 +411,22 @@ MonoBehaviour:
   tint:
     m_OverrideState: 1
     m_Value: 0
+--- !u!114 &-709170188275486510
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c07d5b4d9326984db72c1c43b3520a8, type: 3}
+  m_Name: PosterizationPostProcessEffectVolumeComponent
+  m_EditorClassIdentifier: 
+  active: 1
+  steps:
+    m_OverrideState: 0
+    m_Value: 8
 --- !u!114 &-581120513425526550
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -433,6 +449,38 @@ MonoBehaviour:
   p31:
     m_OverrideState: 1
     m_Value: {r: 0, g: 0, b: 0, a: 1}
+--- !u!114 &-51848547105565633
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4ad92b2d4441c34c8fc9eb5b2e51fd2, type: 3}
+  m_Name: PixelationVol
+  m_EditorClassIdentifier: 
+  active: 1
+  m_Scale:
+    m_OverrideState: 1
+    m_Value: 1
+  m_Grid:
+    m_OverrideState: 1
+    m_Value: 1
+  m_Roundness:
+    m_OverrideState: 1
+    m_Value: 0.5
+  m_Color:
+    m_OverrideState: 1
+    m_Value: {r: 0, g: 0, b: 0, a: 0}
+    hdr: 0
+  m_Palette:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+  m_Impact:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -465,6 +513,8 @@ MonoBehaviour:
   - {fileID: -6288072647309666549}
   - {fileID: 7518938298396184218}
   - {fileID: -1410297666881709256}
+  - {fileID: -51848547105565633}
+  - {fileID: -709170188275486510}
 --- !u!114 &853819529557874667
 MonoBehaviour:
   m_ObjectHideFlags: 3

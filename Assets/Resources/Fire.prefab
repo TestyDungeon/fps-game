@@ -89,7 +89,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_BoundingSphereOverride: {x: 2.4938e-41, y: 2.524355e-29, z: 0, w: 2}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 7120185508742302811}
   - component: {fileID: 5874967349598310688}
   - component: {fileID: 7950627605133369067}
+  - component: {fileID: 74092799971053856}
   m_Layer: 0
   m_Name: Fire
   m_TagString: Untagged
@@ -732,8 +733,8 @@ ParticleSystem:
     rotation3D: 0
     gravityModifier:
       serializedVersion: 2
-      minMaxState: 3
-      scalar: -0.2
+      minMaxState: 0
+      scalar: 0
       minScalar: -0.3
       maxCurve:
         serializedVersion: 2
@@ -4955,3 +4956,33 @@ ParticleSystemRenderer:
   m_MeshWeighting2: 1
   m_MeshWeighting3: 1
   m_MaskInteraction: 0
+--- !u!114 &74092799971053856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9072612316011383069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 744b84e356878914189f22287337e605, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gravityMagnitude: 40
+  customGravityModifier:
+    m_Mode: 3
+    m_CurveMultiplier: 0
+    m_CurveMin:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_CurveMax:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    m_ConstantMin: -0.3
+    m_ConstantMax: -0.2

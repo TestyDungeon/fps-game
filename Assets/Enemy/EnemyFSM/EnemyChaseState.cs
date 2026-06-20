@@ -18,6 +18,10 @@ public class EnemyChaseState : EnemyBaseState
     {
         //enemy.RotateInDirection(enemy.agent.desiredVelocity);
         enemy.traversalBehavior.Chase(enemy);
+        if(enemy.IsTargetReachable() == false && enemy.GetCurrentState() == enemy.ChaseState)
+        {
+            enemy.SwitchState(enemy.WanderState);
+        }
         
     }
 

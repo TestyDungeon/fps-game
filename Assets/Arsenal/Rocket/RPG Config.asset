@@ -16,10 +16,10 @@ MonoBehaviour:
   bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
   layerMask:
     serializedVersion: 2
-    m_Bits: 32759
+    m_Bits: 32695
   shootSFX:
-  - {fileID: 8300000, guid: 39bd5d7999b58334f99dc4df184ddda2, type: 3}
-  volume: 0.6
+  - {fileID: 8300000, guid: c31c9936f57d57d4a8206a3e515d586e, type: 3}
+  volume: 1
   altStartSFX:
   - {fileID: 0}
   shootAnimation:

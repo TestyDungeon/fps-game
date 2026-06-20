@@ -19,6 +19,7 @@ public class EnemyConfig : ScriptableObject
     public float gravity = 30;
     public float falterDuration = 1.5f;
     public GameObject falterParticlesPrefab;
+    public float wanderRadius = 10f;
 
     [Header("Attack")]
     public int damage = 5;

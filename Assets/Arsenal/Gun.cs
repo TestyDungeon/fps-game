@@ -31,7 +31,7 @@ public class Gun : Item, IAmmoHandler
     protected Animator animator = null;
     protected AnimancerComponent animancer = null;
 
-    protected CameraRecoil cameraRecoil;
+    private CameraRecoil cameraRecoil;
 
     protected GunConfig originalConfig;
 
@@ -56,20 +56,17 @@ public class Gun : Item, IAmmoHandler
     void Awake()
     {
         originalConfig = gunConfig;
-        if (GetComponentInChildren<Animator>())
-        {
-            animator = GetComponentInChildren<Animator>();
-        }
-        if (GetComponentInChildren<AnimancerComponent>())
-        {
-            animancer = GetComponentInChildren<AnimancerComponent>();
-        }
+        animator = GetComponentInChildren<Animator>();
+        animancer = GetComponentInChildren<AnimancerComponent>();
+        lights = GetComponentsInChildren<Light>();
+        
         readyToShoot = true;
         readyToShootAlt = true;
     }
 
-    void Start()
+    protected override void Start()
     {
+        base.Start();
         playerStats = player.GetComponent<PlayerStats>();
         cameraRecoil = player.GetComponentInChildren<CameraRecoil>();
         lights = GetComponentsInChildren<Light>();
@@ -235,8 +232,7 @@ public class Gun : Item, IAmmoHandler
         {
             animator.Play("Shoot", 0, 0);
         }
-        ApplyRecoil();
-        cameraRecoil.ApplyRecoil();
+        cameraRecoil.ApplyRecoil(gunConfig.recoilAmountCamera, gunConfig.recoilSpeedCamera, gunConfig.returnSpeedCamera);
         SpawnMuzzleFlash();
         if(gunConfig.ammoPerShot != 0) 
             inventory.ConsumeAmmo(gunConfig.ammoType, gunConfig.ammoPerShot);
@@ -352,27 +348,13 @@ public class Gun : Item, IAmmoHandler
 
     private void SetLights(bool state)
     {
+        if (lights == null) return;
         foreach(Light light in lights)
         {
-            light.enabled = state;
+            if (light != null)
+                light.enabled = state;
         }
     }
-
-
-    //Recoil
-
-
-    
-
-    public void ApplyRecoil()
-    {
-        cameraRecoil.recoilAmount = gunConfig.recoilAmountCamera;
-        cameraRecoil.recoilSpeed = gunConfig.recoilSpeedCamera;
-        cameraRecoil.returnSpeed = gunConfig.returnSpeedCamera;
-        //Debug.Log("Recoil");
-    }
-
-    ///////////
     
 
     private void Knockback(Vector3 dir)

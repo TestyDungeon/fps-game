@@ -28,7 +28,7 @@ MonoBehaviour:
       _NormalizedTimes: []
       _Callbacks: []
       _Names: []
-    _Clip: {fileID: 1023992570608409904, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
+    _Clip: {fileID: 7400000, guid: 6ae6c197122e8774fbcb3a8cb1894f59, type: 2}
     _NormalizedStartTime: NaN
   attackAnimation:
     _FadeDuration: 0.25
@@ -43,11 +43,12 @@ MonoBehaviour:
   maxHealth: 300
   chaseSpeed: 4
   wanderSpeed: 4
-  rotationSpeed: 5
+  rotationSpeed: 3
   maxJumpDistance: 30
   gravity: 30
   falterDuration: 1
   falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
+  wanderRadius: 10
   damage: 5
   attackRange: 100
   startAttackRange: 30

@@ -10,7 +10,13 @@ public class Item : MonoBehaviour
     public string itemName;
     protected Inventory inventory;
 
-    protected bool canUse = false; 
+    protected bool canUse = false;
+    private Transform modelTransform;
+    protected virtual void Start()
+    {
+        Animator anim = GetComponentInChildren<Animator>();
+        modelTransform = anim != null ? anim.transform : transform;
+    }
 
     public void OnEquip()
     {

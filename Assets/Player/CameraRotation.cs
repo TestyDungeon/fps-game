@@ -15,7 +15,7 @@ public class CameraRotation : MonoBehaviour
 
     void Update()
     {
-        if(GameManager.Instance.inUI)
+        if(GameManager.Instance.inUI || GameManager.Instance.GetIsGameOver())
             return;
         Mouse();
         CameraTilt();

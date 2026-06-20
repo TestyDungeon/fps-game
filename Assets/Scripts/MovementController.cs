@@ -9,18 +9,22 @@ public class MovementController : MonoBehaviour
     private CapsuleCollider capsuleCollider;
     private float capsuleColliderRadius;
     private float capsuleColliderHeight;
+    [Header("Gravity")]
     [SerializeField] private bool GravityEnabled = true;
     [SerializeField] private bool GlobalGravityEnabled = true;
     [SerializeField] private float gravity;
-    private float gravityAlignSpeed = 0.5f;
+    private float currentGravityAlignSpeed = 0.5f;
+    [SerializeField] private float targetGravityAlignSpeed = 0.5f;
+    [SerializeField] private float gravityAlignSpeedOnFieldChange = 0.02f;
     [SerializeField] private float gravityAlignStep = 0.01f;
     
+    [Header("Parameters")]
     [SerializeField] private float maxClimbAngle = 55;
+    [SerializeField] private float stepHeight = 0.25f;
     private bool InGravityField = false;
     private int maxRecursion = 3;
     private int recursionDepth;
     float offset = 0.01f;
-    private float stepHeight = 0.25f;
     private float stepOffset;
     
     private Vector3 dashDir;
@@ -37,7 +41,7 @@ public class MovementController : MonoBehaviour
     int layerMaskPlayerDash = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10 | 1 << 8);
     [HideInInspector] public int layerMask;
 
-    
+    Coroutine dashCoroutine;
 
     void Awake()
     {
@@ -65,12 +69,13 @@ public class MovementController : MonoBehaviour
                 if(Vector3.Angle(hit.normal, dashDir) >= 90 && Vector3.Angle(transform.up, hit.normal) < maxClimbAngle)
                     dashDir = mathlib.ProjectOnPlaneOblique(dashDir, hit.normal, -transform.up);
             }
+            Debug.Log("Dash speed: " + dashSpeed);
             Vector3 dashMove = CollideAndSlide(transform.position, dashDir * dashSpeed * Time.fixedDeltaTime, false);
-            Collider[] cols = Physics.OverlapCapsule(
-            transform.position + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
-            transform.position - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
-            capsuleColliderRadius,
-            dashing ? layerMaskPlayerDash : layerMask, QueryTriggerInteraction.Ignore);
+            //Collider[] cols = Physics.OverlapCapsule(
+            //transform.position + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
+            //transform.position - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
+            //capsuleColliderRadius,
+            //dashing ? layerMaskPlayerDash : layerMask, QueryTriggerInteraction.Ignore);
         
             transform.position += dashMove;
             externalVelocity = Vector3.zero;
@@ -112,10 +117,34 @@ public class MovementController : MonoBehaviour
         recursionDepth = 0;
         Vector3 resolvedLateral = CollideAndSlide(transform.position, lateralDisp, false);
         
+        Vector3 stepUp = Vector3.zero;
+        if(resolvedLateral.sqrMagnitude < lateralDisp.sqrMagnitude)
+        {
+            recursionDepth = 0;
+            Vector3 resolvedLateralStepUp = CollideAndSlide(transform.position, transform.up * stepHeight, true);
+            recursionDepth = 0;
+            Vector3 resolvedLateralStepForward = CollideAndSlide(transform.position + resolvedLateralStepUp, lateralDisp, true);
+            if(resolvedLateralStepForward.sqrMagnitude > resolvedLateral.sqrMagnitude && Mathf.Approximately(resolvedLateralStepUp.sqrMagnitude, stepHeight * stepHeight))
+            {
+                recursionDepth = 0;
+                Vector3 resolvedLateralStepDown = CollideAndSlide(transform.position + resolvedLateralStepUp * 2 + resolvedLateralStepForward, -transform.up * stepHeight * 2, true);
+
+                Vector3 onStepPosition = (transform.position + resolvedLateralStepUp * 2) + resolvedLateralStepForward + resolvedLateralStepDown;
+                Vector3 onStepVector = onStepPosition - transform.position;
+
+                if(Vector3.ProjectOnPlane(onStepVector, transform.up).sqrMagnitude > resolvedLateral.sqrMagnitude)
+                {
+                    resolvedLateral = Vector3.ProjectOnPlane(onStepVector, transform.up);
+                    stepUp = Vector3.Project(onStepVector, transform.up);
+                }
+            }
+            
+        }
+        
 
         recursionDepth = 0;
-        Vector3 resolvedVertical = CollideAndSlide(transform.position + resolvedLateral, verticalDisp, true);
-        ResolvePenetration();
+        Vector3 resolvedVertical = CollideAndSlide(transform.position + resolvedLateral + stepUp, verticalDisp, true);
+        //ResolvePenetration();
         
         
 
@@ -131,7 +160,7 @@ public class MovementController : MonoBehaviour
 
         
 
-        transform.position += resolvedVertical + resolvedLateral + pusherVelocity;
+        transform.position += resolvedLateral + stepUp + resolvedVertical + pusherVelocity;
 
         
         Vector3 totalResolved = resolvedLateral + resolvedVertical;
@@ -178,13 +207,32 @@ public class MovementController : MonoBehaviour
 
     private void GravityOrientation()
     {
-        if (gravityAlignSpeed != 0.5)
+        if (currentGravityAlignSpeed != targetGravityAlignSpeed)
         {
-            gravityAlignSpeed = Mathf.MoveTowards(gravityAlignSpeed, 0.5f, gravityAlignStep * Time.fixedDeltaTime);
+            currentGravityAlignSpeed = Mathf.MoveTowards(currentGravityAlignSpeed, targetGravityAlignSpeed, gravityAlignStep * Time.fixedDeltaTime);
         }
 
+        //f (gravityAlignStep != 0.1)
+        //
+        //   gravityAlignStep = Mathf.MoveTowards(gravityAlignStep, 0.1f, 0.005f * Time.fixedDeltaTime);
+        //
+
+        Vector3 lowestPoint = transform.position - transform.up * (capsuleColliderHeight / 2);
         Quaternion targetRotation = Quaternion.FromToRotation(transform.up, -gravityVec) * transform.rotation;
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, gravityAlignSpeed);
+        
+        Quaternion currentRotation = transform.rotation;
+        Quaternion newRotation = Quaternion.Slerp(currentRotation, targetRotation, currentGravityAlignSpeed);
+        
+        // Calculate the offset from the lowest point
+        Vector3 offset = transform.position - lowestPoint;
+        
+        // Rotate the offset according to the rotation change
+        Quaternion deltaRotation = newRotation * Quaternion.Inverse(currentRotation);
+        Vector3 rotatedOffset = deltaRotation * offset;
+        
+        // Apply new rotation and adjusted position
+        transform.rotation = newRotation;
+        transform.position = lowestPoint + rotatedOffset;
     }
 
     private void ResolvePenetration(int recursion_ = 0)
@@ -212,6 +260,7 @@ public class MovementController : MonoBehaviour
                     out Vector3 dir, out float dis))
                 {
                     transform.position += dir * (dis + 0.1f);
+                    Debug.DrawRay(transform.position, dir * (dis + 0.1f), Color.cyan, 1);
                 }
             }
             ResolvePenetration(recursion + 1);
@@ -288,9 +337,29 @@ public class MovementController : MonoBehaviour
         gravityVec = x;
     }
 
+    public float GetGravityAlignSpeed()
+    {
+        return currentGravityAlignSpeed;
+    }
+
+    public float GetGravityAlignSpeedOnFieldChange()
+    {
+        return gravityAlignSpeedOnFieldChange;
+    }
+
     public void setGravityAlignSpeed(float x)
     {
-        gravityAlignSpeed = x;
+        currentGravityAlignSpeed = x;
+    }
+
+    public float GetGravityAlignStep()
+    {
+        return gravityAlignStep;
+    }
+
+    public void SetGravityAlignStep(float x)
+    {
+        gravityAlignStep = x;
     }
 
     public float getGravity()
@@ -313,15 +382,51 @@ public class MovementController : MonoBehaviour
         return InGravityField;
     }
 
+    public float GetMaxClimbAngle()
+    {
+        return maxClimbAngle;
+    }
+
+    public bool GetIsDashing()
+    {
+        return dashing;
+    }
+
+    public Vector3 GetDashDir()
+    {
+        return dashDir;
+    }
+
     public void SetDashDir(Vector3 dir)
     {
         dashDir = dir;
     }
 
+    public float GetDashSpeed()
+    {
+        return dashSpeed;
+    }
+
+    public void SetDashSpeed(float speed)
+    {
+        dashSpeed = speed;
+    }
+
     public void Dash(Vector3 dir, float dist, float speed, float postDashSpeed = 0)
     {
+        StopDash();
         SetDashDir(dir.normalized);
-        StartCoroutine(Dash(dist/speed, postDashSpeed));
+        dashCoroutine = StartCoroutine(Dash(dist/speed, postDashSpeed));
         dashSpeed = speed;
+    }
+
+    public void StopDash()
+    {
+        if (dashCoroutine != null)
+        {
+            StopCoroutine(dashCoroutine);
+            dashing = false;
+            dashCoroutine = null;
+        }
     }
 }

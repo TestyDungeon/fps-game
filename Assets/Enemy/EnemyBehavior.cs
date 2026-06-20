@@ -26,7 +26,7 @@ public class MeleeAttack : IAttackBehavior
         Debug.Log("Attack attempt");
 
         enemy.lookDir = enemy.GetVectorToTarget();
-        enemy.GoToTarget(25);
+        enemy.GoToTarget(15);
 
         enemy.canAttack = false;
         var state = enemy.animancer.Play(enemy.enemyConfig.attackAnimation, 0.1f, Animancer.FadeMode.FromStart);
@@ -43,7 +43,7 @@ public class MeleeAttack : IAttackBehavior
         events.Add(0.35f, () =>
         {
             enemy.lookDir = enemy.GetVectorToTarget();
-            enemy.MoveToTarget(15);
+            enemy.MoveToTarget(5);
         });
 
 
@@ -56,6 +56,7 @@ public class MeleeAttack : IAttackBehavior
         events.Add(0.8f, () =>
         {;
             enemy.StartCoroutine(enemy.ResetAttack());
+            //enemy.SwitchState(enemy.WanderState);
             //enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
         });
 
@@ -203,7 +204,7 @@ public class BorovAttack : IAttackBehavior
 
     public void ExecuteRangedAttack(EnemyStateManager enemy)
     {
-        if(attackCount >= 2)
+        if(attackCount >= 6)
         {
             attackCount = 0;
             enemy.SwitchState(enemy.WanderState);
@@ -241,7 +242,7 @@ public class BorovAttack : IAttackBehavior
         // Reset when animation ends
         events.OnEnd = () => 
         {
-            enemy.StartCoroutine(enemy.ResetAttack(enemy.WanderState));
+            enemy.StartCoroutine(enemy.ResetAttack());
             enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
         };
     }
@@ -450,6 +451,7 @@ public class RangedTraversal : ITraversalBehavior
         {
             chaseTimerStarted = false;
             enemy.SwitchState(enemy.AttackState);
+            return;
         }
         
     }

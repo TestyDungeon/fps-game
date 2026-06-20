@@ -51,3 +51,17 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &3522536869418046351
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed3a9acd9d2c93e4f9ba607930e01945, type: 3}
+  m_Name: PosterizationPostProcessEffectRendererFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  m_Material: {fileID: 2100000, guid: 78a08787ca30045abb69f6f7dd878e09, type: 2}

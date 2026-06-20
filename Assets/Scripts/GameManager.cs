@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
+    private bool isGameOver = false;
     [SerializeField] private GameObject gameOverUI;
     [SerializeField] private GameObject upgradeUI;
     [SerializeField] private GameObject grapple;
@@ -56,6 +57,7 @@ public class GameManager : MonoBehaviour
 
     public void GameOver()
     {
+        isGameOver = true;
         Time.timeScale = 0;
         gameOverUI.SetActive(true);
         Cursor.visible = true;
@@ -91,5 +93,10 @@ public class GameManager : MonoBehaviour
     public void PlayUIButtonSound(float volume)
     {
         SoundManager.PlaySound(SoundType.UI_BUTTON, volume);
+    }
+
+    public bool GetIsGameOver()
+    {
+        return isGameOver;
     }
 }

@@ -31,21 +31,22 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         state.lastDamageVector = (damagePoint - source.position).normalized * damageAmount * 2f;
         //state.SetTarget(source);
         SoundManager.PlaySound(state.enemyConfig.hurtSFX, transform.position, 0.01f, 0.7f);
-        //if(state.GetCurrentState() is EnemyFalterState && !state.movementController.GroundCheck())
-        //{
-//
-        //    Debug.Log("Current state " + state.GetCurrentState());
-        //    StartCoroutine(state.AirJuggle(transform.up * 0.1f * damageAmount));
-        //}
+        if(state.GetCurrentState() is EnemyFalterState && !state.movementController.GroundCheck())
+        {
+
+            Debug.Log("AIR JUGGLE");
+            state.movementController.addVelocity(transform.up * 0.1f * damageAmount);
+            //StartCoroutine(state.AirJuggle(transform.up * 0.1f * damageAmount));
+        }
         GameObject particles = Instantiate(bloodParticlesPrefab, damagePoint, Quaternion.LookRotation(normal));
         Destroy(particles, 2f);
         //SoundManager.PlaySound(SoundType.HURTENEMY, transform.position, 0.5f);
         int preHealth = enemyHealth.GetHealth();
-        if(state.GetCurrentState() is EnemyAirFalterState)
-        {
-            state.AirJuggle(damageAmount * 0.2f);
-            damageAmount *= 2;
-        }
+        //if(state.GetCurrentState() is EnemyAirFalterState)
+        //{
+        //    state.AirJuggle(damageAmount * 0.2f);
+        //    damageAmount *= 2;
+        //}
 
         if((damagePoint.y - transform.position.y) > 0.6)
             enemyHealth.TakeDamage(Mathf.RoundToInt(damageAmount * 1.25f));
@@ -57,10 +58,10 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
             enemyHealth.SetPosture(enemyHealth.GetPosture() - damageAmount * 2);
         
 
-        if(enemyHealth.GetHealth() < enemyHealth.GetMaxHealth() * 0.4)
-        {
-            state.SwitchState(state.StaggerState);
-        }
+        //if(enemyHealth.GetHealth() < enemyHealth.GetMaxHealth() * 0.4)
+        //{
+        //    state.SwitchState(state.StaggerState);
+        //}
 
         
 

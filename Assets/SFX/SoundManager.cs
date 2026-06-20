@@ -23,7 +23,11 @@ public enum SoundType
     KICK,
     AIR_WHOOSH,
     DOOR_OPEN,
-    UI_BUTTON
+    UI_BUTTON,
+    JUMP_PAD,
+    FALLING_WIND_START,
+    FALLING_WIND_LOOP,
+    GRAPPLE_END
 }
 
 [System.Serializable]
@@ -52,14 +56,54 @@ public class SoundManager : MonoBehaviour
     public static void PlaySound(SoundType sound, float volume = 1)
     {
         AudioClip[] clips = instance.soundList[(int)sound].Sounds;
-        AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+                AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
 
         instance.audioSource.PlayOneShot(randomClip, volume);
     }
 
+    public static AudioSource PlayLoop(SoundType sound, float volume = 1)
+    {
+        AudioClip[] clips = instance.soundList[(int)sound].Sounds;
+        AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+
+        GameObject tempAudio = new GameObject($"LoopAudio_{sound}");
+        tempAudio.transform.position = instance.transform.position;
+        AudioSource source = tempAudio.AddComponent<AudioSource>();
+
+        source.clip = randomClip;
+        source.volume = volume;
+        source.spatialBlend = 0f;
+        source.loop = true;
+        source.playOnAwake = false;
+
+        source.Play();
+
+        return source;
+    }
+
+    public static void StopLoop(AudioSource source)
+    {
+        if (source == null)
+            return;
+
+        source.Stop();
+        Destroy(source.gameObject);
+    }
+
     public static void PlaySound(AudioClip sound, float volume = 1)
     {
-        instance.audioSource.PlayOneShot(sound, volume);
+
+        GameObject tempAudio = new GameObject("TempAudio");
+        tempAudio.transform.position = instance.transform.position;
+        AudioSource source = tempAudio.AddComponent<AudioSource>();
+
+        source.clip = sound;
+        source.volume = volume;
+        source.spatialBlend = 0f;
+        source.playOnAwake = false;
+
+        source.Play();
+        Destroy(tempAudio, sound.length);
     }
 
     public static void PlaySound(AudioClip[] sounds, float volume = 1)
@@ -75,7 +119,7 @@ public class SoundManager : MonoBehaviour
     public static void PlaySound(SoundType sound, Vector3 position, float volume = 1, float spatialBlend = 1f)
     {
         AudioClip[] clips = instance.soundList[(int)sound].Sounds;
-        AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+                AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
 
         //AudioSource.PlayClipAtPoint(randomClip, position, volume);
 
@@ -96,7 +140,7 @@ public class SoundManager : MonoBehaviour
 
     public static void PlaySound(AudioClip sound, Vector3 position, float volume = 1, float spatialBlend = 1f)
     {
-        GameObject tempAudio = new GameObject("TempAudio");
+                GameObject tempAudio = new GameObject("TempAudio");
         tempAudio.transform.position = position;
         AudioSource source = tempAudio.AddComponent<AudioSource>();
 

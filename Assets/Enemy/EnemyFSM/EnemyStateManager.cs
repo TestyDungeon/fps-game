@@ -135,6 +135,8 @@ public class EnemyStateManager : MonoBehaviour
             targetTransform = PlayerHitResponder.Instance.transform;
         }
 
+        
+
         RotateInDirection();
 
         currentState.FixedUpdateState(this);
@@ -166,10 +168,12 @@ public class EnemyStateManager : MonoBehaviour
         if(currentState is EnemyDeadState)
             return;
 
-        
+        //Debug.Log("Switching to " + state + " from " + currentState);
+        StopAllCoroutines();
         currentState.ExitState(this);
         currentState = state;
         state.EnterState(this);
+
     }
 
     public IEnumerator SwitchState(EnemyBaseState state, float x, float y)
@@ -280,6 +284,7 @@ public class EnemyStateManager : MonoBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * enemyConfig.rotationSpeed);
     }
 
+
     public Vector3 GetRandomReachablePointOnNavMesh(float range = 10, int maxAttempts = 10)
     {
 
@@ -288,12 +293,10 @@ public class EnemyStateManager : MonoBehaviour
             Vector2 randomCircle = Random.insideUnitCircle * range;
             Vector3 randomPoint_ = transform.position + new Vector3(randomCircle.x, 0, randomCircle.y);
 
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(randomPoint_, out hit, range, NavMesh.AllAreas))
+            
+            if (NavMesh.SamplePosition(randomPoint_, out NavMeshHit hit, range, NavMesh.AllAreas))
             {
-                
-                NavMeshHit pathHit;
-                if (!NavMesh.Raycast(transform.position, hit.position, out pathHit, NavMesh.AllAreas))
+                if (!NavMesh.Raycast(transform.position, hit.position, out NavMeshHit pathHit, NavMesh.AllAreas))
                 {
                     return hit.position;
                 }
@@ -301,6 +304,29 @@ public class EnemyStateManager : MonoBehaviour
         }
 
         return transform.position;
+    }
+
+    public bool IsTargetReachable()
+    {
+        if (targetTransform == null) return false;
+
+        NavMeshPath path = new NavMeshPath();
+        if (agent.isActiveAndEnabled && agent.isOnNavMesh)
+        {
+            if (agent.CalculatePath(targetTransform.position, path))
+            {
+                return path.status == NavMeshPathStatus.PathComplete;
+            }
+        }
+        else
+        {
+            // Fallback if agent is disabled or not on mesh
+            if (NavMesh.CalculatePath(transform.position, targetTransform.position, NavMesh.AllAreas, path))
+            {
+                return path.status == NavMeshPathStatus.PathComplete;
+            }
+        }
+        return false;
     }
 
     public IEnumerator ResetAttack(EnemyBaseState state = null)
@@ -311,11 +337,12 @@ public class EnemyStateManager : MonoBehaviour
         canAttack = true;
     }
 
-    public void AirJuggle(float upForce)
+    public void Kicked(Vector3 dir)
     {
-        Debug.Log("Juggle");
-        enemyVelocity += transform.up * upForce;
-        
+        //Debug.Log("Juggle");
+        movementController.resetVelocity();
+        movementController.Dash(dir, 4f, 25, 10);
+        SwitchState(FalterState);
     }
 
     private Vector3 CalculateAvoidance()

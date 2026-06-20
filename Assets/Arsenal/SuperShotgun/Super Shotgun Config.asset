@@ -16,7 +16,7 @@ MonoBehaviour:
   bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
   layerMask:
     serializedVersion: 2
-    m_Bits: 32759
+    m_Bits: 32695
   shootSFX:
   - {fileID: 8300000, guid: f33b2c6bf77875f4abe27219ff48a9a2, type: 3}
   volume: 0.9

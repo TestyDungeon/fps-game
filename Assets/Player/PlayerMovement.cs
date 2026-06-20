@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -15,6 +16,7 @@ public class PlayerMovement : MonoBehaviour
     private bool jumped = false;
     private int jumpsLeft;
     private bool wasGrounded = true;
+    private float lastGroundedTime = 0;
 
     private int dashLeft;
 
@@ -33,6 +35,11 @@ public class PlayerMovement : MonoBehaviour
 
     private float speedMultiplier = 1f;
     private float airControlMultiplier = 1f;
+
+    private int dashInvokes = 2;
+
+    private AudioSource fallingWindStartAudioSource;
+    private AudioSource fallingWindLoopAudioSource;
 
     private void Awake()
     {
@@ -59,37 +66,28 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        SlopeHandling();
-        if(dashLeft < playerMovementConfig.dashAmount && !IsInvoking("ResetDash")/* && movementController.GroundCheck()*/)
+        if (movementController.GroundCheck())
         {
+           dashInvokes = 1; 
+        }
+        //SlopeHandling();
+        if (dashLeft < playerMovementConfig.dashAmount && !IsInvoking("ResetDash") && dashInvokes > 0)
+        {
+            Debug.Log("DashInvokes: " + dashInvokes);
             Invoke("ResetDash", playerMovementConfig.dashCooldown);
-            
+            dashInvokes--;
         }
         
         playerVelocity = movementController.Move(playerVelocity);
         if (movementController.GroundCheck() && playerVelocity.sqrMagnitude > 25)
             StartCoroutine(PlayFootStepsSound());
+
+        WindSound();
     }
 
     void LateUpdate()
     {
         wasGrounded = movementController.GroundCheck();
-    }
-
-
-    private void GroundMove()
-    {
-    
-        if (Physics.Raycast(transform.position, -Vector3.up, out RaycastHit hit, traceDistance, movementController.layerMask))
-        {
-            if (hit.normal.y >= 0.7f)
-            {
-                float dropDistance = hit.distance;
-                transform.position += -transform.up * dropDistance;
-                //playerVelocity += -transform.up * dropDistance;
-            }
-        }
-
     }
 
     private void AirMove()
@@ -131,7 +129,6 @@ public class PlayerMovement : MonoBehaviour
             
             Friction();
             Accelerate(wishdir, wishspeed);
-            //GroundMove();
         }
         else
         {
@@ -182,7 +179,6 @@ public class PlayerMovement : MonoBehaviour
 
         if(wishSpd > 0)
         {
-            // INTERPOLATE THE TOTAL VELOCITY VECTOR TOWARDS THE TARGET DIRECTION
             playerVelocity = Vector3.Lerp(playerVelocity, wishDir * targetSpeed + (playerVelocity - currentHorizontalVel), playerMovementConfig.airAccel * airControlMultiplier * Time.deltaTime);
         }
     }
@@ -256,11 +252,33 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void SlopeHandling()
+    private void WindSound()
     {
-        if (movementController.GroundCheck() && !jumped)
+        float volume = 0.25f;
+        if (movementController.GroundCheck())
         {
-            movementController.addVelocity(-transform.up * 0.25f);
+            lastGroundedTime = Time.time;
+            if (fallingWindLoopAudioSource != null)
+            {
+                SoundManager.StopLoop(fallingWindLoopAudioSource);
+            }
+        }
+        else
+        {
+            if(fallingWindLoopAudioSource == null)
+            {
+                Debug.Log("Falling");
+                fallingWindLoopAudioSource = SoundManager.PlayLoop(SoundType.FALLING_WIND_LOOP, volume);
+
+            }
+
+            if(fallingWindLoopAudioSource != null)
+            {
+                if(movementController.GetIsDashing() == false)
+                    fallingWindLoopAudioSource.volume = Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - playerMovementConfig.speed * 1.4f, 0) / 20) * volume;
+                //else
+                //    fallingWindLoopAudioSource.volume = Mathf.Clamp01(movementController.GetDashSpeed() / 40) * volume;
+            }
         }
     }
 
@@ -284,6 +302,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 SetDash(dashLeft - 1);
                 ExecuteDash();
+                dashInvokes--;
             }
         }
     }
@@ -298,7 +317,6 @@ public class PlayerMovement : MonoBehaviour
             dir = Vector3.ProjectOnPlane(playerCamera.transform.forward, transform.up).normalized;
         }
         movementController.resetVelocity();
-        movementController.SetDashDir(dir);
         movementController.Dash(dir, 4f, 40, 10);
         
         //movementController.addVelocity(dir * 10);
@@ -323,15 +341,17 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnGUI()
     {
-        //GUI.color = Color.green;
-        //var ups = playerVelocity;
-        //GUI.Label(new Rect(0, 15, 400, 100),
-        //"Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
-        //"Velocity: " + ups + "\n" +
-        //"Grounded: " + movementController.GroundCheck() + "\n" +
-        //"Jumps: " + jumpsLeft + "\n" +
-        //"Jumped?: " + jumped + "\n" +
-        //"Time Scale: " + Time.timeScale);
+        GUI.color = Color.green;
+        var ups = playerVelocity;
+        GUI.Label(new Rect(0, 15, 400, 200),
+        "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
+        "Velocity: " + ups + "\n" +
+        "Grounded: " + movementController.GroundCheck() + "\n" +
+        "Jumps: " + jumpsLeft + "\n" +
+        "Jumped?: " + jumped + "\n" +
+        "Gravity Align Speed: " + movementController.GetGravityAlignSpeed() + "\n" +
+        "Gravity Align Step: " + movementController.GetGravityAlignStep() + "\n" +
+        "Time Scale: " + Time.timeScale);
     }
 
     IEnumerator PlayFootStepsSound()

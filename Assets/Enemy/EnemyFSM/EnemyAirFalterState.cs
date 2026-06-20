@@ -13,7 +13,7 @@ public class EnemyAirFalterState : EnemyBaseState
         //GameObject.Destroy(enemy.gameObject, 1);
         //enemy.enemyAttack.StopAttack();
         enemy.SetNavmeshAgent(false);
-        enemy.AirJuggle(10);
+        //enemy.AirJuggle(10);
         Object.Destroy(Object.Instantiate(enemy.enemyConfig.falterParticlesPrefab, enemy.transform.position + enemy.transform.up * (enemy.height / 2), Quaternion.identity, enemy.transform), enemy.enemyConfig.falterDuration);
     }
 

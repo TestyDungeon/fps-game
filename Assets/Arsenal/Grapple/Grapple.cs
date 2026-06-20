@@ -6,33 +6,31 @@ public class Grapple : Item
 {
     private LineRenderer lr;
     [SerializeField] private float range;
-    [SerializeField] private float timeWindow;
-    [SerializeField] private float grappleDelay;
-    [SerializeField] private float minForce;
-    [SerializeField] private float maxForce;
-    [SerializeField] private float upForce;
+    [SerializeField] private float startSpeed = 10;
+    [SerializeField] private float maxSpeed = 30;
+    [SerializeField] private float acceleration = 2f;
     [SerializeField] private float animSpeed;
 
     [SerializeField] private Transform grappleStart;
     private float g;
-    private float speed = 5;
     private float currentSpeed;
     private bool grappling = false;
     private bool swinging;
+    private Transform targetTransform = null;
     private Vector3 grapplePoint;
-    Vector3 velocity;
     private RaycastHit hit;
     private MovementController mc = null;
-    private LayerMask layerMask = ~(1 << 9);
+    private AudioSource audioSource = null;
+    private LayerMask layerMask = ~(1 << 9 | 1 << 6 | 1 << 2);
 
     void Awake()
     {
-        currentSpeed = speed;
+        currentSpeed = startSpeed;
         lr = GetComponent<LineRenderer>();
         lr.enabled = false;
     }
 
-    void Start()
+    protected override void Start()
     {
         g = player.GetComponent<MovementController>().getGravity();
         mc = player.GetComponent<MovementController>();
@@ -40,54 +38,132 @@ public class Grapple : Item
 
     void Update()
     {
-        //Debug.Log(swinging);
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            //grappling = true;
             StartGrapple();
-            //player.GetComponent<MovementController>().resetVelocity();
-            velocity = mc.getVelocity();
-            currentSpeed = Vector3.Dot((grapplePoint - player.transform.position).normalized, velocity);
-        }
-        
-        if (Input.GetKey(KeyCode.Q))
-        {
-            LaunchGrapple();
+            
         }
 
-        if (Input.GetKeyUp(KeyCode.Q))
+        if(grappling && 
+        (Vector3.Distance(player.transform.position, grapplePoint) < 3 ||
+        Input.GetKeyDown(KeyCode.LeftShift) || 
+        Input.GetKeyDown(KeyCode.Space)))
         {
-            CancelInvoke();
-            if (grappling)
-            {
-                grappling = false;
-                StartCoroutine(AnimateLineOut(lr.GetPosition(1), grappleStart.position));
-                lr.enabled = false;
-                //Invoke(nameof(LaunchGrapple), grappleDelay);
-            }
-            //if (swinging)
-            //{
-            //    swinging = false;
-            //    StartCoroutine(AnimateLineOut(grapplePoint, grappleStart.position));
-            //    lr.enabled = false;
-            //}
+            StopGrapple();
         }
 
-        //if (swinging)
-        //{
-        //    Swing();
-        //}
-        
+    }
+
+    void FixedUpdate()
+    {
+        if(grappling)
+        {
+            UpdateGrapplePoint();
+            if(currentSpeed < maxSpeed)
+                currentSpeed *= Mathf.Pow(acceleration, Time.fixedDeltaTime);
+            Debug.Log("Current Speed: " + currentSpeed);
+            mc.Dash((grapplePoint - player.transform.position).normalized, Vector3.Distance(grapplePoint, player.transform.position) - 3, currentSpeed, currentSpeed);
+        }
     }
 
     void LateUpdate()
     {
-        //if (grappling || swinging)
-        //{
-           lr.SetPosition(0, grappleStart.position);
-        //}
+        if(grappling)
+        {
+            lr.SetPosition(1, grappleStart.position);
+            UpdateGrapplePoint();
+            lr.SetPosition(0, grapplePoint);
+        }
     }
 
+    
+
+
+    private void StartGrapple()
+    {
+        Vector3 dir = cameraPivot.forward;
+        if (Physics.Raycast(cameraPivot.position, dir, out hit, range, layerMask, QueryTriggerInteraction.Collide)
+        || Physics.SphereCast(cameraPivot.position, 2, dir, out hit, range, layerMask, QueryTriggerInteraction.Collide))
+        {
+            if (!hit.transform.CompareTag("Enemy"))
+                return;
+            targetTransform = hit.transform;
+            if(hit.transform.TryGetComponent(out EnemyStateManager esm))
+                esm.SwitchState(esm.FalterState);
+
+            audioSource = SoundManager.PlayLoop(SoundType.GRAPPLE, 0.4f);
+            grapplePoint = hit.point;
+            lr.enabled = true;
+            StartCoroutine(AnimateLineOut(grappleStart.position));
+        }
+    }
+
+    private void StopGrapple()
+    {
+        Vector3 dir = mc.GetDashDir();
+        if(Input.GetKeyDown(KeyCode.Space))
+        {
+            mc.StopDash();
+            mc.addVelocity(dir.normalized * currentSpeed);
+            SoundManager.PlaySound(SoundType.GRAPPLE_END, 0.4f);
+        }
+        else if(Input.GetKeyDown(KeyCode.LeftShift))
+        {
+            mc.StopDash();
+        }
+        else if(Vector3.Distance(player.transform.position, grapplePoint) < 3)
+        {
+            SoundManager.PlaySound(SoundType.GRAPPLE_END, 0.4f);
+        }
+        else
+        {
+            return;
+        }
+        CancelInvoke();
+        SoundManager.StopLoop(audioSource);
+        
+        targetTransform = null;
+        if (grappling)
+        {
+            grappling = false;
+            //StartCoroutine(AnimateLineOut(lr.GetPosition(1)));
+            lr.enabled = false;
+        }
+    }
+
+    private void LaunchGrapple()
+    {
+        currentSpeed = Mathf.Max(Vector3.Dot((grapplePoint - player.transform.position).normalized, mc.getVelocity()), startSpeed);
+        mc.resetVelocity();
+        mc.Dash((grapplePoint - player.transform.position).normalized, Vector3.Distance(grapplePoint, player.transform.position) - 3, currentSpeed, currentSpeed / 2);
+    }
+
+    private IEnumerator AnimateLineOut(Vector3 start)
+    {
+        Vector3 currentEnd = start;
+        while (currentEnd != grapplePoint)
+        {
+            UpdateGrapplePoint();
+            lr.SetPosition(1, grappleStart.position);
+            currentEnd = Vector3.MoveTowards(currentEnd, grapplePoint, animSpeed * Time.deltaTime);
+            lr.SetPosition(0, currentEnd);
+
+            yield return null;
+        }
+        LaunchGrapple();
+        grappling = true;
+    }
+
+
+    private void UpdateGrapplePoint()
+    {
+        if(targetTransform != null)
+        {
+            grapplePoint = targetTransform.position;
+            mc.SetDashDir((grapplePoint - player.transform.position).normalized);
+        }
+    }
+    /*
     private void Swing()
     {
         Vector3 vel = mc.getVelocity();
@@ -97,57 +173,6 @@ public class Grapple : Item
     }
 
 
-    private void StartGrapple()
-    {
-        Vector3 dir = cameraPivot.forward;
-        if (Physics.Raycast(cameraPivot.position, dir, out hit, range, layerMask, QueryTriggerInteraction.Ignore))
-        {
-            SoundManager.PlaySound(SoundType.GRAPPLE, 0.6f);
-            grapplePoint = hit.point;
-            lr.enabled = true;
-            grappling = true;
-            //Invoke("StopGrappling", timeWindow);
-            StartCoroutine(AnimateLineOut(grappleStart.position, grapplePoint));
-
-            
-            //Invoke(nameof(StopGrappling), 0.2f);
-
-        }
-
-    }
-
-    private void LaunchGrapple()
-    {
-        //player.GetComponent<PlayerMovement>().append_vel(Vector3.up * 10);\
-        //CancelInvoke();
-        //player.GetComponent<MovementController>().resetVelocity();
-        //player.GetComponent<MovementController>().addVelocity((grapplePoint - player.transform.position).normalized * 0.6f - (grapplePoint - player.transform.position) * 0.6f);
-        //player.GetComponent<MovementController>().SetVelocitySpeed(15);
-        currentSpeed += 20 * Time.deltaTime;
-        velocity = Vector3.Lerp(velocity, (grapplePoint - player.transform.position).normalized * currentSpeed, Time.deltaTime * 10);
-        player.GetComponent<MovementController>().setVelocityDir(velocity);
-
-    }
-
-    private IEnumerator AnimateLineOut(Vector3 start, Vector3 end)
-    {
-        float t = 0f;
-        Vector3 currentEnd = start;
-        while ((currentEnd - end).sqrMagnitude > 0.25)
-        {
-            t += Time.deltaTime * animSpeed;
-            //Debug.Log("OUT");
-            currentEnd += (end - currentEnd).normalized * Time.deltaTime * animSpeed;
-            //currentEnd = Vector3.Lerp(currentEnd, end, Time.deltaTime * animSpeed);
-            lr.SetPosition(1, currentEnd);
-
-            yield return null;
-        }
-        if(!grappling)
-            lr.enabled = false;
-    }
-
-    
     private void StopGrappling()
     {
         grappling = false;
@@ -208,5 +233,5 @@ public class Grapple : Item
         // Final velocity
         return 1.1f*(velocityXZ + up * velocityY);
     }
-
+    */
 }

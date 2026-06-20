@@ -10,41 +10,47 @@ public class Kick : Item, IAmmoHandler
     [SerializeField] private int damage = 10;
     [SerializeField] private float meleeRechargeCooldown = 12f;
     [SerializeField] private float meleeCooldown = 0.25f;
+
+    [Header("Camera Recoil")]
+    [SerializeField] private float recoilAmountCamera = 5;
+    [SerializeField] private float recoilSpeedCamera = 5;
+    [SerializeField] private float returnSpeedCamera = 5;
+
     private bool canMelee = true;
 
-    private BoxCollider shieldCollider;
-    private Vector3 shieldSize;
-    private BoxCollider swordCollider;
+    //private BoxCollider shieldCollider;
+    //private Vector3 shieldSize;
+    [SerializeField] private BoxCollider swordCollider;
     private Vector3 swordSize;
 
+    private Animator animator; 
     private AnimancerComponent animancer;
     [SerializeField] private ClipTransition attackAnimation;
     [SerializeField] private ClipTransition blockAnimation;
 
     private MovementController mc;
     private PlayerMovement pm;
-    Vector3 targetPos = new Vector3(0.5f, 0, -0.18f);
     private int layerMask = 1 << 6;
     private int swordLayerMask = (1 << 8);
     private bool blocking = false;
     private bool canParry = false;
     private bool parried = false;
 
-    
+    private CameraRecoil cameraRecoil;
     private Transform transform_;
 
-    void Start()
+    protected override void Start()
     {
-        
+        base.Start();
+        cameraRecoil = player.GetComponentInChildren<CameraRecoil>();
+        animator = GetComponentInChildren<Animator>();
         animancer = GetComponentInChildren<AnimancerComponent>();
         pm = player.GetComponent<PlayerMovement>();
         mc = player.GetComponent<MovementController>();
         transform_ = transform.parent;
-        shieldCollider = transform.parent.GetComponentInParent<BoxCollider>();
-        Debug.Log(shieldCollider.name);
-        swordCollider = shieldCollider.transform.parent.GetComponent<BoxCollider>();
+        //shieldCollider = transform.parent.GetComponentInParent<BoxCollider>();
         Debug.Log(swordCollider.name);
-        shieldSize = Vector3.Scale(shieldCollider.size, shieldCollider.transform.lossyScale);
+        //shieldSize = Vector3.Scale(shieldCollider.size, shieldCollider.transform.lossyScale);
         swordSize = Vector3.Scale(swordCollider.size, swordCollider.transform.lossyScale);
         startPos = transform.localPosition;
         inventory = FindAnyObjectByType<Inventory>();
@@ -116,6 +122,7 @@ public class Kick : Item, IAmmoHandler
     void FixedUpdate()
     {
         //Time.timeScale = Mathf.MoveTowards(Time.timeScale, 1, Time.fixedUnscaledDeltaTime * 0.01f);
+        /*
         if (blocking && canParry)
         {
             
@@ -142,7 +149,7 @@ public class Kick : Item, IAmmoHandler
                 }   
 
             }
-        }
+        }*/
 
     }
     
@@ -153,6 +160,8 @@ public class Kick : Item, IAmmoHandler
         var state = animancer.Play(attackAnimation, 0.1f, FadeMode.FromStart);
         state.Speed = 1;
         state.NormalizedTime = 0;
+        //animator.Play("Kick", 0, 0f);
+        cameraRecoil.ApplyRecoil(recoilAmountCamera, recoilSpeedCamera, returnSpeedCamera);
         SoundManager.PlaySound(SoundType.AIR_WHOOSH, 1);
         bool groundCheckPreDash;
         
@@ -172,7 +181,7 @@ public class Kick : Item, IAmmoHandler
             {
                 inventory.ConsumeAmmo(LootType.MeleeAmmo, 1);
             }
-            yield return new WaitForSeconds(0.15f);
+            yield return new WaitForSeconds(0.075f);
             SoundManager.PlaySound(SoundType.KICK, 0.25f);
             foreach(Collider col in cols)
             {
@@ -186,8 +195,7 @@ public class Kick : Item, IAmmoHandler
                     EnemyHitResponder ehr = col.GetComponent<EnemyHitResponder>();
                     ehr.TakeDamage(player.transform, damage, col.transform.position, col.transform.up);
                     ehr.CheckStaggerKill();
-                    esm.SwitchState(esm.FalterState);
-                    
+                    esm.Kicked(cameraPivot.forward);
                     Destroy(Instantiate(GameManager.Instance.ammoOrb, col.transform.position, Quaternion.identity), 8);
                 }
                 if(col.tag == "Bullet")

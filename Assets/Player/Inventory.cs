@@ -129,12 +129,10 @@ public class Inventory : MonoBehaviour
 
     public Item GetCurrent()
     {
-        if(slots.Length <= 0)
+        if (currentSlot < 0 || currentSlot >= slots.Length)
             return null;
-        if(slots[currentSlot] != null)
-            return slots[currentSlot];
-        else
-            return null;
+            
+        return slots[currentSlot];
     }
 
     public Item[] GetAlwaysOn()

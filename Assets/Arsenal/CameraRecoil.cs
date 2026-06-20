@@ -2,9 +2,9 @@ using UnityEngine;
 
 public class CameraRecoil : MonoBehaviour
 {
-    public float recoilAmount;
-    public float recoilSpeed;
-    public float returnSpeed;
+    private float recoilAmount;
+    private float recoilSpeed;
+    private float returnSpeed;
     private Vector3 currentRecoil;
     private Vector3 targetRecoil;
     private Transform transform_;
@@ -35,8 +35,11 @@ public class CameraRecoil : MonoBehaviour
         prePos = transform.localPosition;
     }
 
-    public void ApplyRecoil()
+    public void ApplyRecoil(float recoilAmount_, float recoilSpeed_, float returnSpeed_)
     {
+        recoilAmount = recoilAmount_;
+        recoilSpeed = recoilSpeed_;
+        returnSpeed = returnSpeed_;
         targetRecoil += new Vector3(-recoilAmount, 0, 0);
     }
 }
