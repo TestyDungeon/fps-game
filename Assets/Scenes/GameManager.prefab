@@ -57,9 +57,12 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
+  textUI: {fileID: 0}
+  mapStartText: '"Double-Edged World"'
   decalParticles: {fileID: 7853611592334637332, guid: 7f3531d146f3dd346aed4e2e9ec920ff, type: 3}
   enemySpawnParticles: {fileID: 4455388225042208415, guid: 67e480219ceeca4419fbe282d916f7e3, type: 3}
   bloodParticles: {fileID: 1257824197082757075, guid: 7791c853dcbbc0b4691e3eaeaae37e47, type: 3}
+  whiteMaterial: {fileID: 2100000, guid: 3a79f89acd229744f880c7b2dc19e18a, type: 2}
   healthOrb: {fileID: 7767593974562298775, guid: 20505471413c58c458e99127037c9606, type: 3}
   ammoOrb: {fileID: 7767593974562298775, guid: 05e4bb90e62494d48970700356abf33f, type: 3}
   inUI: 0

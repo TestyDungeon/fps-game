@@ -13,7 +13,7 @@ public class Projectile : MonoBehaviour
     private SphereCollider sphereCollider;
 
     private Vector3 direction;
-    int layerMask = ~(0 << 3);
+    int layerMask;
 
     [HideInInspector] public Vector3 gravityVec = Vector3.down;
 
@@ -36,6 +36,7 @@ public class Projectile : MonoBehaviour
         origin = projectileStart.position;
         pre_pos = transform.position;
         ricochetCount = gunConfig.ricochet;
+        layerMask = gunConfig.layerMask;
         Invoke("EnableMesh", 0.01f);
         rb = GetComponent<Rigidbody>();
 
@@ -66,6 +67,7 @@ public class Projectile : MonoBehaviour
         vertical += gunConfig.gravityMult * Time.deltaTime;
         if(Vector3.Distance(pre_pos, origin) >= gunConfig.range || didHit)
         {
+            Debug.Log(didHit + " ONCOLLISION: " + (didHit ? hit.collider.gameObject.layer.ToString() : "none"));
             collided = true;
             if(ricochetCount > 0 && didHit)
             {
@@ -86,6 +88,7 @@ public class Projectile : MonoBehaviour
     {
         if(rb != null && !collided)
         {
+            rb.linearVelocity = rb.linearVelocity / 2;
             collided = true;
             Invoke("Detonate", gunConfig.explosionDelay);
         }

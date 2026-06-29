@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Dynamic;
 using UnityEngine;
 
 public class EnemyIdleState : EnemyBaseState
@@ -15,7 +13,7 @@ public class EnemyIdleState : EnemyBaseState
 
 
         //enemy.GoInDirection(enemy.idleDir * enemy.enemyConfig.idleSpeed);
-        enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
+        enemy.animator.Play("Idle");
         //Debug.Log("IM AN IDLE ENEMY");
         if (enemy.IsTargetInSight())
         {

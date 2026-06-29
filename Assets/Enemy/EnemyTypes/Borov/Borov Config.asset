@@ -58,7 +58,7 @@ MonoBehaviour:
   layerMask:
     serializedVersion: 2
     m_Bits: 8
-  projectile: {fileID: 8304178073877007807, guid: 654ad15eb3b06334db576c48f205db1e, type: 3}
+  projectile: {fileID: 8304178073877007807, guid: 00c58adbb48abb444b0c196db879fba0, type: 3}
   bulletTrailPrefab: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 04de150e4a1134c45847782808dd5346, type: 3}
   deathParticle: {fileID: 1257824197082757075, guid: 9da7d6d6616b57e409c5840fbfa18c06, type: 3}

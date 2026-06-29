@@ -11,19 +11,24 @@ public class Door : MonoBehaviour, IInteractable
     private Vector3 closedPos;
     private bool closed = true;
 
+    [SerializeField] private float animSpeed = 0.3f;
+    [SerializeField] private float activationRange = 4;
+    [SerializeField] private float openRange = 4;
+    [SerializeField] private Vector3 direction = Vector3.up;
+
     void Awake()
     {
         if(key != null)
             locked = true;
-
-        boxCollider = GetComponent<BoxCollider>();
-        size = Vector3.Scale(boxCollider.size, boxCollider.transform.lossyScale);
+        //Renderer renderer = GetComponent<Renderer>();
+        //size = renderer.bounds.size; 
+        //size = Vector3.Scale(boxCollider.size, transform.lossyScale);
         closedPos = transform.position;
     }
 
     void FixedUpdate()
     {
-        if (Vector3.Distance(PlayerHitResponder.Instance.transform.position, closedPos) < 4)
+        if (Vector3.Distance(PlayerHitResponder.Instance.transform.position, closedPos) < activationRange)
         {
             Interact();
         }
@@ -45,17 +50,17 @@ public class Door : MonoBehaviour, IInteractable
 
     public void Open(bool state)
     {
-        if (state && state == closed)
+        if (state == true && state == closed)
         {
             
             SoundManager.PlaySound(SoundType.DOOR_OPEN, transform.position, 0.2f, 0.9f);
-            transform.DOMove(closedPos + Vector3.up * size.y, 0.3f);
+            transform.DOMove(closedPos + direction * openRange, animSpeed).SetEase(Ease.Linear);
             closed = false;
         }
         else if(!state)
         {
             
-            transform.DOMove(closedPos, 0.3f);
+            transform.DOMove(closedPos, animSpeed).SetEase(Ease.Linear);
             closed = true;
         }
     }

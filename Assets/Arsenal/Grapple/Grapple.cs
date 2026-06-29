@@ -40,6 +40,10 @@ public class Grapple : Item
     {
         if (Input.GetKeyDown(KeyCode.Q))
         {
+            if (grappling)
+            {
+                StopGrapple();
+            }
             StartGrapple();
             
         }
@@ -114,10 +118,6 @@ public class Grapple : Item
         else if(Vector3.Distance(player.transform.position, grapplePoint) < 3)
         {
             SoundManager.PlaySound(SoundType.GRAPPLE_END, 0.4f);
-        }
-        else
-        {
-            return;
         }
         CancelInvoke();
         SoundManager.StopLoop(audioSource);

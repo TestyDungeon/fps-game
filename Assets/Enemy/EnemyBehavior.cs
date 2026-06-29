@@ -37,19 +37,26 @@ public class MeleeAttack : IAttackBehavior
 
         events.Add(0.25f, () =>
         {
-            Hit(enemy);
+            enemy.MoveToTarget(8);
         });
 
         events.Add(0.35f, () =>
         {
+            Hit(enemy);
             enemy.lookDir = enemy.GetVectorToTarget();
-            enemy.MoveToTarget(5);
+            enemy.MoveToTarget(8);
         });
 
 
         events.Add(0.5f, () =>
         {;
+            enemy.MoveToTarget(8);
+        });
+
+        events.Add(0.65f, () =>
+        {;
             Hit(enemy);
+            enemy.MoveToTarget(8);
         });
 
         // Reset when animation ends

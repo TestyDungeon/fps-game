@@ -5,6 +5,7 @@ using UnityEngine;
 public class GravityField : MonoBehaviour
 {
     protected float rbGravity = 20f;
+    [SerializeField] private bool blendable = false;
     public static int gravityLayerMask = 1 << 9;
 
     void Start()
@@ -21,6 +22,11 @@ public class GravityField : MonoBehaviour
                 ApplyRigidbodyGravity(rb);
             }
         }
+    }
+
+    public bool GetIsBlendable()
+    {
+        return blendable;
     }
 
 

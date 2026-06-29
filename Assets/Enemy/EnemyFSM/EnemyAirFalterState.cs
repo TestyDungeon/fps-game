@@ -5,7 +5,7 @@ public class EnemyAirFalterState : EnemyBaseState
     private float startTime;
     public override void EnterState(EnemyStateManager enemy)
     {
-        Debug.Log("IM A FALTERED ENEMY");
+        Debug.Log("IM A AIR FALTERED ENEMY");
         startTime = Time.time;
         //if(enemy.animator != null)
         //    enemy.animator.CrossFade("Air", 1, 0, 0);

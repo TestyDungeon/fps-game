@@ -19,7 +19,7 @@ MonoBehaviour:
       _NormalizedTimes: []
       _Callbacks: []
       _Names: []
-    _Clip: {fileID: 7400000, guid: 792532e59b9eda9438bbf63e6dc93b44, type: 2}
+    _Clip: {fileID: 7400000, guid: 983fbd86c5e27b145b6ede812e81ec52, type: 2}
     _NormalizedStartTime: NaN
   walkAnimation:
     _FadeDuration: 0.25
@@ -28,7 +28,7 @@ MonoBehaviour:
       _NormalizedTimes: []
       _Callbacks: []
       _Names: []
-    _Clip: {fileID: 7400000, guid: 78d903a93f69f3545b551fa76962191e, type: 2}
+    _Clip: {fileID: 7400000, guid: 3df99b13676bc5b479658bfe4c24f990, type: 2}
     _NormalizedStartTime: NaN
   attackAnimation:
     _FadeDuration: 0.25
@@ -37,7 +37,7 @@ MonoBehaviour:
       _NormalizedTimes: []
       _Callbacks: []
       _Names: []
-    _Clip: {fileID: 7400000, guid: 7bdc443654ffcbf45b0f0b86b69d19ee, type: 2}
+    _Clip: {fileID: 7400000, guid: 52c421976c541064caafb50e15a1c5d7, type: 2}
     _NormalizedStartTime: NaN
   enemyName: Melee Enemy
   maxHealth: 100
@@ -51,8 +51,8 @@ MonoBehaviour:
   wanderRadius: 10
   damage: 12
   attackRange: 3
-  startAttackRange: 4
-  endAttackRange: 4
+  startAttackRange: 2.5
+  endAttackRange: 3
   meleeAttackRange: 3
   attackCooldown: 0
   layerMask:

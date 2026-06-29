@@ -1,4 +1,4 @@
-// Animancer // https://kybernetik.com.au/animancer // Copyright 2018-2025 Kybernetik //
+// Animancer // https://kybernetik.com.au/animancer // Copyright 2018-2026 Kybernetik //
 
 #if ! UNITY_EDITOR
 #pragma warning disable CS0618 // Type or member is obsolete (for Animancer Events in Animancer Lite).
@@ -149,7 +149,11 @@ namespace Animancer
 
         /// <inheritdoc/>
         public override Transition<SequenceState> Clone(CloneContext context)
-            => new TransitionSequence();
+        {
+            var clone = new TransitionSequence();
+            clone.CopyFrom(this, context);
+            return clone;
+        }
 
         /// <inheritdoc/>
         public sealed override void CopyFrom(Transition<SequenceState> copyFrom, CloneContext context)
@@ -161,7 +165,7 @@ namespace Animancer
             base.CopyFrom(copyFrom, context);
 
             _NormalizedStartTime = copyFrom._NormalizedStartTime;
-            AnimancerUtilities.CopyExactArray(copyFrom._Transitions, ref _Transitions);
+            context.CloneArray(copyFrom._Transitions, ref _Transitions);
         }
 
         /************************************************************************************************************************/

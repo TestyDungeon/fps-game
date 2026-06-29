@@ -45,7 +45,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 761c0bf7865d2ba429f347d0fc322022, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentTrack: {fileID: 8300000, guid: a007b52d89b22584790f78241cd113c4, type: 3}
+  tracks:
+  - {fileID: 8300000, guid: cd664c4c313031447b96d9927502e9a4, type: 3}
+  - {fileID: 8300000, guid: ac08740ca881d644f9c441529d4313ef, type: 3}
+  - {fileID: 8300000, guid: d2aa4df8dad49054ca0ad085f499c18c, type: 3}
+  - {fileID: 8300000, guid: 89c382767c549ab43b94aa4917b25d1f, type: 3}
+  - {fileID: 8300000, guid: da992178ffe58be41b1da5e578a8c6e6, type: 3}
+  currentTrack: {fileID: 0}
+  volume: 0.1
 --- !u!82 &1489488838519369916
 AudioSource:
   m_ObjectHideFlags: 0

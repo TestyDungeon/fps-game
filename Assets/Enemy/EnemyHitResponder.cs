@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Health))]
@@ -7,7 +8,9 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
     private Health enemyHealth;
     private EnemyStateManager state;
     private float lastFalter;
-    
+    private Material originalMaterial;
+    private MaterialPropertyBlock _mpb;
+    private static readonly int ColorID = Shader.PropertyToID("_BaseColor");
 
 
     void Awake()
@@ -15,6 +18,12 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         enemyHealth = GetComponent<Health>();
         state = GetComponent<EnemyStateManager>();
         lastFalter = -10f;
+        _mpb = new MaterialPropertyBlock();
+    }
+    void Start()
+    {
+        originalMaterial = state.smrs[0].materials[0]; 
+        
     }
 
     void FixedUpdate()
@@ -53,6 +62,10 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         else
             enemyHealth.TakeDamage(damageAmount);
 
+        
+        
+        StartCoroutine(WhiteMaterialChange());
+
 
         if(Time.time - lastFalter > 4)
             enemyHealth.SetPosture(enemyHealth.GetPosture() - damageAmount * 2);
@@ -90,5 +103,45 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
             Destroy(orb, 8);
             enemyHealth.TakeDamage(enemyHealth.GetMaxHealth());
         }
+    }
+
+    private IEnumerator WhiteMaterialChange()
+    {
+        SetColor(Color.white);
+        yield return new WaitForSeconds(10f);
+        SetColor(Color.white * 0f); // or restore original via GetPropertyBlock first
+        foreach (SkinnedMeshRenderer smr in state.smrs)
+        {
+            smr.SetPropertyBlock(null, 0);
+
+        }
+        
+        
+
+        
+
+        //foreach (SkinnedMeshRenderer smr in state.smrs)
+        //{
+        //    Material[] mats = smr.materials;
+        //    mats[0] = GameManager.Instance.whiteMaterial;
+        //    smr.materials = mats;
+        //}
+        //yield return new WaitForSeconds(0.1f);
+        //foreach (SkinnedMeshRenderer smr in state.smrs)
+        //{
+        //    Material[] mats = smr.materials;
+        //    mats[0] = originalMaterial;
+        //    smr.materials = mats;
+        //}
+    }
+    private void SetColor(Color color)
+    {
+        foreach (SkinnedMeshRenderer smr in state.smrs)
+        {
+            smr.GetPropertyBlock(_mpb, 0);
+            _mpb.SetColor(ColorID, color);
+            smr.SetPropertyBlock(_mpb, 0);
+        }
+
     }
 }

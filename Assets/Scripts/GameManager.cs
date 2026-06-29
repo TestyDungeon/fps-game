@@ -10,9 +10,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject grapple;
     [SerializeField] private GameObject[] itemsPos;
     [SerializeField] private GameObject[] UI;
+    public TextUI textUI;
+    [SerializeField] private string mapStartText;
     public GameObject decalParticles;
     public GameObject enemySpawnParticles;
     public GameObject bloodParticles;
+    public Material whiteMaterial;
     [Header("Drops")]
     public GameObject healthOrb;
     public GameObject ammoOrb;
@@ -29,6 +32,7 @@ public class GameManager : MonoBehaviour
     {
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+        textUI.SetText(mapStartText);
     }
 
     void Update()

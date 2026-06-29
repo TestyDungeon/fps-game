@@ -40,6 +40,8 @@ public class PlayerMovement : MonoBehaviour
 
     private AudioSource fallingWindStartAudioSource;
     private AudioSource fallingWindLoopAudioSource;
+    private float windStartDelay = 1f;
+    private float windStartMult = 0;
 
     private void Awake()
     {
@@ -57,7 +59,10 @@ public class PlayerMovement : MonoBehaviour
     {
         
         if(!wasGrounded && movementController.GroundCheck())
-            SoundManager.PlaySound(SoundType.LANDING, 0.6f);
+        {
+            Debug.Log("Percent " + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14));
+            SoundManager.PlaySound(SoundType.LANDING, 0.6f + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14) * 0.4f);
+        }
         AirMove();
         JumpButton();
         FOV();
@@ -219,7 +224,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void JumpButton()
     {
-        if ((!movementController.GroundCheck(out RaycastHit hit) || Vector3.Angle(hit.normal, transform.up) > 75) && jumpsLeft <= 0)
+        if ((!movementController.GroundCheck(out RaycastHit hit) || Vector3.Angle(hit.normal, transform.up) > 65) && jumpsLeft <= 0)
         {
             
             return;
@@ -257,6 +262,7 @@ public class PlayerMovement : MonoBehaviour
         float volume = 0.25f;
         if (movementController.GroundCheck())
         {
+            windStartMult = 0;
             lastGroundedTime = Time.time;
             if (fallingWindLoopAudioSource != null)
             {
@@ -268,14 +274,15 @@ public class PlayerMovement : MonoBehaviour
             if(fallingWindLoopAudioSource == null)
             {
                 Debug.Log("Falling");
-                fallingWindLoopAudioSource = SoundManager.PlayLoop(SoundType.FALLING_WIND_LOOP, volume);
+                fallingWindLoopAudioSource = SoundManager.PlayLoop(SoundType.FALLING_WIND_LOOP, 0, UnityEngine.Random.Range(0, 3));
 
             }
 
             if(fallingWindLoopAudioSource != null)
             {
                 if(movementController.GetIsDashing() == false)
-                    fallingWindLoopAudioSource.volume = Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - playerMovementConfig.speed * 1.4f, 0) / 20) * volume;
+                    fallingWindLoopAudioSource.volume = Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude, 0) / 25) * volume * windStartMult;
+                windStartMult = Mathf.MoveTowards(windStartMult, 1, windStartDelay * Time.fixedDeltaTime);
                 //else
                 //    fallingWindLoopAudioSource.volume = Mathf.Clamp01(movementController.GetDashSpeed() / 40) * volume;
             }

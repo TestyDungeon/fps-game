@@ -17,20 +17,28 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
     {
         if (other.CompareTag("GravityField"))
         {
+            bool addedNewField = false;
             if (!gravityFields.Contains(other))
+            {
                 gravityFields.Add(other);
+                addedNewField = true;
+            }
 
-                // If we don't have a field yet, or the current one is spherical (low priority)
-                // and the new one is non-spherical (high priority), swap it.
-                if (prioritizedField == null || 
-                    (prioritizedField.GetComponent<GravityFieldSpherical>() != null && 
-                     other.GetComponent<GravityFieldSpherical>() == null))
-                {
-                    prioritizedField = other;
-                    mc.setInGravityField(true);
-                    mc.setGravityAlignSpeed(mc.GetGravityAlignSpeedOnFieldChange());
-                    mc.setGravityVec(other.GetComponent<GravityField>().CalculateGravityVector(transform));
-                }
+            // If we don't have a field yet, or the current one is spherical (low priority)
+            // and the new one is non-spherical (high priority), swap it.
+            if (prioritizedField == null || 
+                (prioritizedField.GetComponent<GravityFieldSpherical>() != null && 
+                 other.GetComponent<GravityFieldSpherical>() == null))
+            {
+                prioritizedField = other;
+            }
+
+            if (addedNewField)
+            {
+                mc.setInGravityField(true);
+                mc.setGravityAlignSpeed(mc.GetGravityAlignSpeedOnFieldChange());
+                mc.setGravityVec(CalculateIntersectingVectors(prioritizedField ?? other));
+            }
 
         }
     }
@@ -42,7 +50,7 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
             if (other == prioritizedField)
             {
                 mc.setInGravityField(true);
-                mc.setGravityVec(other.GetComponent<GravityField>().CalculateGravityVector(transform));
+                mc.setGravityVec(CalculateIntersectingVectors(other));
             }
         }
     }
@@ -88,5 +96,17 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
                 }
             }
         }
+    }
+
+    private Vector3 CalculateIntersectingVectors(Collider other)
+    {
+        Vector3 finalVector = Vector3.zero;
+        foreach(Collider col in gravityFields)
+        {
+            if(col.TryGetComponent<GravityField>(out GravityField gf) && gf.GetIsBlendable())
+                finalVector += gf.CalculateGravityVector(transform);
+        }
+        finalVector = finalVector.normalized;
+        return finalVector != Vector3.zero ? finalVector : other.GetComponent<GravityField>().CalculateGravityVector(transform);
     }
 }

@@ -1,5 +1,7 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public class LevelTrigger : MonoBehaviour
 {
@@ -7,9 +9,12 @@ public class LevelTrigger : MonoBehaviour
     private bool triggered = false;
     public Door[] doorsToUnlockOnEnd;
     public Door[] doorsToCloseOnStart;
-    public AudioClip soundOnEnter;
-    public bool killOnEnter = false;
+    public AudioClip soundOnEnter = null;
     public float volume = 1;
+    public bool killOnEnter = false;
+    public UnityEvent onEnter;
+    public UnityEvent onExit;
+    [SerializeField] private string sceneToLoad = null;
 
     [System.Serializable]
     public class Encounter
@@ -40,20 +45,33 @@ public class LevelTrigger : MonoBehaviour
             triggered = true;
             OnEnter();
         }
+        else if(triggered && boxCollider.ClosestPoint(PlayerHitResponder.Instance.transform.position) != PlayerHitResponder.Instance.transform.position)
+        {
+            triggered = false;
+            OnExit();
+        }
     }
 
     private void OnEnter()
     {
+        if(sceneToLoad != null)
+            SceneManager.LoadScene(sceneToLoad);
+        onEnter?.Invoke();
         StartCoroutine(StartEncounter());
         PlaySoundOnEnter();
         if(killOnEnter)
             PlayerHitResponder.Instance.TakeDamage(transform, 10000);
     }
 
+    private void OnExit()
+    {
+        onExit?.Invoke();
+    }
+
     private void PlaySoundOnEnter()
     {
-        
-        SoundManager.PlaySound(soundOnEnter, volume);
+        if(soundOnEnter != null)
+            SoundManager.PlaySound(soundOnEnter, volume);
         
     }
 

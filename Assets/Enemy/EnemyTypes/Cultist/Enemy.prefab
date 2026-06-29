@@ -88,20 +88,19 @@ MonoBehaviour:
   movementController: {fileID: 0}
   height: 0
   agent: {fileID: 0}
-  idleDir: {x: 0, y: 0, z: 0}
   targetTransform: {fileID: 0}
   lookDir: {x: 0, y: 0, z: 1}
   audioSource: {fileID: 0}
   sight: 0
   animator: {fileID: 0}
-  randomPosition: {x: 0, y: 0, z: 0}
   enemyVelocity: {x: 0, y: 0, z: 0}
-  enemyExternalVelocity: {x: 0, y: 0, z: 0}
   playerLayer: 8
+  rigidbodies: []
   canAttack: 1
   animancer: {fileID: 0}
   smrs: []
   staggerMat: {fileID: 0}
+  lastDamageVector: {x: 0, y: 0, z: 0}
 --- !u!114 &7040681531250887915
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117,8 +116,11 @@ MonoBehaviour:
   GravityEnabled: 1
   GlobalGravityEnabled: 1
   gravity: 30
+  targetGravityAlignSpeed: 0.5
+  gravityAlignSpeedOnFieldChange: 0.02
   gravityAlignStep: 0.01
   maxClimbAngle: 55
+  stepHeight: 0.25
   layerMask: 0
 --- !u!114 &7003416070906085369
 MonoBehaviour:
@@ -132,7 +134,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac4632f9cc63cc74a8a591b2bf4bde2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
   health: 0
   isAlive: 1
 --- !u!114 &3820048920577739092
@@ -711,9 +712,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7263114630687901862}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8582353131324930672}
     - targetCorrespondingSourceObject: {fileID: 430108200687226393, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4180474003419282426}
@@ -940,21 +938,6 @@ Animator:
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
 --- !u!114 &7263114630687901862
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 151699138524746471}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ad50f81b1d25c441943c37a89ba23f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _Animator: {fileID: 7160089809520909043}
-  _Transitions: {fileID: 0}
-  _ActionOnDisable: 0
---- !u!114 &8582353131324930672
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class MusicManager : MonoBehaviour
 {
-    private AudioClip[] tracks;
+    [SerializeField] private AudioClip[] tracks;
     [SerializeField] private AudioClip currentTrack;
     [SerializeField] private float volume = 1;
     private AudioSource audioSource;
@@ -18,10 +18,11 @@ public class MusicManager : MonoBehaviour
     {
         if (audioSource.isPlaying == false)
         {
+            currentTrack = tracks[Random.Range(0, tracks.Length)];
             Debug.Log("AUDIO");
             audioSource.clip = currentTrack;
             audioSource.volume = volume;
-            audioSource.loop = true;
+            audioSource.loop = false;
             audioSource.Play();
         }
     }

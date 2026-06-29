@@ -4,7 +4,7 @@ public class EnemyChaseState : EnemyBaseState
 {
     public override void EnterState(EnemyStateManager enemy)
     {
-        Debug.Log("IM A CHASING ENEMY");
+        //Debug.Log("IM A CHASING ENEMY");
         //if(enemy.animator != null)
         //{
         //    enemy.animator.speed = 2;

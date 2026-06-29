@@ -89,7 +89,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 2.4938e-41, y: 2.524355e-29, z: 0, w: 2}
+  m_BoundingSphereOverride: {x: 2.4953e-41, y: 2.524355e-29, z: 0, w: 9.577777e+11}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
@@ -3945,7 +3945,7 @@ ParticleSystem:
     enabled: 1
     ratio: 0.4
     light: {fileID: 8916135504672767825}
-    randomDistribution: 1
+    randomDistribution: 0
     color: 1
     range: 1
     intensity: 1
@@ -4055,7 +4055,7 @@ ParticleSystem:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
-    maxLights: 20
+    maxLights: 4
   TrailModule:
     enabled: 0
     mode: 0

@@ -190,7 +190,7 @@ public class EnemyStateManager : MonoBehaviour
             agent.destination = targetTransform.position;
             if(IsInvoking("GetRandomReachablePointOnNavMesh"))
                 CancelInvoke("GetRandomReachablePointOnNavMesh");
-            animancer.Play(enemyConfig.walkAnimation);
+            animator.Play("Walk");
             GoInDirection(agent.desiredVelocity.normalized * speed + CalculateAvoidance());
             lookDir = agent.desiredVelocity;
         }
@@ -269,7 +269,7 @@ public class EnemyStateManager : MonoBehaviour
     {
         if((transform.position-dest).sqrMagnitude > 4)
         {
-            animancer.Play(enemyConfig.walkAnimation);
+            animator.Play("Walk");
             agent.destination = dest;
             GoInDirection(Vector3.ProjectOnPlane(agent.desiredVelocity, transform.up).normalized * speed + CalculateAvoidance());
         }

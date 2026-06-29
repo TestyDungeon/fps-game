@@ -27,7 +27,8 @@ public enum SoundType
     JUMP_PAD,
     FALLING_WIND_START,
     FALLING_WIND_LOOP,
-    GRAPPLE_END
+    GRAPPLE_END,
+    GRAPPLE_POINT
 }
 
 [System.Serializable]
@@ -61,7 +62,7 @@ public class SoundManager : MonoBehaviour
         instance.audioSource.PlayOneShot(randomClip, volume);
     }
 
-    public static AudioSource PlayLoop(SoundType sound, float volume = 1)
+    public static AudioSource PlayLoop(SoundType sound, float volume = 1, float start = 0)
     {
         AudioClip[] clips = instance.soundList[(int)sound].Sounds;
         AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
@@ -69,12 +70,13 @@ public class SoundManager : MonoBehaviour
         GameObject tempAudio = new GameObject($"LoopAudio_{sound}");
         tempAudio.transform.position = instance.transform.position;
         AudioSource source = tempAudio.AddComponent<AudioSource>();
-
+        
         source.clip = randomClip;
         source.volume = volume;
         source.spatialBlend = 0f;
         source.loop = true;
         source.playOnAwake = false;
+        source.time = Mathf.Clamp(start, 0f, Mathf.Max(0f, randomClip.length - 0.01f));
 
         source.Play();
 

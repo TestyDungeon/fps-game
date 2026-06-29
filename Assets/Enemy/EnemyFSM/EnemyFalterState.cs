@@ -22,7 +22,12 @@ public class EnemyFalterState : EnemyBaseState
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
         if(enemy.animator != null)
-            enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
+        {
+            if(enemy.movementController.GroundCheck())
+                enemy.animator.Play("Idle");
+            else
+                enemy.animator.Play("Air");
+        }
 
         if (switchCoroutine != null) return;
 
