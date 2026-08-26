@@ -4,7 +4,7 @@ public class EnemyChaseState : EnemyBaseState
 {
     public override void EnterState(EnemyStateManager enemy)
     {
-        //Debug.Log("IM A CHASING ENEMY");
+        Debug.Log("IM A CHASING ENEMY");
         //if(enemy.animator != null)
         //{
         //    enemy.animator.speed = 2;
@@ -16,9 +16,10 @@ public class EnemyChaseState : EnemyBaseState
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
+        //Debug.Log("Reach" + enemy.IsTargetReachable()  + "OnNavmesh" + enemy.agent.isOnNavMesh);
         //enemy.RotateInDirection(enemy.agent.desiredVelocity);
         enemy.traversalBehavior.Chase(enemy);
-        if(enemy.IsTargetReachable() == false && enemy.GetCurrentState() == enemy.ChaseState)
+        if(!enemy.IsTargetReachable() && enemy.IsOnUsableNavMesh() && enemy.GetCurrentState() == enemy.ChaseState)
         {
             enemy.SwitchState(enemy.WanderState);
         }

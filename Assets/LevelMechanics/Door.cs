@@ -12,9 +12,10 @@ public class Door : MonoBehaviour, IInteractable
     private bool closed = true;
 
     [SerializeField] private float animSpeed = 0.3f;
-    [SerializeField] private float activationRange = 4;
     [SerializeField] private float openRange = 4;
     [SerializeField] private Vector3 direction = Vector3.up;
+    [SerializeField] private bool automatic = false;
+    [SerializeField] private float activationRange = 4;
 
     void Awake()
     {
@@ -28,14 +29,18 @@ public class Door : MonoBehaviour, IInteractable
 
     void FixedUpdate()
     {
-        if (Vector3.Distance(PlayerHitResponder.Instance.transform.position, closedPos) < activationRange)
+        if (automatic)
         {
-            Interact();
+            if (Vector3.Distance(PlayerMovement.Instance.transform.position, closedPos) < activationRange)
+            {
+                Interact();
+            }
+            else
+            {
+                Open(false);
+            }
         }
-        else
-        {
-            Open(false);
-        }
+        
     }
 
     public void Interact()  

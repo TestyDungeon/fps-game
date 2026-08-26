@@ -6,8 +6,9 @@ using UnityEditor;
 public class ParticleDetectCollision : MonoBehaviour
 {
     public GameObject DecalPrefab;
-    public ParticleSystem part;
+    [HideInInspector] public ParticleSystem part;
     public List<ParticleCollisionEvent> collisionEvents;
+    public int decalIndex = 0;
 
     void Start()
     {
@@ -28,12 +29,8 @@ public class ParticleDetectCollision : MonoBehaviour
 
     void SpawnDecal(ParticleCollisionEvent item)
     {
-        //We give negative normal as forward, so the decal is rotated like we wanted
         Quaternion qua = Quaternion.LookRotation(-item.normal, Vector3.up);
-
-        GameObject spawnedDecal = Instantiate(DecalPrefab, item.intersection, qua);
-        spawnedDecal.transform.localScale *= Random.Range(1f, 2f);
-
+        DecalManager.Instance.PositionDecal(decalIndex, item.intersection, qua, Vector3.one * Random.Range(1f, 2f));
 
     }
 

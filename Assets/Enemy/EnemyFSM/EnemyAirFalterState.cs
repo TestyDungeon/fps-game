@@ -19,8 +19,8 @@ public class EnemyAirFalterState : EnemyBaseState
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
-        if(enemy.animancer != null)
-            enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
+        if(enemy.animator != null)
+            enemy.animator.Play("Idle");
         //enemy.movementController.Move(enemy.enemyVelocity); 
         if((Time.time - startTime) > 0.1f && enemy.movementController.GroundCheck())
         {

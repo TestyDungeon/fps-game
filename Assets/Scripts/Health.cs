@@ -22,8 +22,8 @@ public class Health : MonoBehaviour
     {
         //Debug.Log("DAMAGE: " + damageAmount);
         //Debug.Log(name + " health: " + health);
-        if (health <= 0)
-            return;
+        //if (health <= 0)
+        //    return;
         SetHealth(health - damageAmount);
 
         if (health <= 0 && isAlive)

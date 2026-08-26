@@ -1,14 +1,8 @@
 using UnityEngine;
-using Animancer;
 
 [CreateAssetMenu(fileName = "Enemy Config", menuName = "AI/Enemy Config")]
 public class EnemyConfig : ScriptableObject
 {
-    [Header("Animations")]
-    public ClipTransition idleAnimation;
-    public ClipTransition walkAnimation;
-    public ClipTransition attackAnimation;
-
     [Header("Stats")]
     public string enemyName;
     public int maxHealth;
@@ -28,7 +22,7 @@ public class EnemyConfig : ScriptableObject
     public float endAttackRange = 132;
     public float meleeAttackRange = 3;
     public float attackCooldown = 2;
-    public LayerMask layerMask = 1 << 3 << 8;
+    [HideInInspector] public LayerMask layerMask = 1 << 3 | 1 << 8;
     public GameObject projectile;
 
     [Header("Weapon (for Ranged)")]

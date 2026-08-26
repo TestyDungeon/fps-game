@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using Animancer;
 using GravityGUN.Data;
 
 public class Kick : Item, IAmmoHandler
@@ -24,14 +23,10 @@ public class Kick : Item, IAmmoHandler
     private Vector3 swordSize;
 
     private Animator animator; 
-    private AnimancerComponent animancer;
-    [SerializeField] private ClipTransition attackAnimation;
-    [SerializeField] private ClipTransition blockAnimation;
-
+ 
     private MovementController mc;
-    private PlayerMovement pm;
     private int layerMask = 1 << 6;
-    private int swordLayerMask = (1 << 8);
+    private int swordLayerMask = (1 << 15);
     private bool blocking = false;
     private bool canParry = false;
     private bool parried = false;
@@ -44,16 +39,14 @@ public class Kick : Item, IAmmoHandler
         base.Start();
         cameraRecoil = player.GetComponentInChildren<CameraRecoil>();
         animator = GetComponentInChildren<Animator>();
-        animancer = GetComponentInChildren<AnimancerComponent>();
         pm = player.GetComponent<PlayerMovement>();
         mc = player.GetComponent<MovementController>();
         transform_ = transform.parent;
         //shieldCollider = transform.parent.GetComponentInParent<BoxCollider>();
-        Debug.Log(swordCollider.name);
+        //Debug.Log(swordCollider.name);
         //shieldSize = Vector3.Scale(shieldCollider.size, shieldCollider.transform.lossyScale);
         swordSize = Vector3.Scale(swordCollider.size, swordCollider.transform.lossyScale);
         startPos = transform.localPosition;
-        inventory = FindAnyObjectByType<Inventory>();
         
     }
 
@@ -157,9 +150,7 @@ public class Kick : Item, IAmmoHandler
 
     private IEnumerator ExecuteAttack(bool stagger = false)
     {
-        var state = animancer.Play(attackAnimation, 0.1f, FadeMode.FromStart);
-        state.Speed = 1;
-        state.NormalizedTime = 0;
+        animator.Play("Attack", 0, 0);
         //animator.Play("Kick", 0, 0f);
         cameraRecoil.ApplyRecoil(recoilAmountCamera, recoilSpeedCamera, returnSpeedCamera);
         SoundManager.PlaySound(SoundType.AIR_WHOOSH, 1);
@@ -170,33 +161,37 @@ public class Kick : Item, IAmmoHandler
 
         
         Vector3 worldCenter = swordCollider.transform.TransformPoint(swordCollider.center);
-        cols = Physics.OverlapBox(worldCenter, swordSize / 2, Quaternion.identity, swordLayerMask);
+        cols = Physics.OverlapBox(worldCenter, swordSize / 2, Quaternion.identity, swordLayerMask, QueryTriggerInteraction.Collide);
         
 
         if(cols.Length > 0)
         {
             groundCheckPreDash = mc.GroundCheck();
             //mc.Dash(!groundCheckPreDash ? transform.forward : Vector3.ProjectOnPlane(transform.forward, player.transform.up).normalized, Mathf.Clamp((cols[0].transform.position - transform.position).magnitude - 0.5f, 0, 100), 30, 0);
-            if (!stagger)
-            {
-                inventory.ConsumeAmmo(LootType.MeleeAmmo, 1);
-            }
-            yield return new WaitForSeconds(0.075f);
+            //if (!stagger)
+            //{
+            //    inventory.ConsumeAmmo(LootType.MeleeAmmo, 1);
+            //}
+            yield return new WaitForSeconds(0.035f);
             SoundManager.PlaySound(SoundType.KICK, 0.25f);
             foreach(Collider col in cols)
             {
                 if(col.tag == "Enemy")
                 {
-                    EnemyStateManager esm = col.GetComponent<EnemyStateManager>();
+                    EnemyStateManager esm = col.GetComponentInParent<EnemyStateManager>();
+                    EnemyHitResponder ehr = col.GetComponentInParent<EnemyHitResponder>();
                     
                     
                     Time.timeScale = 0.5f;
                     StartCoroutine(TimeReset());
-                    EnemyHitResponder ehr = col.GetComponent<EnemyHitResponder>();
                     ehr.TakeDamage(player.transform, damage, col.transform.position, col.transform.up);
                     ehr.CheckStaggerKill();
                     esm.Kicked(cameraPivot.forward);
-                    Destroy(Instantiate(GameManager.Instance.ammoOrb, col.transform.position, Quaternion.identity), 8);
+                    if(esm.GetCurrentState() != esm.DeadState)
+                    {
+                        inventory.ConsumeAmmo(LootType.MeleeAmmo, 1);
+                        Destroy(Instantiate(GameManager.Instance.ammoOrb, col.transform.position, Quaternion.identity), 8);
+                    }
                 }
                 if(col.tag == "Bullet")
                 {
@@ -223,7 +218,7 @@ public class Kick : Item, IAmmoHandler
     private bool CheckStagger()
     {
         Vector3 worldCenter = swordCollider.transform.TransformPoint(swordCollider.center);
-        Collider[] cols = Physics.OverlapBox(worldCenter, swordSize / 2);
+        Collider[] cols = Physics.OverlapBox(worldCenter, swordSize / 2, swordCollider.transform.rotation, layerMask);
         if(cols.Length > 0)
         {
             foreach(Collider col in cols)

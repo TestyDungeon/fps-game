@@ -8,8 +8,7 @@ using UnityEngine;
 
 public interface IAttackBehavior
 {
-    public void ExecuteRangedAttack(EnemyStateManager enemy);
-    public void ExecuteMeleeAttack(EnemyStateManager enemy);
+    public void ExecuteAttack(EnemyStateManager enemy);
     public bool IsInAttackRange(EnemyStateManager enemy);
 }
 
@@ -18,7 +17,7 @@ public class MeleeAttack : IAttackBehavior
 {
     float lastAttackTime = 0;
     
-    public void ExecuteRangedAttack(EnemyStateManager enemy)
+    public void ExecuteAttack(EnemyStateManager enemy)
     {
         
         //if(!canAttack)
@@ -29,11 +28,11 @@ public class MeleeAttack : IAttackBehavior
         enemy.GoToTarget(15);
 
         enemy.canAttack = false;
-        var state = enemy.animancer.Play(enemy.enemyConfig.attackAnimation, 0.1f, Animancer.FadeMode.FromStart);
-    
-        state.Events(this, out var events);
+        enemy.animator.Play("Attack", 0, 0f);
 
-        events.Clear(); // Important if replaying animation
+        var events = enemy.animEvents.GetEvents("Attack");
+
+        events.Clear();
 
         events.Add(0.25f, () =>
         {
@@ -43,28 +42,25 @@ public class MeleeAttack : IAttackBehavior
         events.Add(0.35f, () =>
         {
             Hit(enemy);
+
             enemy.lookDir = enemy.GetVectorToTarget();
             enemy.MoveToTarget(8);
         });
 
-
         events.Add(0.5f, () =>
-        {;
+        {
             enemy.MoveToTarget(8);
         });
 
         events.Add(0.65f, () =>
-        {;
+        {
             Hit(enemy);
             enemy.MoveToTarget(8);
         });
 
-        // Reset when animation ends
         events.Add(0.8f, () =>
-        {;
+        {
             enemy.StartCoroutine(enemy.ResetAttack());
-            //enemy.SwitchState(enemy.WanderState);
-            //enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
         });
 
         
@@ -80,22 +76,22 @@ public class MeleeAttack : IAttackBehavior
             enemy.meleeAttackCollider.transform.position,
             enemy.meleeAttackCollider.size * enemy.transform.lossyScale.x / 2,
             enemy.meleeAttackCollider.transform.rotation,
-            1 << 3 | 1 << 8,
-            QueryTriggerInteraction.Ignore
+            1 << 15 | 1 << 16,
+            QueryTriggerInteraction.Collide
         );
         
-        Debug.Log("Size: " + enemy.meleeAttackCollider.size * enemy.transform.lossyScale.x / 2);
         foreach(Collider col in cols)
         {
+            if(col.transform.parent == enemy.transform)
+                continue;
+
             if(col.transform != enemy.transform)
-                col.transform.GetComponent<IDamageable>().TakeDamage(enemy.transform, enemy.enemyConfig.damage, col.transform.position);
+                col.transform.GetComponent<IDamageable>().TakeDamage(enemy.transform, enemy.enemyConfig.damage, col.transform.position, enemy.transform.position - col.transform.position);
+            //if(col.transform.TryGetComponent<MovementController>(out MovementController mc))
+            //{
+            //    mc.addVelocity((col.transform.position - enemy.transform.position).normalized * 10f);
+            //}
         }
-    }
-
-
-    public void ExecuteMeleeAttack(EnemyStateManager enemy)
-    {
-        return;
     }
 
 
@@ -120,19 +116,18 @@ public class RangedAttack : IAttackBehavior
     private Vector3 target;
     private int attackCount = 0;
 
-    public void ExecuteRangedAttack(EnemyStateManager enemy)
+    public void ExecuteAttack(EnemyStateManager enemy)
     {
         enemy.canAttack = false;
          // Set immediately to prevent duplicate calls from FixedUpdate
         SoundManager.PlaySound(enemy.enemyConfig.preAttackSFX, enemy.transform.position, 1, 0.96f);
         attackCount++;
         target = enemy.targetTransform.position;
-        var state = enemy.animancer.Play(enemy.enemyConfig.attackAnimation, 0.1f, Animancer.FadeMode.FromStart);
-        Debug.Log("RANGED");
+        enemy.animator.Play("Attack", 0, 0f);
 
-        state.Events(this, out var events);
+        var events = enemy.animEvents.GetEvents("Attack");
 
-        events.Clear(); // Important if replaying animation
+        events.Clear();
 
         events.Add(0.5f, () =>
         {
@@ -143,21 +138,17 @@ public class RangedAttack : IAttackBehavior
         });
 
         // Reset when animation ends
-        events.OnEnd = () => 
+        events.Add(1f, () => 
         {
             
             enemy.StartCoroutine(enemy.ResetAttack(enemy.WanderState));
-            enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
+            enemy.animator.Play("Attack");
 
-        };
+        });
 
 
     }
 
-    public void ExecuteMeleeAttack(EnemyStateManager enemy)
-    {
-        return;
-    }
 
     public bool IsInAttackRange(EnemyStateManager enemy)
     {
@@ -209,7 +200,7 @@ public class BorovAttack : IAttackBehavior
     private Vector3 target;
     private int attackCount = 0;
 
-    public void ExecuteRangedAttack(EnemyStateManager enemy)
+    public void ExecuteAttack(EnemyStateManager enemy)
     {
         if(attackCount >= 6)
         {
@@ -223,11 +214,11 @@ public class BorovAttack : IAttackBehavior
         enemy.lookDir = enemy.GetVectorToTarget();
         target = enemy.targetTransform.position;
         enemy.canAttack = false;
-        var state = enemy.animancer.Play(enemy.enemyConfig.attackAnimation, 0.1f, Animancer.FadeMode.FromStart);
-    
-        state.Events(this, out var events);
+        enemy.animator.Play("Attack", 0, 0f);
 
-        events.Clear(); // Important if replaying animation
+        var events = enemy.animEvents.GetEvents("Attack");
+
+        events.Clear();
 
         events.Add(0.25f, () =>
         {
@@ -247,16 +238,11 @@ public class BorovAttack : IAttackBehavior
         });
 
         // Reset when animation ends
-        events.OnEnd = () => 
+        events.Add(1f, () => 
         {
             enemy.StartCoroutine(enemy.ResetAttack());
-            enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
-        };
-    }
-
-    public void ExecuteMeleeAttack(EnemyStateManager enemy)
-    {
-        return;
+            enemy.animator.Play("Attack");
+        });
     }
 
     public bool IsInAttackRange(EnemyStateManager enemy)
@@ -311,7 +297,7 @@ public class BorovAttack : IAttackBehavior
 public class PiggyAttack : IAttackBehavior
 {
     
-    public void ExecuteRangedAttack(EnemyStateManager enemy)
+    public void ExecuteAttack(EnemyStateManager enemy)
     {
         
         
@@ -321,11 +307,11 @@ public class PiggyAttack : IAttackBehavior
         enemy.lookDir = enemy.GetVectorToTarget();
 
         enemy.canAttack = false;
-        var state = enemy.animancer.Play(enemy.enemyConfig.attackAnimation, 0.1f, Animancer.FadeMode.FromStart);
-    
-        state.Events(this, out var events);
+        enemy.animator.Play("Attack", 0, 0f);
 
-        events.Clear(); // Important if replaying animation
+        var events = enemy.animEvents.GetEvents("Attack");
+
+        events.Clear();
 
         events.Add(0.25f, () =>
         {
@@ -366,11 +352,11 @@ public class PiggyAttack : IAttackBehavior
         });
 
         // Reset when animation ends
-        events.OnEnd = () => 
+        events.Add(1f, () => 
         {
             enemy.StartCoroutine(enemy.ResetAttack());
-            enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
-        };
+            enemy.animator.Play("Attack");
+        });
 
         
     }
@@ -383,10 +369,6 @@ public class PiggyAttack : IAttackBehavior
         }
     }
 
-    public void ExecuteMeleeAttack(EnemyStateManager enemy)
-    {
-        return;
-    }
 
 
     public bool IsInAttackRange(EnemyStateManager enemy)
@@ -449,7 +431,7 @@ public class RangedTraversal : ITraversalBehavior
 
         if(enemy.GetVectorToTarget().sqrMagnitude > enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange 
         || !enemy.IsTargetInSight() 
-        || Physics.Raycast(enemy.bulletStart[0].position, enemy.targetTransform.position, 100 ,enemy.playerLayer) 
+        || !Physics.BoxCast(enemy.bulletStart[0].position, new Vector3(0.5f, 0.5f, 0.5f), enemy.targetTransform.position - enemy.bulletStart[0].position, enemy.transform.rotation, enemy.enemyConfig.attackRange, enemy.playerLayer) 
         /*|| (Time.time - chaseStartTime) < chaseDuration*/)
         {
             enemy.GoToTarget(enemy.enemyConfig.chaseSpeed);

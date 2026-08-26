@@ -27,8 +27,8 @@ TagManager:
   - Corpse
   - LevelTrigger
   - Interactable
-  - 
-  - 
+  - EnemyHurtBox
+  - PlayerHurtBox
   - 
   - 
   - 

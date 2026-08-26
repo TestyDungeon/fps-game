@@ -224,7 +224,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 0.5943396, g: 0, b: 0, a: 1}
+      maxColor: {r: 0.6792453, g: 0, b: 0, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -4966,6 +4966,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DecalPrefab: {fileID: 2204318513479173227, guid: 375779d9a5962b74c80bdbd60ba6bf46, type: 3}
   part: {fileID: 0}
+  decalIndex: 0
 --- !u!198 &4917690412905464613
 ParticleSystem:
   m_ObjectHideFlags: 0
@@ -14764,6 +14765,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DecalPrefab: {fileID: 2204318513479173227, guid: 375779d9a5962b74c80bdbd60ba6bf46, type: 3}
   part: {fileID: 0}
+  decalIndex: 0
 --- !u!198 &9126777454496636763
 ParticleSystem:
   m_ObjectHideFlags: 0
@@ -24585,6 +24587,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DecalPrefab: {fileID: 2204318513479173227, guid: 375779d9a5962b74c80bdbd60ba6bf46, type: 3}
   part: {fileID: 0}
+  decalIndex: 0
 --- !u!198 &7608571655010488566
 ParticleSystem:
   m_ObjectHideFlags: 0
@@ -33209,7 +33212,7 @@ ParticleSystem:
     m_Dampen:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.54
+      scalar: 0.33
       minScalar: 0
       maxCurve:
         serializedVersion: 2

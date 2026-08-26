@@ -8,15 +8,13 @@ public class Dash : Item
     private float dashCooldown = 0.8f;
     
     private MovementController mc;
-    private PlayerMovement pm;
     
 
-    void Start()
+    protected override void Start()
     {
-        
+        base.Start();
         dashLeft = dashAmount;
         mc = player.GetComponent<MovementController>();
-        pm = player.GetComponent<PlayerMovement>();
     } 
 
     void Update()

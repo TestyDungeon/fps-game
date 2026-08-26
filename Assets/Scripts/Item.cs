@@ -5,6 +5,7 @@ using DG.Tweening;
 public class Item : MonoBehaviour
 {
     [HideInInspector] public GameObject player;
+    protected PlayerMovement pm;
     [HideInInspector] public Transform cameraPivot;
     protected Vector3 startPos = new Vector3(0, -1f, 0f);
     public string itemName;
@@ -12,8 +13,16 @@ public class Item : MonoBehaviour
 
     protected bool canUse = false;
     private Transform modelTransform;
+
+    protected virtual void Awake()
+    {
+        pm = PlayerMovement.Instance;
+    }
+
     protected virtual void Start()
     {
+        pm = PlayerMovement.Instance;
+        //pm = player.GetComponent<PlayerMovement>();
         Animator anim = GetComponentInChildren<Animator>();
         modelTransform = anim != null ? anim.transform : transform;
     }
@@ -54,5 +63,15 @@ public class Item : MonoBehaviour
         }
         canUse = true;
         transform.localPosition = targetPos;
+    }
+
+    public void SetInventory(Inventory inv)
+    {
+        inventory = inv;
+    }
+
+    public bool GetCanUse()
+    {
+        return canUse;
     }
 }

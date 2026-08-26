@@ -16,7 +16,7 @@ public class CameraRecoil : MonoBehaviour
     {
 
         origin = transform.localPosition;
-        mc = PlayerHitResponder.Instance.gameObject.GetComponent<MovementController>();    
+        mc = PlayerMovement.Instance.gameObject.GetComponent<MovementController>();    
         prePos = transform.localPosition;
     }
 

@@ -3,23 +3,36 @@ using System.Collections.Generic;
 
 public class CustomTrigger : MonoBehaviour
 {
-    [SerializeField] private MonoBehaviour receiver;
-    [SerializeField] private LayerMask layermsk = ~0;
+    [SerializeField] private List<MonoBehaviour> receivers;
+    [SerializeField] private LayerMask layermsk = 1 << 9 | 1 << 13;
     private HashSet<Collider> _currentTriggers = new HashSet<Collider>();
-    private ICustomTriggerReceiver _receiver;
+    private List<ICustomTriggerReceiver> receivers_ = new List<ICustomTriggerReceiver>();
     private CapsuleCollider capsuleCollider;
     private float capsuleHalfHeight;
 
     void Awake() 
     {
         capsuleCollider = GetComponent<CapsuleCollider>();
-        capsuleHalfHeight = capsuleCollider.height / 2 - capsuleCollider.radius;
+        if(tag != "Enemy")
+            capsuleHalfHeight = capsuleCollider.height / 2 - capsuleCollider.radius;
+        else
+            capsuleHalfHeight = 0.2f;
 
-        if (receiver != null)
-            _receiver = receiver as ICustomTriggerReceiver;
+        receivers_.Clear();
+
+        if (receivers == null)
+            return;
+
+        foreach (var behaviour in receivers)
+        {
+            if (behaviour is ICustomTriggerReceiver customTriggerReceiver)
+            {
+                receivers_.Add(customTriggerReceiver);
+            }
+        }
     }
 
-    void Update()
+    void FixedUpdate()
     {
         CustomTriggerCheck();
     }
@@ -40,11 +53,21 @@ public class CustomTrigger : MonoBehaviour
 
             if (_currentTriggers.Add(hit))
             {
-                _receiver?.OnCustomTriggerEnter(hit);
+                foreach(ICustomTriggerReceiver receiver in receivers_)
+                {
+                    receiver?.OnCustomTriggerEnter(hit);
+                }
+                if(tag != "Enemy" && hit.TryGetComponent<LevelTrigger>(out LevelTrigger levelTrigger))
+                {
+                    levelTrigger.OnEnter();
+                }
             }
             else
             {
-                _receiver?.OnCustomTriggerStay(hit);
+                foreach(ICustomTriggerReceiver receiver in receivers_)
+                {
+                    receiver?.OnCustomTriggerStay(hit);
+                }
             }
         }
 
@@ -52,7 +75,14 @@ public class CustomTrigger : MonoBehaviour
         {
             if (!System.Array.Exists(hits, h => h == c))
             {
-                _receiver?.OnCustomTriggerExit(c);
+                foreach(ICustomTriggerReceiver receiver in receivers_)
+                {
+                    receiver?.OnCustomTriggerExit(c);
+                }
+                if(tag != "Enemy" && c.TryGetComponent<LevelTrigger>(out LevelTrigger levelTrigger))
+                {
+                    levelTrigger.OnExit();
+                }
                 return true;
             }
             return false;

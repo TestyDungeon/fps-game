@@ -4,13 +4,11 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
+    private bool inMenu = false;
     private bool isGameOver = false;
-    [SerializeField] private GameObject gameOverUI;
-    [SerializeField] private GameObject upgradeUI;
-    [SerializeField] private GameObject grapple;
+    
+    public GameObject grapple;
     [SerializeField] private GameObject[] itemsPos;
-    [SerializeField] private GameObject[] UI;
-    public TextUI textUI;
     [SerializeField] private string mapStartText;
     public GameObject decalParticles;
     public GameObject enemySpawnParticles;
@@ -24,33 +22,40 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        if(Instance == null)
-            Instance = this;    
+        if(Instance != null)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
     }
 
     void Start()
     {
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
-        textUI.SetText(mapStartText);
+        UI.Instance.textUI.SetText(mapStartText);
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.I) && !inUI)
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
-            inUI = true;
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.Confined;
-            upgradeUI.SetActive(true);
+            SetMainMenuOpen(!inMenu);
         }
-        else if(Input.GetKeyDown(KeyCode.I) && inUI)
-        {
-            inUI = false;
-            Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked;
-            upgradeUI.SetActive(false);
-        }
+    }
+
+   public void SetMainMenuOpen(bool open)
+    {
+        inMenu = open;
+        UI.Instance.mainMenuUI.gameObject.SetActive(open);
+        Time.timeScale = open ? 0f : 1f;
+
+        Cursor.visible = open;
+        Cursor.lockState = open ? CursorLockMode.Confined : CursorLockMode.Locked;
     }
 
     public void Restart()
@@ -63,9 +68,24 @@ public class GameManager : MonoBehaviour
     {
         isGameOver = true;
         Time.timeScale = 0;
-        gameOverUI.SetActive(true);
+        UI.Instance.gameOverUI.SetActive(true);
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+    }
+
+    public void LevelEnd()
+    {
+        isGameOver = true;
+        Time.timeScale = 0;
+        UI.Instance.levelEndUI.SetActive(true);
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
+    public void LoadScene(string name)
+    {
+        SceneManager.LoadScene(name);
+        SetMainMenuOpen(false);
     }
 
     public void EnableGrapple()
@@ -83,12 +103,12 @@ public class GameManager : MonoBehaviour
 
     public void EnableItem(string name)
     {
-        PlayerHitResponder.Instance.GetComponent<Inventory>().EnableItem(name);
+        PlayerMovement.Instance.GetComponent<Inventory>().EnableItem(name);
     }
 
     public void EnableUI()
     {
-        foreach(GameObject item in UI)
+        foreach(GameObject item in UI.Instance.UIs)
         {
             item.SetActive(true);  
         }
@@ -102,5 +122,10 @@ public class GameManager : MonoBehaviour
     public bool GetIsGameOver()
     {
         return isGameOver;
+    }
+
+    public bool GetInMenu()
+    {
+        return inMenu;
     }
 }

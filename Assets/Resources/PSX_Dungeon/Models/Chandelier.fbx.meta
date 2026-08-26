@@ -3,7 +3,17 @@ guid: 4899d0fb85d025b48b6f818072b3989b
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Chain
+    second: {fileID: 2100000, guid: 53e10c27edff0a94a87f907c4c2fd11d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: N64
+    second: {fileID: 2100000, guid: de450d06e3ee39744a6035bdcfef663d, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

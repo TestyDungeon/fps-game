@@ -46,7 +46,7 @@ MonoBehaviour:
   rotationSpeed: 3
   maxJumpDistance: 30
   gravity: 20
-  falterDuration: 0.8
+  falterDuration: 0.4
   falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
   wanderRadius: 10
   damage: 12
@@ -74,7 +74,7 @@ MonoBehaviour:
   hurtSFX:
   - {fileID: 8300000, guid: 3f78793aff513414a9714f65b74908e5, type: 3}
   deathSFX:
-  - {fileID: 8300000, guid: 402d4bd0161225343acf8653f2c9a901, type: 3}
+  - {fileID: 8300000, guid: 93927255ccad83e4e971f796b204ac3a, type: 3}
   staggerMaterial: {fileID: 2100000, guid: eda80e8ba2a7b3b4e865ef9341aef92b, type: 2}
   references:
     version: 2

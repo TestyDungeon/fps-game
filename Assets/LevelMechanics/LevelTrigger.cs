@@ -5,7 +5,6 @@ using UnityEngine.SceneManagement;
 
 public class LevelTrigger : MonoBehaviour
 {
-    private BoxCollider boxCollider;
     private bool triggered = false;
     public Door[] doorsToUnlockOnEnd;
     public Door[] doorsToCloseOnStart;
@@ -14,6 +13,7 @@ public class LevelTrigger : MonoBehaviour
     public bool killOnEnter = false;
     public UnityEvent onEnter;
     public UnityEvent onExit;
+    public UnityEvent onEncounterEnd;
     [SerializeField] private string sceneToLoad = null;
 
     [System.Serializable]
@@ -23,11 +23,8 @@ public class LevelTrigger : MonoBehaviour
     }
 
     public Encounter[] encounters;
+    private bool encounterStarted = false;
 
-    void Awake()
-    {
-        boxCollider = GetComponent<BoxCollider>();
-    }
     void Start()
     {
         foreach(Encounter enc in encounters)
@@ -38,35 +35,34 @@ public class LevelTrigger : MonoBehaviour
             }
         }
     }
-    void Update()
-    {
-        if (!triggered && boxCollider.ClosestPoint(PlayerHitResponder.Instance.transform.position) == PlayerHitResponder.Instance.transform.position)
-        {
-            triggered = true;
-            OnEnter();
-        }
-        else if(triggered && boxCollider.ClosestPoint(PlayerHitResponder.Instance.transform.position) != PlayerHitResponder.Instance.transform.position)
-        {
-            triggered = false;
-            OnExit();
-        }
-    }
 
-    private void OnEnter()
+    public void OnEnter()
     {
-        if(sceneToLoad != null)
+        if (triggered)
+        {
+            return;
+        }
+        triggered = true;
+        if(!string.IsNullOrEmpty(sceneToLoad))
             SceneManager.LoadScene(sceneToLoad);
         onEnter?.Invoke();
-        StartCoroutine(StartEncounter());
+        if(!encounterStarted)
+            StartCoroutine(StartEncounter());
         PlaySoundOnEnter();
         if(killOnEnter)
             PlayerHitResponder.Instance.TakeDamage(transform, 10000);
     }
 
-    private void OnExit()
+    public void OnExit()
     {
+        if (!triggered)
+        {
+            return;
+        }
+        triggered = false;
         onExit?.Invoke();
     }
+
 
     private void PlaySoundOnEnter()
     {
@@ -77,6 +73,7 @@ public class LevelTrigger : MonoBehaviour
 
     private IEnumerator StartEncounter()
     {
+        encounterStarted = true;
         int encInd = 0;
         foreach(Door door in doorsToCloseOnStart)
         {
@@ -115,6 +112,7 @@ public class LevelTrigger : MonoBehaviour
             }
             encInd++;
         }
+        onEncounterEnd?.Invoke();
         foreach(Door door in doorsToUnlockOnEnd)
         {
             

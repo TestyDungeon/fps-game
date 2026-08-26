@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using Animancer;
 using GravityGUN.Data;
 using UnityEngine;
 
@@ -8,10 +7,11 @@ public class Gun : Item, IAmmoHandler
 {
     public event Action<int, int> OnAmmoChanged;
     public Transform bulletStart;
+    public Transform bulletCaseStart;
     private Light[] lights;
     
     public GunConfig gunConfig;
-
+    
     private float damageMultiplier = 1;
 
     protected bool readyToShoot;
@@ -29,7 +29,7 @@ public class Gun : Item, IAmmoHandler
     Vector3 direction;
 
     protected Animator animator = null;
-    protected AnimancerComponent animancer = null;
+    //protected AnimancerComponent animancer = null;
 
     private CameraRecoil cameraRecoil;
 
@@ -42,26 +42,31 @@ public class Gun : Item, IAmmoHandler
 
     [SerializeField] protected bool IsReadyToShoot => alt ? readyToShootAlt : readyToShoot;
 
-    void OnEnable()
-    {
-        if(animancer != null)
-            animancer.Play(gunConfig.shootAnimation).Time = 1;
-        else if(animator != null)
-            animator.Play("Shoot", 0, 1);
-        
-        SetLights(false);
-        OnAltEnd();
-    }
+    
 
-    void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         originalConfig = gunConfig;
         animator = GetComponentInChildren<Animator>();
-        animancer = GetComponentInChildren<AnimancerComponent>();
         lights = GetComponentsInChildren<Light>();
         
         readyToShoot = true;
         readyToShootAlt = true;
+    }
+
+    void OnEnable()
+    {
+        if(animator != null)
+            animator.Play("Shoot", 0, 1);
+        
+        SetLights(false);
+        //
+    }
+
+    void OnDisable()
+    {
+        OnAltEnd();
     }
 
     protected override void Start()
@@ -78,8 +83,9 @@ public class Gun : Item, IAmmoHandler
 
     void Update()
     {
-        if(GameManager.Instance.inUI)
+        if(GameManager.Instance.GetInMenu() || GameManager.Instance.GetIsGameOver())
             return;
+            
         GunInput();
         if(altStart)
             OnAltStart();
@@ -224,16 +230,17 @@ public class Gun : Item, IAmmoHandler
     {
         //if(gunConfig.shootSFX.audio != null)
         SoundManager.PlaySound(gunConfig.shootSFX, gunConfig.volume);
-        if(animancer != null && gunConfig.inputDelay == 0)
-        {
-            animancer.Play(gunConfig.shootAnimation).Time = 0;
-        }
-        else if(animator != null && gunConfig.inputDelay == 0)
+        //if(animancer != null && gunConfig.inputDelay == 0)
+        //{
+        //    animancer.Play(gunConfig.shootAnimation).Time = 0;
+        //}
+        if(animator != null && gunConfig.inputDelay == 0)
         {
             animator.Play("Shoot", 0, 0);
         }
         cameraRecoil.ApplyRecoil(gunConfig.recoilAmountCamera, gunConfig.recoilSpeedCamera, gunConfig.returnSpeedCamera);
         SpawnMuzzleFlash();
+        StartCoroutine(SpawnBulletCase());
         if(gunConfig.ammoPerShot != 0) 
             inventory.ConsumeAmmo(gunConfig.ammoType, gunConfig.ammoPerShot);
     }
@@ -270,8 +277,9 @@ public class Gun : Item, IAmmoHandler
 
         RaycastHit hit;
 
-        if (Physics.Raycast(start, dir, out hit, gunConfig.range, gunConfig.layerMask, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(start, dir, out hit, gunConfig.range, (1 << 0 | 1 << 15), QueryTriggerInteraction.Collide))
         {
+            Debug.Log("HIT: " + hit.transform.name);
             target = hit.point;
             distance = hit.distance;
             if (hit.rigidbody)
@@ -279,15 +287,11 @@ public class Gun : Item, IAmmoHandler
                 hit.rigidbody.AddForceAtPosition(transform.forward * gunConfig.force, hit.point, ForceMode.Impulse);
             }
 
-            if (hit.transform.gameObject.GetComponent<IDamageable>() != null)
+            if (hit.transform.gameObject.TryGetComponent<IDamageable>(out IDamageable victim))
             {
-                hit.transform.gameObject.GetComponent<IDamageable>().TakeDamage(player.transform, Mathf.RoundToInt(gunConfig.damage * damageMultiplier), hit.point, hit.normal);
+                victim.TakeDamage(player.transform, Mathf.RoundToInt(gunConfig.damage * damageMultiplier), hit.point, hit.normal);
             }
-            else if (hit.transform.gameObject.layer == LayerMask.NameToLayer("Corpse"))
-            {
-                Destroy(Instantiate(GameManager.Instance.bloodParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
-            }
-            else
+            else if(hit.transform.gameObject.layer == LayerMask.NameToLayer("Default") || hit.transform.gameObject.layer == LayerMask.NameToLayer("Interactable"))
             {
                 Destroy(Instantiate(GameManager.Instance.decalParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
                 hitSurface = true;
@@ -334,7 +338,6 @@ public class Gun : Item, IAmmoHandler
         altEndButtonCheck = true;
         alt = false;
         shooting = false;
-        var pm = player.GetComponent<PlayerMovement>();
         pm.SetFOV(1);
         gunConfig = originalConfig;
     }
@@ -387,6 +390,18 @@ public class Gun : Item, IAmmoHandler
         Destroy(particles, 0.5f);
     }
 
+    protected IEnumerator SpawnBulletCase()
+    {
+        yield return new WaitForSeconds(gunConfig.bulletCaseDelay);
+        if(gunConfig.bulletCasePrefab != null)
+        {
+            GameObject particles = Instantiate(gunConfig.bulletCasePrefab, bulletCaseStart.position, transform.rotation, transform);
+            Destroy(particles, 2f);
+            yield return new WaitForSeconds(0.3f);
+            SoundManager.PlaySound(gunConfig.caseFallSFX, gunConfig.caseFallVolume);
+        }
+    }
+
     public int GetAmmo()
     {
         if(inventory == null)
@@ -399,10 +414,7 @@ public class Gun : Item, IAmmoHandler
         return gunConfig.ammoType;
     }
 
-    public void SetInventory(Inventory inv)
-    {
-        inventory = inv;
-    }
+    
 
     public void AmmoChanged(int maxAmount, int amount)
     {

@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: AR Config
   m_EditorClassIdentifier: 
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 7703ace7cd973424087b710123029a52, type: 3}
+  bulletCasePrefab: {fileID: 1147123391096741731, guid: cc40d7b68a50c8947a05eb3582c55052, type: 3}
+  bulletCaseDelay: 0.1
   bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
   layerMask:
     serializedVersion: 2
@@ -21,6 +23,13 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 0ba1cdbeaa0c6b74687fa82cfc348ba0, type: 3}
   volume: 0.25
   altStartSFX: []
+  caseFallSFX:
+  - {fileID: 8300000, guid: 0baaa7fc2c4f8b342aa4abd20d1a2906, type: 3}
+  - {fileID: 8300000, guid: 0a1c4531780aa4f4a946325775318beb, type: 3}
+  - {fileID: 8300000, guid: a8ffadc793ff20b41b9ce50a492a5fe9, type: 3}
+  - {fileID: 8300000, guid: 1a34b0062afa97c478daf8ed5a4f6af3, type: 3}
+  - {fileID: 8300000, guid: 9d1713923337b8645b44ab08a39cb90a, type: 3}
+  caseFallVolume: 0.2
   shootAnimation:
     _FadeDuration: 0.25
     _Speed: 1

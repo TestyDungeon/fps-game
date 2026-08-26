@@ -7,8 +7,10 @@ public class PlayerMovementConfig : ScriptableObject
     public float MAX_SPEED = 30f;
     public float speed = 10f;
     public float accel = 11f;
+    public float airSpeed = 10f;
     public float airMaxSpeed = 2f;
     public float airAccel = 11f;
+    public float airControl = 3f;
     public float friction = 7f;
     public float stopSpeed = 0.1f;
     public int jumpsAmount = 1;

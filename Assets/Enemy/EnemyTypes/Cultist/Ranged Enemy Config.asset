@@ -19,7 +19,7 @@ MonoBehaviour:
       _NormalizedTimes: []
       _Callbacks: []
       _Names: []
-    _Clip: {fileID: -8886876057350898493, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
+    _Clip: {fileID: 7400000, guid: 05754ea2b555ae74e862d52d29242ff1, type: 2}
     _NormalizedStartTime: NaN
   walkAnimation:
     _FadeDuration: 0.25
@@ -28,7 +28,7 @@ MonoBehaviour:
       _NormalizedTimes: []
       _Callbacks: []
       _Names: []
-    _Clip: {fileID: 7400000, guid: 5696a5215f6521349b5087459ed8cd3d, type: 2}
+    _Clip: {fileID: 7400000, guid: 3a05525e73cea7f4b922a9185120d326, type: 2}
     _NormalizedStartTime: NaN
   attackAnimation:
     _FadeDuration: 0.25
@@ -37,16 +37,16 @@ MonoBehaviour:
       _NormalizedTimes: []
       _Callbacks: []
       _Names: []
-    _Clip: {fileID: 1021806162419773930, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
+    _Clip: {fileID: 7400000, guid: f27f46aa92ef2ec46aafc3dc940d5ef2, type: 2}
     _NormalizedStartTime: NaN
   enemyName: Ranged Enemy
   maxHealth: 160
   chaseSpeed: 5
   wanderSpeed: 4
-  rotationSpeed: 6
+  rotationSpeed: 8
   maxJumpDistance: 30
   gravity: 20
-  falterDuration: 0.8
+  falterDuration: 0.4
   falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
   wanderRadius: 10
   damage: 5
@@ -54,7 +54,7 @@ MonoBehaviour:
   startAttackRange: 30
   endAttackRange: 35
   meleeAttackRange: 3
-  attackCooldown: 0.1
+  attackCooldown: 0
   layerMask:
     serializedVersion: 2
     m_Bits: 8

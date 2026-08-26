@@ -1,11 +1,11 @@
 using GravityGUN.Data;
 using UnityEngine;
 
-public class PickupCollector : MonoBehaviour
+public class PickupCollector : MonoBehaviour, ICustomTriggerReceiver
 {
-    private CapsuleCollider capsuleCollider;
+    //private CapsuleCollider capsuleCollider;
     private int layerMask = 1 << 10;
-    private float capsuleHalfHeight;
+    //private float capsuleHalfHeight;
     private Health playerHealth;
     private Inventory inventory;
     private GameManager gameManager;
@@ -16,9 +16,29 @@ public class PickupCollector : MonoBehaviour
         gameManager = FindAnyObjectByType<GameManager>();
         playerHealth = GetComponent<Health>();
         inventory = GetComponent<Inventory>();
-        capsuleCollider = GetComponent<CapsuleCollider>();
-        capsuleHalfHeight = capsuleCollider.height / 2 - capsuleCollider.radius;
+        //capsuleCollider = GetComponent<CapsuleCollider>();
+        //capsuleHalfHeight = capsuleCollider.height / 2 - capsuleCollider.radius;
     }
+
+    public void OnCustomTriggerEnter(Collider other)
+    {
+        foreach (Pickup pickup in other.GetComponents<Pickup>())
+        {
+            pickup.Collect(this);
+        }
+    }
+    public void OnCustomTriggerStay(Collider other)
+    {
+
+    }
+
+    public void OnCustomTriggerExit(Collider other)
+    {
+        
+    }
+
+    
+
 
     void FixedUpdate()
     {
@@ -49,20 +69,20 @@ public class PickupCollector : MonoBehaviour
         
         
 
-        Collider[] hits = Physics.OverlapCapsule(
-            transform.position + transform.up * capsuleHalfHeight, 
-            transform.position - transform.up * capsuleHalfHeight, 
-            capsuleCollider.radius, layerMask, QueryTriggerInteraction.Collide);
-        if(hits.Length > 0)
-        {
-            foreach(Collider hit in hits)
-            {
-                foreach (Pickup pickup in hit.GetComponents<Pickup>())
-                {
-                    pickup.Collect(this);
-                }
-            }
-        }
+        //Collider[] hits = Physics.OverlapCapsule(
+        //    transform.position + transform.up * capsuleHalfHeight, 
+        //    transform.position - transform.up * capsuleHalfHeight, 
+        //    capsuleCollider.radius, layerMask, QueryTriggerInteraction.Collide);
+        //if(hits.Length > 0)
+        //{
+        //    foreach(Collider hit in hits)
+        //    {
+        //        foreach (Pickup pickup in hit.GetComponents<Pickup>())
+        //        {
+        //            pickup.Collect(this);
+        //        }
+        //    }
+        //}
     }
 
     public bool ApplyCollected(LootType lootType, int amount)
@@ -72,7 +92,6 @@ public class PickupCollector : MonoBehaviour
             case LootType.BulletAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
-                    SoundManager.PlaySound(SoundType.PICKUP_MEDKIT, 0.2f);
                     inventory.AddAmmo(lootType, amount);
                     return true;
                 }
@@ -80,7 +99,6 @@ public class PickupCollector : MonoBehaviour
             case LootType.ShellAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
-                    SoundManager.PlaySound(SoundType.PICKUP_AMMO, 0.2f);
                     inventory.AddAmmo(lootType, amount);
                     return true;
                 }
@@ -88,7 +106,6 @@ public class PickupCollector : MonoBehaviour
             case LootType.RocketAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
-                    SoundManager.PlaySound(SoundType.PICKUP_AMMO, 0.2f);
                     inventory.AddAmmo(lootType, amount);
                     return true;
                 }
@@ -96,7 +113,6 @@ public class PickupCollector : MonoBehaviour
             case LootType.MeleeAmmo:
                 if(inventory.GetAmmo(lootType) != inventory.GetMaxAmmo(lootType))
                 {
-                    SoundManager.PlaySound(SoundType.PICKUP_AMMO, 0.2f);
                     inventory.AddAmmo(lootType, amount);
                     return true;
                 }
@@ -110,7 +126,6 @@ public class PickupCollector : MonoBehaviour
             case LootType.Health:
                 if (!playerHealth.IsFullHealth())
                 {
-                    SoundManager.PlaySound(SoundType.PICKUP_MEDKIT, 0.4f);
                     playerHealth.Heal(amount);
                     return true;
                 }      
@@ -118,18 +133,15 @@ public class PickupCollector : MonoBehaviour
 
             case LootType.Key:
                 {
-                    SoundManager.PlaySound(SoundType.PICKUP_KEY, 1f);
                     return true;
                 }
                 
 
             case LootType.Grapple:
-                SoundManager.PlaySound(SoundType.PICKUP_GRAPPLE, 1);
                 gameManager.EnableGrapple();
                 return true;
             
             case LootType.Guns:
-                SoundManager.PlaySound(SoundType.PICKUP_GUNS, 1);
                 gameManager.EnableUI();
                 gameManager.EnableItems();
                 return true;  
@@ -139,7 +151,6 @@ public class PickupCollector : MonoBehaviour
 
     public bool ApplyCollected(GameObject item)
     {
-        SoundManager.PlaySound(SoundType.PICKUP_GUNS, 0.3f);
         gameManager.EnableUI();
         gameManager.EnableItem(item.name);
         return true;

@@ -23,7 +23,7 @@ public class EnemyProjectile : MonoBehaviour
     private Vector3 direction;
 
     int layerMask;
-    int playerLayerMask = ~(1 << 6 | 1 << 2);
+    int playerLayerMask = 1 << 0 | 1 << 15 | 1 << 16;
     int deflectedLayerMask = 1 << 8;
 
 
@@ -44,21 +44,22 @@ public class EnemyProjectile : MonoBehaviour
         Destroy(gameObject, 5);
         boxCollider = GetComponent<BoxCollider>();
         size = boxCollider.size * Mathf.Max(boxCollider.transform.lossyScale.x, boxCollider.transform.lossyScale.y, boxCollider.transform.lossyScale.z);
-        Collider[] overlap = Physics.OverlapBox(prePos, size/2, Quaternion.identity, layerMask, QueryTriggerInteraction.Ignore);
+        Collider[] overlap = Physics.OverlapBox(prePos, size/2, Quaternion.identity, layerMask, QueryTriggerInteraction.Collide);
         if(overlap.Length > 0)
         {
             foreach(Collider col in overlap)
             {
-                if(col.transform == parent && !deflected)
+                if(col.transform.parent == parent && !deflected)
                     return;
 
                 if (col.gameObject.CompareTag("Player") || col.gameObject.CompareTag("Enemy"))
                 {
                     Damage(col);
-                    col.gameObject.GetComponent<MovementController>().addVelocity(transform.forward * knockback);
                 }
-                Debug.Log("(Overlap) Name: " + col.transform.name);
+                //Debug.Log("Name: " + hit.transform.name);
                 Destroy(gameObject);
+                
+                
             }
             
         }
@@ -70,25 +71,25 @@ public class EnemyProjectile : MonoBehaviour
     private void FixedUpdate()
     {
         if(!deflected)
-            targetMagnetism = Mathf.Lerp(targetMagnetism, 0, 1f * Time.fixedDeltaTime);
+            targetMagnetism = Mathf.Lerp(targetMagnetism, 0, 0.5f * Time.fixedDeltaTime);
         if(target != null)
             direction += (target.position - transform.position).normalized * targetMagnetism * Time.fixedDeltaTime;
         direction = direction.normalized;
         //SpawnParticles();
         transform.Translate(direction * projectileSpeed * Time.fixedDeltaTime, Space.World);
         Debug.DrawLine(prePos, transform.position, Color.cyan, 5);
-        if(Physics.BoxCast(prePos, size/2, direction, out RaycastHit hit, Quaternion.identity, Vector3.Distance(prePos, transform.position), layerMask, QueryTriggerInteraction.Ignore))
+        if(Physics.BoxCast(prePos, size/2, direction, out RaycastHit hit, Quaternion.identity, Vector3.Distance(prePos, transform.position), layerMask, QueryTriggerInteraction.Collide))
         {
             
-            if(hit.collider.transform == parent && !deflected)
+            if(hit.collider.transform.parent == parent && !deflected)
                 return;
 
             if (hit.collider.gameObject.CompareTag("Player") || hit.collider.gameObject.CompareTag("Enemy"))
             {
                 Damage(hit);
-                hit.collider.gameObject.GetComponent<MovementController>().addVelocity(-hit.normal * knockback);
+                //hit.collider.gameObject.GetComponent<MovementController>().addVelocity(-hit.normal * knockback);
             }
-            Debug.Log("Name: " + hit.transform.name);
+            //Debug.Log("Name: " + hit.transform.name);
             Destroy(gameObject);
             //direction = Vector3.ProjectOnPlane(direction, hit.normal).normalized;
         }
@@ -126,7 +127,7 @@ public class EnemyProjectile : MonoBehaviour
         if(deflected || !parryable)
             return;
         target = parent;
-        parent = PlayerHitResponder.Instance.transform;
+        parent = PlayerMovement.Instance.transform;
         SoundManager.PlaySound(SoundType.DEFLECT, 0.3f);
         layerMask = deflectedLayerMask;
         deflected = true;
@@ -141,7 +142,7 @@ public class EnemyProjectile : MonoBehaviour
         if(deflected)
             return;
         target = parent;
-        parent = PlayerHitResponder.Instance.transform;
+        parent = PlayerMovement.Instance.transform;
         SoundManager.PlaySound(SoundType.DEFLECT, 0.3f);
         layerMask = deflectedLayerMask;
         deflected = true;

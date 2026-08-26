@@ -3,7 +3,37 @@ guid: 0d5fba775adab8e45a0c2085f5b0ce93
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Bush
+    second: {fileID: 2100000, guid: 925725c23870e464a95e7446ce6cbd7f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Grass
+    second: {fileID: 2100000, guid: 1fe854ce7596f5745aaf81bedfa64052, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Leaf
+    second: {fileID: 2100000, guid: 949c7a3fad6513848b0e5c39de01ce80, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Stone
+    second: {fileID: 2100000, guid: b5906ca94612ef346b50a1aefad3b0cd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Stonewall
+    second: {fileID: 2100000, guid: 6ce285f0dce443a48b74d45ec2875d55, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Tree
+    second: {fileID: 2100000, guid: c1f11d473e8fa514d997ed2040e4de81, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

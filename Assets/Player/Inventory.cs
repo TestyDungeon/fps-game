@@ -17,8 +17,7 @@ public class Inventory : MonoBehaviour
     private int currentSlot = -1;
 
     [Header("Ammo")]
-    [SerializeField] private int maxLightAmmo;
-    [SerializeField] private int maxHeavyAmmo;
+    [SerializeField] private int maxBulletAmmo;
     [SerializeField] private int maxShellAmmo;
     [SerializeField] private int maxRocketAmmo;
     [SerializeField] private int maxMeleeAmmo;
@@ -35,7 +34,7 @@ public class Inventory : MonoBehaviour
 
     void Awake()
     {
-        maxAmmoCount[LootType.BulletAmmo] = maxLightAmmo;
+        maxAmmoCount[LootType.BulletAmmo] = maxBulletAmmo;
         maxAmmoCount[LootType.ShellAmmo] = maxShellAmmo;
         maxAmmoCount[LootType.RocketAmmo] = maxRocketAmmo;
         maxAmmoCount[LootType.MeleeAmmo] = maxMeleeAmmo;
@@ -51,8 +50,7 @@ public class Inventory : MonoBehaviour
 
         
 
-        if(slots.Length > 0)
-            EquipItem(0);
+        
         
         for (int i = 0; i < slots.Length; i++)
         {
@@ -64,15 +62,18 @@ public class Inventory : MonoBehaviour
         {
             alwaysOnSlots[i].player = gameObject;
             alwaysOnSlots[i].cameraPivot = cameraPivot;
+            alwaysOnSlots[i].SetInventory(this);
         }
 
+        if(slots.Length > 0)
+            EquipItem(0);
     }
 
     void Start()
     {
-        AddAmmo(LootType.BulletAmmo, maxAmmoCount[LootType.BulletAmmo] / 1);
-        AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo] / 1);
-        AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo] / 1);
+        AddAmmo(LootType.BulletAmmo, maxAmmoCount[LootType.BulletAmmo] / 2);
+        AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo] / 2);
+        AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo] / 2);
         AddAmmo(LootType.MeleeAmmo, maxAmmoCount[LootType.MeleeAmmo]);
     }
 
@@ -106,9 +107,9 @@ public class Inventory : MonoBehaviour
         slots[currentSlot].transform.localPosition = pos;
         
         
-        if (slots[currentSlot] is Gun gun)
+        if (slots[currentSlot] is Item item)
         {
-            gun.SetInventory(this);
+            item.SetInventory(this);
         }
         
         OnSlotChanged?.Invoke(slots[currentSlot]);

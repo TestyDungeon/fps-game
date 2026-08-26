@@ -47,8 +47,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05cc6b0ca6ad7e5459ae9da9a0fd3f09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lootType: 3
+  lootType: 4
   amount: 50
+  item: {fileID: 0}
+  rotationSpeed: 0
+  amplitude: 0
+  frequency: 0
+  playSound: 1
+  soundType: 11
+  volume: 1
 --- !u!33 &3849916910002914586
 MeshFilter:
   m_ObjectHideFlags: 0

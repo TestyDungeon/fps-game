@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using DG.Tweening;
+using GravityGUN.Data;
 
 public class Grapple : Item
 {
@@ -9,19 +10,21 @@ public class Grapple : Item
     [SerializeField] private float startSpeed = 10;
     [SerializeField] private float maxSpeed = 30;
     [SerializeField] private float acceleration = 2f;
+    [SerializeField] private float cooldown = 2f;
+    private float lastTime = -1;
     [SerializeField] private float animSpeed;
 
     [SerializeField] private Transform grappleStart;
     private float g;
     private float currentSpeed;
     private bool grappling = false;
-    private bool swinging;
+    private bool started = false;
     private Transform targetTransform = null;
     private Vector3 grapplePoint;
     private RaycastHit hit;
     private MovementController mc = null;
     private AudioSource audioSource = null;
-    private LayerMask layerMask = ~(1 << 9 | 1 << 6 | 1 << 2);
+    private LayerMask layerMask = (1 << 0 | 1 << 8);
 
     void Awake()
     {
@@ -32,18 +35,15 @@ public class Grapple : Item
 
     protected override void Start()
     {
+        base.Start();
         g = player.GetComponent<MovementController>().getGravity();
         mc = player.GetComponent<MovementController>();
     } 
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (!started && Input.GetKeyDown(KeyCode.Q) && (Time.time - lastTime) >= cooldown)
         {
-            if (grappling)
-            {
-                StopGrapple();
-            }
             StartGrapple();
             
         }
@@ -65,8 +65,8 @@ public class Grapple : Item
             UpdateGrapplePoint();
             if(currentSpeed < maxSpeed)
                 currentSpeed *= Mathf.Pow(acceleration, Time.fixedDeltaTime);
-            Debug.Log("Current Speed: " + currentSpeed);
-            mc.Dash((grapplePoint - player.transform.position).normalized, Vector3.Distance(grapplePoint, player.transform.position) - 3, currentSpeed, currentSpeed);
+            //Debug.Log("Current Speed: " + currentSpeed);
+            mc.Dash((grapplePoint - player.transform.position).normalized, Vector3.Distance(grapplePoint, player.transform.position) - 3, currentSpeed);
         }
     }
 
@@ -91,6 +91,8 @@ public class Grapple : Item
         {
             if (!hit.transform.CompareTag("Enemy"))
                 return;
+
+            started = true;
             targetTransform = hit.transform;
             if(hit.transform.TryGetComponent(out EnemyStateManager esm))
                 esm.SwitchState(esm.FalterState);
@@ -98,6 +100,7 @@ public class Grapple : Item
             audioSource = SoundManager.PlayLoop(SoundType.GRAPPLE, 0.4f);
             grapplePoint = hit.point;
             lr.enabled = true;
+            
             StartCoroutine(AnimateLineOut(grappleStart.position));
         }
     }
@@ -105,6 +108,7 @@ public class Grapple : Item
     private void StopGrapple()
     {
         Vector3 dir = mc.GetDashDir();
+        lastTime = Time.time;
         if(Input.GetKeyDown(KeyCode.Space))
         {
             mc.StopDash();
@@ -117,12 +121,15 @@ public class Grapple : Item
         }
         else if(Vector3.Distance(player.transform.position, grapplePoint) < 3)
         {
+            mc.StopDash();
+            mc.addVelocity(dir.normalized * currentSpeed);
             SoundManager.PlaySound(SoundType.GRAPPLE_END, 0.4f);
         }
         CancelInvoke();
-        SoundManager.StopLoop(audioSource);
-        
+        SoundManager.StopLoop(audioSource, 1);
+        started = false;
         targetTransform = null;
+        inventory.AddAmmo(LootType.MeleeAmmo, 1);
         if (grappling)
         {
             grappling = false;

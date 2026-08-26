@@ -8,9 +8,16 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
     Collider prioritizedField = null;
 
 
-    void Start()
+    void Awake()
     {
         mc = GetComponent<MovementController>();
+        SyncGravityFromCurrentPosition();
+    }
+
+
+    void Start()
+    {
+        SyncGravityFromCurrentPosition();
     }
 
     public void OnCustomTriggerEnter(Collider other)
@@ -108,5 +115,36 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
         }
         finalVector = finalVector.normalized;
         return finalVector != Vector3.zero ? finalVector : other.GetComponent<GravityField>().CalculateGravityVector(transform);
+    }
+
+    private void SyncGravityFromCurrentPosition()
+    {
+        if (mc == null)
+            return;
+
+        Collider[] hits = Physics.OverlapSphere(transform.position, 0.01f, GravityField.gravityLayerMask);
+        gravityFields.Clear();
+        prioritizedField = null;
+
+        foreach (Collider hit in hits)
+        {
+            if (!hit.CompareTag("GravityField"))
+                continue;
+
+            gravityFields.Add(hit);
+
+            if (prioritizedField == null ||
+                (prioritizedField.GetComponent<GravityFieldSpherical>() != null &&
+                 hit.GetComponent<GravityFieldSpherical>() == null))
+            {
+                prioritizedField = hit;
+            }
+        }
+
+        if (prioritizedField != null)
+        {
+            mc.setInGravityField(true);
+            mc.setGravityVec(CalculateIntersectingVectors(prioritizedField));
+        }
     }
 }

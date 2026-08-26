@@ -7,11 +7,16 @@ public class Pickup : MonoBehaviour
     public LootType lootType;
     public int amount;
     public GameObject item = null;
+
     [Header("Visual")]
     public float rotationSpeed = 0;
-
     public float amplitude = 0;
     public float frequency = 0;
+
+    [Header("Audio")]
+    public bool playSound = false;
+    public SoundType soundType;
+    public float volume;
 
     private Transform transform_;
     void Awake()
@@ -37,12 +42,18 @@ public class Pickup : MonoBehaviour
         {
             if (collector.ApplyCollected(item))
             {
+                if(playSound)
+                    SoundManager.PlaySound(soundType, volume);
                 Destroy(gameObject);
                 
             }
         }
         else if(collector.ApplyCollected(lootType, amount))
+        {
+            if(playSound)
+                SoundManager.PlaySound(soundType, volume);
             Destroy(gameObject);
+        }
     }
 
 }

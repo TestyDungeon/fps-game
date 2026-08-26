@@ -23,7 +23,7 @@ public class EnemyStaggerState : EnemyBaseState
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
-        enemy.animancer.Play(enemy.enemyConfig.idleAnimation);
+        enemy.animator.Play("Idle");
     }
 
     public override void ExitState(EnemyStateManager enemy)

@@ -4,29 +4,44 @@ using TMPro;
 
 public class HealthBarUI : MonoBehaviour
 {
-    private Health playerHealth;
     [SerializeField] private Image fill;
     [SerializeField] private TextMeshProUGUI text;
 
+    private Health playerHealth;
+
     void Awake()
     {
-        if (playerHealth == null)
-            playerHealth = FindAnyObjectByType<PlayerHitResponder>().gameObject.GetComponent<Health>();
+        Player.OnPlayerSpawned += HandlePlayerSpawned;
 
+        if (Player.Instance != null)
+        {
+            HandlePlayerSpawned();
+        }
     }
 
-    void OnEnable()
+    void OnDestroy()
     {
+        Player.OnPlayerSpawned -= HandlePlayerSpawned;
+
+        if (playerHealth != null)
+        {
+            playerHealth.OnHealthChanged -= OnHealthChanged;
+        }
+    }
+
+    private void HandlePlayerSpawned()
+    {
+        if (playerHealth != null)
+        {
+            playerHealth.OnHealthChanged -= OnHealthChanged;
+        }
+
+        playerHealth = Player.Instance.Health;
+
         if (playerHealth != null)
         {
             playerHealth.OnHealthChanged += OnHealthChanged;
         }
-    }
-
-    void OnDisable()
-    {
-        if (playerHealth != null)
-            playerHealth.OnHealthChanged -= OnHealthChanged;
     }
 
     private void OnHealthChanged(float currentHealth, float maxHealth)

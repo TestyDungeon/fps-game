@@ -13,14 +13,23 @@ MonoBehaviour:
   m_Name: Pistol Config
   m_EditorClassIdentifier: 
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 7703ace7cd973424087b710123029a52, type: 3}
-  bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
+  bulletCasePrefab: {fileID: 1147123391096741731, guid: cc40d7b68a50c8947a05eb3582c55052, type: 3}
+  bulletCaseDelay: 0.1
+  bulletTrail: {fileID: 0}
   layerMask:
     serializedVersion: 2
-    m_Bits: 32695
+    m_Bits: 65207
   shootSFX:
   - {fileID: 8300000, guid: d4a2dbea9276c0f4c8fee94fa3b2bf32, type: 3}
   volume: 0.3
   altStartSFX: []
+  caseFallSFX:
+  - {fileID: 8300000, guid: 0baaa7fc2c4f8b342aa4abd20d1a2906, type: 3}
+  - {fileID: 8300000, guid: 0a1c4531780aa4f4a946325775318beb, type: 3}
+  - {fileID: 8300000, guid: a8ffadc793ff20b41b9ce50a492a5fe9, type: 3}
+  - {fileID: 8300000, guid: 1a34b0062afa97c478daf8ed5a4f6af3, type: 3}
+  - {fileID: 8300000, guid: 9d1713923337b8645b44ab08a39cb90a, type: 3}
+  caseFallVolume: 0.15
   shootAnimation:
     _FadeDuration: 0.25
     _Speed: 1
@@ -34,13 +43,13 @@ MonoBehaviour:
   recoilSpeedCamera: 14
   returnSpeedCamera: 15
   allowButtonHold: 1
-  damage: 56
+  damage: 30
   ammoType: 0
   range: 300
   force: 20
   knockbackForce: 0
   spread: 0
-  timeBetweenShooting: 0.45
+  timeBetweenShooting: 0.35
   bulletsPerShot: 1
   ammoPerShot: 1
   timeBetweenShots: 0
@@ -56,7 +65,7 @@ MonoBehaviour:
   explosionDelay: 0
   ricoshetSpeedLoss: 0
   mass: 1
-  altConfig: {fileID: 11400000, guid: 473fbef404961414cae890cf168a4824, type: 2}
+  altConfig: {fileID: 11400000, guid: 47ad83526b4f7074cbe47fb8dc6da2a1, type: 2}
   references:
     version: 2
     RefIds: []

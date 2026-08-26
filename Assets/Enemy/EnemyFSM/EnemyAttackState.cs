@@ -27,9 +27,9 @@ public class EnemyAttackState : EnemyBaseState
         else if (enemy.canAttack)
         {
             enemy.canAttack = false;
-            Debug.Log("Attac");
+            //Debug.Log("Attac");
             enemy.lookDir = enemy.GetVectorToTarget();
-            enemy.attackBehavior.ExecuteRangedAttack(enemy);
+            enemy.attackBehavior.ExecuteAttack(enemy);
         }
 
         
@@ -37,9 +37,9 @@ public class EnemyAttackState : EnemyBaseState
 
     public override void ExitState(EnemyStateManager enemy)
     {
-        enemy.animancer.Stop();
+        //enemy.animator.Stop();
         enemy.StopCoroutine(enemy.ResetAttack());
-        Debug.Log("True");
+        //Debug.Log("True");
         enemy.canAttack = true;
     }
 

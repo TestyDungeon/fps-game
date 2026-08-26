@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9d1f3a9e35c094e9adfba833efea7b, type: 3}
+  m_Name: Pistol Config 1
+  m_EditorClassIdentifier: 
+  muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 7703ace7cd973424087b710123029a52, type: 3}
+  bulletCasePrefab: {fileID: 1147123391096741731, guid: cc40d7b68a50c8947a05eb3582c55052, type: 3}
+  bulletCaseDelay: 0.1
+  bulletTrail: {fileID: 0}
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 65207
+  shootSFX:
+  - {fileID: 8300000, guid: d4a2dbea9276c0f4c8fee94fa3b2bf32, type: 3}
+  volume: 0.7
+  altStartSFX: []
+  caseFallSFX:
+  - {fileID: 8300000, guid: 0baaa7fc2c4f8b342aa4abd20d1a2906, type: 3}
+  - {fileID: 8300000, guid: 0a1c4531780aa4f4a946325775318beb, type: 3}
+  - {fileID: 8300000, guid: a8ffadc793ff20b41b9ce50a492a5fe9, type: 3}
+  - {fileID: 8300000, guid: 1a34b0062afa97c478daf8ed5a4f6af3, type: 3}
+  - {fileID: 8300000, guid: 9d1713923337b8645b44ab08a39cb90a, type: 3}
+  caseFallVolume: 0.2
+  shootAnimation:
+    _FadeDuration: 0.25
+    _Speed: 1
+    _Events:
+      _NormalizedTimes: []
+      _Callbacks: []
+      _Names: []
+    _Clip: {fileID: -7453387558714718212, guid: 8ac583e55987f614caa1f3cfa168f648, type: 3}
+    _NormalizedStartTime: NaN
+  recoilAmountCamera: 1
+  recoilSpeedCamera: 14
+  returnSpeedCamera: 15
+  allowButtonHold: 1
+  damage: 100
+  ammoType: 0
+  range: 300
+  force: 20
+  knockbackForce: 0
+  spread: 0
+  timeBetweenShooting: 1.5
+  bulletsPerShot: 1
+  ammoPerShot: 1
+  timeBetweenShots: 0
+  inputDelay: 0
+  ricochet: 0
+  projectilePrefab: {fileID: 0}
+  explosionPrefab: {fileID: 0}
+  projectileSpeed: 1
+  projectileRicoshet: 0
+  gravityMult: 0
+  explosionRadius: 10
+  explosionForceRB: 5
+  explosionDelay: 0
+  ricoshetSpeedLoss: 0
+  mass: 1
+  altConfig: {fileID: 11400000, guid: 7b2f60061fde4014fa8e3d93bb31f5e0, type: 2}
+  references:
+    version: 2
+    RefIds: []

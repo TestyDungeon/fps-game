@@ -10,6 +10,8 @@ public class PlayerMovement : MonoBehaviour
 
     private MovementController movementController;
 
+    private Sway sway;
+
     [SerializeField] private PlayerMovementConfig playerMovementConfig;
     private Vector3 playerVelocity = Vector3.zero;
     private bool isPlayingFootsteps = false;
@@ -38,32 +40,46 @@ public class PlayerMovement : MonoBehaviour
 
     private int dashInvokes = 2;
 
-    private AudioSource fallingWindStartAudioSource;
     private AudioSource fallingWindLoopAudioSource;
-    private float windStartDelay = 1f;
+    private float windStartDelay = 0.5f;
     private float windStartMult = 0;
 
+    private float lastVerticalSpeed = 0;
+
+    Vector3 forward, right;
+
+    float fmove, smove;
+
+
+    public static PlayerMovement Instance { get; private set; }
+    
     private void Awake()
     {
+        if(Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+    
         dashLeft = playerMovementConfig.dashAmount;
         defaultFOV = playerCamera.fieldOfView;
         targetFov = defaultFOV;
         defaultWeaponFOV = weaponCamera.fieldOfView;
         targetWeaponFov = defaultWeaponFOV;
         movementController = GetComponent<MovementController>();
+        sway = GetComponent<Sway>();
         jumpsLeft = playerMovementConfig.jumpsAmount;
         //traceDistance = movementController.capsuleCollider.height/2 + slopeSticking;
     }
 
     private void Update()
     {
-        
         if(!wasGrounded && movementController.GroundCheck())
         {
-            Debug.Log("Percent " + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14));
-            SoundManager.PlaySound(SoundType.LANDING, 0.6f + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14) * 0.4f);
+            sway.CameraLandBob(lastVerticalSpeed);
+            //Debug.Log("Percent " + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14));
+            SoundManager.PlaySound(SoundType.LANDING, 0.4f + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14) * 0.6f);
         }
-        AirMove();
+        MoveInput();
         JumpButton();
         FOV();
         DashButton();
@@ -83,8 +99,10 @@ public class PlayerMovement : MonoBehaviour
             dashInvokes--;
         }
         
+        AirMove();
         playerVelocity = movementController.Move(playerVelocity);
-        if (movementController.GroundCheck() && playerVelocity.sqrMagnitude > 25)
+
+        if (movementController.GroundCheck() && playerVelocity.sqrMagnitude > 25 && !isPlayingFootsteps)
             StartCoroutine(PlayFootStepsSound());
 
         WindSound();
@@ -93,34 +111,32 @@ public class PlayerMovement : MonoBehaviour
     void LateUpdate()
     {
         wasGrounded = movementController.GroundCheck();
+        lastVerticalSpeed = movementController.GetVerticalSpeed();
     }
 
-    private void AirMove()
+    private void MoveInput()
     {
-        
-        Vector3 wishvel = new Vector3();
-        float wishspeed;
-
-        Vector3 forward;
-        Vector3 right;
-
-        float fmove, smove;
-
         forward = playerPivot.forward;
         right = playerPivot.right;
 
         fmove = Input.GetAxisRaw("Horizontal");
         smove = Input.GetAxisRaw("Vertical");
 
-        Vector3.Normalize(forward);
-        Vector3.Normalize(right);
+        //Vector3.Normalize(forward);
+        //Vector3.Normalize(right);
+    }
+
+    private void AirMove()
+    {
+        Vector3 wishvel = new Vector3();
+        float wishspeed;
 
         for (int i = 0; i < 3; i++)
             wishvel[i] = forward[i] * smove + right[i] * fmove;
 
         wishdir = wishvel;
         wishdir = Vector3.Normalize(wishdir);
-        wishspeed = wishdir.magnitude * (movementController.GroundCheck() ? playerMovementConfig.speed : playerMovementConfig.airMaxSpeed) * speedMultiplier;
+        wishspeed = wishdir.magnitude * (movementController.GroundCheck() ? playerMovementConfig.speed : playerMovementConfig.airSpeed);
         Debug.DrawRay(transform.position, wishdir, Color.yellow);
 
         if (wishspeed > playerMovementConfig.MAX_SPEED)
@@ -138,6 +154,7 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             AirAccelerate(wishdir, wishspeed);
+            //AirControl(wishdir, wishspeed);
         }
     }
 
@@ -151,7 +168,7 @@ public class PlayerMovement : MonoBehaviour
         if (addSpeed <= 0)
             return;
 
-        accelSpeed = playerMovementConfig.accel * Time.deltaTime * wishSpeed;
+        accelSpeed = playerMovementConfig.accel * Time.fixedDeltaTime * wishSpeed;
 
         if (accelSpeed > addSpeed)
             accelSpeed = addSpeed;
@@ -159,7 +176,6 @@ public class PlayerMovement : MonoBehaviour
         for (int i = 0; i < 3; i++)
             playerVelocity[i] += wishDir[i] * accelSpeed;
     }
-
 
     private void AirAccelerate(Vector3 wishDir, float wishSpeed)
     {
@@ -184,10 +200,58 @@ public class PlayerMovement : MonoBehaviour
 
         if(wishSpd > 0)
         {
-            playerVelocity = Vector3.Lerp(playerVelocity, wishDir * targetSpeed + (playerVelocity - currentHorizontalVel), playerMovementConfig.airAccel * airControlMultiplier * Time.deltaTime);
+            playerVelocity = Vector3.Lerp(playerVelocity, wishDir * targetSpeed + (playerVelocity - currentHorizontalVel), playerMovementConfig.airAccel * airControlMultiplier * Time.fixedDeltaTime);
         }
     }
+/*
 
+    private void AirAccelerate(Vector3 wishDir, float wishSpeed)
+    {
+        float wishSpd = wishSpeed;
+
+        if (wishSpd > playerMovementConfig.airMaxSpeed)
+            wishSpd = playerMovementConfig.airMaxSpeed;
+
+        float currentSpeed = Vector3.Dot(playerVelocity, wishDir);
+        float addSpeed = wishSpd - currentSpeed;
+
+        if (addSpeed <= 0)
+            return;
+
+        float accelSpeed = playerMovementConfig.airAccel * Time.deltaTime * wishSpeed;
+
+        if (accelSpeed > addSpeed)
+            accelSpeed = addSpeed;
+
+        for (int i = 0; i < 3; i++)
+            playerVelocity[i] += wishDir[i] * accelSpeed;
+    }
+
+
+    private void AirControl(Vector3 wishDir, float wishSpeed)
+    {
+        if (wishSpeed <= 0f) return;
+
+        Vector3 verticalVel = Vector3.Project(playerVelocity, transform.up);
+        Vector3 horizontalVel = playerVelocity - verticalVel;
+
+        float speed = horizontalVel.magnitude;
+        if (speed < 0.001f) return;
+
+        Vector3 velDir = horizontalVel / speed;
+        float dot = Vector3.Dot(velDir, wishDir);
+
+        // only steer while wishdir roughly agrees with current velocity -
+        // without this gate, air control lets you cancel/reverse momentum for free
+        if (dot > 0f)
+        {
+            float k = playerMovementConfig.airControl * dot * dot * Time.deltaTime;
+            velDir = (velDir + wishDir * k).normalized;
+        }
+
+        playerVelocity = velDir * speed + verticalVel; // same speed, new direction
+    }
+*/
     private void Friction()
     {
         //ref float vel;
@@ -266,14 +330,14 @@ public class PlayerMovement : MonoBehaviour
             lastGroundedTime = Time.time;
             if (fallingWindLoopAudioSource != null)
             {
-                SoundManager.StopLoop(fallingWindLoopAudioSource);
+                SoundManager.StopLoop(fallingWindLoopAudioSource, 0);
             }
         }
         else
         {
             if(fallingWindLoopAudioSource == null)
             {
-                Debug.Log("Falling");
+                //Debug.Log("Falling");
                 fallingWindLoopAudioSource = SoundManager.PlayLoop(SoundType.FALLING_WIND_LOOP, 0, UnityEngine.Random.Range(0, 3));
 
             }
@@ -363,12 +427,12 @@ public class PlayerMovement : MonoBehaviour
 
     IEnumerator PlayFootStepsSound()
     {
-        if (isPlayingFootsteps)
-            yield break;
+        //if (isPlayingFootsteps)
+        //    yield break;
             
         isPlayingFootsteps = true;
-        SoundManager.PlaySound(SoundType.FOOTSTEP, 0.8f);
-        yield return new WaitForSeconds(0.5f);
+        SoundManager.PlaySound(SoundType.FOOTSTEP, 0.35f);
+        yield return new WaitForSeconds(0.35f);
         isPlayingFootsteps = false;
     }
 

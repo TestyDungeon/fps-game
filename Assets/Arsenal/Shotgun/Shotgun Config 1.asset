@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Shotgun Config 1
   m_EditorClassIdentifier: 
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 22606562c1e5d614a81d3fa5597226ea, type: 3}
+  bulletCasePrefab: {fileID: 1147123391096741731, guid: 9e62d7d16ef71b348ba8b992a9da68e3, type: 3}
+  bulletCaseDelay: 0.3
   bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
   layerMask:
     serializedVersion: 2
@@ -22,6 +24,8 @@ MonoBehaviour:
   volume: 0.6
   altStartSFX:
   - {fileID: 8300000, guid: da0e8d5de5adbed4eaed37a8a4b0e52c, type: 3}
+  caseFallSFX: []
+  caseFallVolume: 1
   shootAnimation:
     _FadeDuration: 0.25
     _Speed: 1
@@ -55,7 +59,7 @@ MonoBehaviour:
   explosionRadius: 2.5
   explosionForceRB: 5
   explosionDelay: 0.25
-  ricoshetSpeedLoss: 0
+  ricoshetSpeedLoss: 0.1
   mass: 0.0001
   altConfig: {fileID: 11400000, guid: fed73bf97b2525b4494a519342879878, type: 2}
   references:

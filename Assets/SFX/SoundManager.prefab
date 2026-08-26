@@ -48,10 +48,10 @@ MonoBehaviour:
   soundList:
   - name: FOOTSTEP
     sounds:
-    - {fileID: 8300000, guid: 578a1bb451d6a49468a2f0d5c2c6aa51, type: 3}
-    - {fileID: 8300000, guid: 70ac4fd434ce22f49abc1b17cba2e246, type: 3}
-    - {fileID: 8300000, guid: bc03859e45aed8845b821155f537d1be, type: 3}
-    - {fileID: 8300000, guid: a0e1a30113e79aa459497a801ce13cfa, type: 3}
+    - {fileID: 8300000, guid: a93764cac3e6e254aa9e81b17cd668a5, type: 3}
+    - {fileID: 8300000, guid: 1b67130c9676b0c47a673cf9390f074f, type: 3}
+    - {fileID: 8300000, guid: e9f931f5c45eb184b94ebc59b770449a, type: 3}
+    - {fileID: 8300000, guid: e0dfb6b6981be7d42b673dc84e9c3b13, type: 3}
   - name: JUMP
     sounds:
     - {fileID: 8300000, guid: a4943b7d8cf7ae241ad7aecfb8aab47d, type: 3}
@@ -78,7 +78,7 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 070f05f830b425a44a64647c82dbb914, type: 3}
   - name: PICKUP_GRAPPLE
     sounds:
-    - {fileID: 8300000, guid: cc2e8778bb8bc7c409f3dc3d4b965fea, type: 3}
+    - {fileID: 8300000, guid: 3482a6bfa5e399d49a5ce31ea18e5aeb, type: 3}
   - name: PICKUP_GUNS
     sounds:
     - {fileID: 8300000, guid: fb06a5b878e3fb7468b7027b0607442a, type: 3}
@@ -123,6 +123,12 @@ MonoBehaviour:
   - name: GRAPPLE_END
     sounds:
     - {fileID: 8300000, guid: 9d43b9fb326bf9c4b950d8be7fb97f11, type: 3}
+  - name: GRAPPLE_POINT
+    sounds:
+    - {fileID: 8300000, guid: 4fe4f3e35d5a32c4cae341084868c181, type: 3}
+  - name: CORPSE_EXPLOSION
+    sounds:
+    - {fileID: 8300000, guid: 402d4bd0161225343acf8653f2c9a901, type: 3}
 --- !u!82 &7636616833535133655
 AudioSource:
   m_ObjectHideFlags: 0

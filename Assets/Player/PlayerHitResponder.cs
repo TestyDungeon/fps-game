@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PlayerHitResponder : MonoBehaviour, IDamageable
 {
-    [SerializeField] private Transform playerPivot;
+    //[SerializeField] private Transform playerPivot;
     private Health health;
     private GameManager gameManager;
     private Kick melee;
@@ -21,7 +21,7 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
 
     void Start()
     {
-        health = GetComponent<Health>();
+        health = GetComponentInParent<Health>();
         gameManager = FindAnyObjectByType<GameManager>();
         melee = FindAnyObjectByType<Kick>();
     }
@@ -31,16 +31,16 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
         if (health.GetHealth() <= 0)
             return;
         
-        if(melee.GetBlocking())
-        {
-            bool isInFront = Vector3.Dot(playerPivot.forward, (damagePoint - transform.position).normalized) > 0;
-            if(isInFront)
-            {
-                if (!melee.GetParrying())
-                    SoundManager.PlaySound(SoundType.SHIELD_BLOCK, 1);
-                return;
-            }
-        }
+        //if(melee.GetBlocking())
+        //{
+        //    bool isInFront = Vector3.Dot(playerPivot.forward, (damagePoint - transform.position).normalized) > 0;
+        //    if(isInFront)
+        //    {
+        //        if (!melee.GetParrying())
+        //            SoundManager.PlaySound(SoundType.SHIELD_BLOCK, 1);
+        //        return;
+        //    }
+        //}
         SoundManager.PlaySound(SoundType.HURT, 0.3f);
         health.SetHealth(health.GetHealth() - damageAmount);
         health.HealthChanged();

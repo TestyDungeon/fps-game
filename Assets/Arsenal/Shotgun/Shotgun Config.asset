@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Shotgun Config
   m_EditorClassIdentifier: 
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 22606562c1e5d614a81d3fa5597226ea, type: 3}
-  bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
+  bulletCasePrefab: {fileID: 1147123391096741731, guid: 9e62d7d16ef71b348ba8b992a9da68e3, type: 3}
+  bulletCaseDelay: 0.55
+  bulletTrail: {fileID: 0}
   layerMask:
     serializedVersion: 2
     m_Bits: 32695
@@ -22,6 +24,14 @@ MonoBehaviour:
   volume: 0.85
   altStartSFX:
   - {fileID: 8300000, guid: da0e8d5de5adbed4eaed37a8a4b0e52c, type: 3}
+  caseFallSFX:
+  - {fileID: 8300000, guid: dcffa30f30445234ca806e928f8ebc28, type: 3}
+  - {fileID: 8300000, guid: cbee844cabfd50d43acf71504002ad3f, type: 3}
+  - {fileID: 8300000, guid: 14339823c0d9332419793514737e3386, type: 3}
+  - {fileID: 8300000, guid: 47c80e55fd8200f429382d6a042d2ed8, type: 3}
+  - {fileID: 8300000, guid: 1cfff36de2433084a94c22bd70ba8910, type: 3}
+  - {fileID: 8300000, guid: 391e8df9b4f9826478a42ea748c42c7f, type: 3}
+  caseFallVolume: 0.1
   shootAnimation:
     _FadeDuration: 0.25
     _Speed: 1
@@ -35,7 +45,7 @@ MonoBehaviour:
   recoilSpeedCamera: 20
   returnSpeedCamera: 5
   allowButtonHold: 1
-  damage: 14
+  damage: 20
   ammoType: 1
   range: 30
   force: 20

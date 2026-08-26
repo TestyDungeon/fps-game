@@ -17,21 +17,34 @@ public class Explosion : MonoBehaviour
         {
             MovementController mc = obj.GetComponent<MovementController>();
             float dist = (transform.position - obj.transform.position).magnitude;
+            Vector3 dir = (obj.transform.position - transform.position).normalized;
             Rigidbody rb = obj.GetComponent<Rigidbody>();
             if (mc != null)
             {
+                if(mc.tag == "Enemy")
+                {
+                    dir = Vector3.Project(dir, mc.GetGravityVec()).normalized;   
+                    EnemyStateManager esm = obj.GetComponent<EnemyStateManager>();
+                    esm.SwitchState(esm.FalterState); 
+                }
+
                 if(dist > (gunConfig.explosionRadius * 0.5))
-                    mc.addVelocity(gunConfig.force * (obj.transform.position - transform.position).normalized * 0.5f);
+                {
+                    mc.addVelocity(gunConfig.force * dir * 0.5f);
+                }
                 else
-                    mc.addVelocity(gunConfig.force * (obj.transform.position - transform.position).normalized);
+                {
+                    
+                    mc.addVelocity(gunConfig.force * dir);
+                }
             }
             IDamageable victim = obj.GetComponent<IDamageable>();
             if (victim != null && dist <= gunConfig.explosionRadius)
             {
                 if(obj.tag == "Player")
-                    victim.TakeDamage(PlayerHitResponder.Instance.transform, Mathf.FloorToInt(CalculateDamage(gunConfig.explosionRadius, dist) * 0.1f));
+                    victim.TakeDamage(PlayerMovement.Instance.transform, Mathf.FloorToInt(CalculateDamage(gunConfig.explosionRadius, dist) * 0.1f));
                 else
-                    victim.TakeDamage(PlayerHitResponder.Instance.transform, CalculateDamage(gunConfig.explosionRadius, dist));
+                    victim.TakeDamage(PlayerMovement.Instance.transform, CalculateDamage(gunConfig.explosionRadius, dist));
             }
             //if (rb != null)
             //    rb.AddExplosionForce(explosionForceRB, transform.position, explosionRadius, 3, ForceMode.Impulse);

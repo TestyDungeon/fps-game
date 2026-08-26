@@ -13,7 +13,6 @@ public class Projectile : MonoBehaviour
     private SphereCollider sphereCollider;
 
     private Vector3 direction;
-    int layerMask;
 
     [HideInInspector] public Vector3 gravityVec = Vector3.down;
 
@@ -36,7 +35,6 @@ public class Projectile : MonoBehaviour
         origin = projectileStart.position;
         pre_pos = transform.position;
         ricochetCount = gunConfig.ricochet;
-        layerMask = gunConfig.layerMask;
         Invoke("EnableMesh", 0.01f);
         rb = GetComponent<Rigidbody>();
 
@@ -62,7 +60,7 @@ public class Projectile : MonoBehaviour
         if(!collided || (gunConfig.ricochet > 0 && ricochetCount > 0))
             transform.Translate(direction * Time.deltaTime, Space.World);
         RaycastHit hit;
-        bool didHit = Physics.SphereCast(pre_pos, sphereCollider.radius * transform.lossyScale.x, transform.position - pre_pos,  out hit, Vector3.Distance(pre_pos, transform.position), layerMask, QueryTriggerInteraction.Ignore);
+        bool didHit = Physics.SphereCast(pre_pos, sphereCollider.radius * transform.lossyScale.x, transform.position - pre_pos,  out hit, Vector3.Distance(pre_pos, transform.position), gunConfig.layerMask, QueryTriggerInteraction.Ignore);
 
         vertical += gunConfig.gravityMult * Time.deltaTime;
         if(Vector3.Distance(pre_pos, origin) >= gunConfig.range || didHit)
@@ -88,7 +86,7 @@ public class Projectile : MonoBehaviour
     {
         if(rb != null && !collided)
         {
-            rb.linearVelocity = rb.linearVelocity / 2;
+            rb.linearVelocity = rb.linearVelocity * gunConfig.ricoshetSpeedLoss;
             collided = true;
             Invoke("Detonate", gunConfig.explosionDelay);
         }

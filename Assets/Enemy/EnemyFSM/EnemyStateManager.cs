@@ -4,7 +4,6 @@ using UnityEngine.AI;
 using TMPro;
 using UnityEngine.Animations;
 using UnityEngine.UI;
-using Animancer;
 
 public class EnemyStateManager : MonoBehaviour
 {
@@ -33,13 +32,14 @@ public class EnemyStateManager : MonoBehaviour
     
 
     [HideInInspector] public Transform targetTransform;
+    private Vector3 lastSeenTargetPosition;
     [HideInInspector] public Vector3 lookDir = Vector3.forward;
 
     [HideInInspector] public AudioSource audioSource;
-    [HideInInspector] public float sight;
+    //[HideInInspector] public float sight;
     [HideInInspector] public Animator animator;
     [HideInInspector] public Vector3 enemyVelocity = Vector3.zero;
-    private int layermask = ~((1 << 6) | (1 << 9) | (1 << 11) | (1 << 2) | (1 << 13) | (1 << 12) | (1 << 10));
+    private int layermask = (1 << 0 | 1 << 3 | 1 << 14);
 
     [HideInInspector] public int playerLayer = 1 << 3;
     private int enemyLayer = 1 << 8;
@@ -51,6 +51,7 @@ public class EnemyStateManager : MonoBehaviour
     private Collider[] colliders;
 
     private Health enemyHealth;
+    [HideInInspector] public EnemyHitResponder ehr;
 
 
     private TextMeshProUGUI text;
@@ -61,10 +62,13 @@ public class EnemyStateManager : MonoBehaviour
     [HideInInspector] public bool canAttack = true;
 
 
-    [HideInInspector] public AnimancerComponent animancer;
+    //[HideInInspector] public AnimancerComponent animancer;
+    [HideInInspector] public CodeAnimationEvents animEvents;
+    
     [HideInInspector] public SkinnedMeshRenderer[] smrs;
-    public Material staggerMat;
+    [HideInInspector] public Material staggerMat;
 
+    [HideInInspector] public float lastDamage = 0;
     [HideInInspector] public Vector3 lastDamageVector = Vector3.zero;
 
     void Awake()
@@ -72,9 +76,11 @@ public class EnemyStateManager : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         agent.updatePosition = false;
         agent.updateRotation = false;
-
+        agent.updateUpAxis = false;
+        ehr = GetComponentInChildren<EnemyHitResponder>();
         smrs = GetComponentsInChildren<SkinnedMeshRenderer>();
-        animancer = GetComponentInChildren<AnimancerComponent>();
+        //animancer = GetComponentInChildren<AnimancerComponent>();
+        animEvents = GetComponentInChildren<CodeAnimationEvents>();
         audioSource = GetComponentInChildren<AudioSource>();
         attackBehavior = enemyConfig.GetAttackBehavior();
         traversalBehavior = enemyConfig.GetTraversalBehavior();
@@ -86,11 +92,10 @@ public class EnemyStateManager : MonoBehaviour
         enemyHealth.SetPosture(enemyConfig.maxHealth);
 
         animator = GetComponentInChildren<Animator>();
-        targetTransform = GameObject.FindGameObjectWithTag("Player").transform;
 
         capsuleCollider = GetComponent<CapsuleCollider>();
         height = capsuleCollider.height;
-        sight = GetComponentInChildren<SphereCollider>().radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
+        //sight = GetComponentInChildren<SphereCollider>().radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
         
         movementController = GetComponent<MovementController>();
         movementController.SetGravity(enemyConfig.gravity);
@@ -123,8 +128,8 @@ public class EnemyStateManager : MonoBehaviour
         rigidbodies = GetComponentsInChildren<Rigidbody>();
         colliders = GetComponentsInChildren<Collider>();
 
-        SetRagdollRigidBody(false);
-        SetRagdollColliders(false);
+        //SetRagdollRigidBody(false);
+        //SetRagdollColliders(false);
     }
 
     
@@ -132,7 +137,7 @@ public class EnemyStateManager : MonoBehaviour
     {
         if (targetTransform == null)
         {
-            targetTransform = PlayerHitResponder.Instance.transform;
+            targetTransform = PlayerMovement.Instance.transform;
         }
 
         
@@ -146,7 +151,8 @@ public class EnemyStateManager : MonoBehaviour
         if(text != null)
         {
             text.SetText("S: " + currentState + "\n" +
-                        "A:" + canAttack);
+                        "A:" + canAttack + "\n" +
+                        "IsOnNav:" + IsOnUsableNavMesh());
 
             healthFill.fillAmount = (float)enemyHealth.GetHealth() / enemyHealth.GetMaxHealth();
             postureFill.fillAmount = (float)enemyHealth.GetPosture() / enemyHealth.GetMaxPosture();
@@ -185,7 +191,7 @@ public class EnemyStateManager : MonoBehaviour
 
     public void GoToTarget(float speed)
     {
-        if (agent.enabled && agent.isOnNavMesh)
+        if (IsOnUsableNavMesh())
         {
             agent.destination = targetTransform.position;
             if(IsInvoking("GetRandomReachablePointOnNavMesh"))
@@ -194,11 +200,16 @@ public class EnemyStateManager : MonoBehaviour
             GoInDirection(agent.desiredVelocity.normalized * speed + CalculateAvoidance());
             lookDir = agent.desiredVelocity;
         }
+        else if (movementController.GroundCheck() && !IsTargetReachable())
+        {
+            animator.Play("Walk");
+            GoInDirection(Vector3.ProjectOnPlane(GetVectorToTarget(), transform.up).normalized * speed);
+        }
     }
 
     public void MoveToTarget(float speed)
     {
-        if (agent.enabled && agent.isOnNavMesh)
+        if (IsOnUsableNavMesh())
         {
             agent.destination = targetTransform.position;
             if(IsInvoking("GetRandomReachablePointOnNavMesh"))
@@ -212,6 +223,7 @@ public class EnemyStateManager : MonoBehaviour
 
     public Vector3 GetVectorToTarget()
     {
+        //Debug.DrawLine(targetTransform.position, transform.position, Color.cyan);
         return targetTransform.position - transform.position;
 
     }
@@ -248,8 +260,9 @@ public class EnemyStateManager : MonoBehaviour
 
     public bool IsTargetInSight()
     {
-        if (Physics.Raycast(transform.position, targetTransform.position - transform.position, out RaycastHit hit, 100, layermask))
+        if (Physics.SphereCast(transform.position, 0.5f, targetTransform.position - transform.position, out RaycastHit hit, 100, layermask))
         {
+            //Debug.Log("SIGHT " + hit.transform.name + " TARGET " + targetTransform.name);
             if (hit.transform == targetTransform)
             {
                 return true;
@@ -270,9 +283,43 @@ public class EnemyStateManager : MonoBehaviour
         if((transform.position-dest).sqrMagnitude > 4)
         {
             animator.Play("Walk");
-            agent.destination = dest;
-            GoInDirection(Vector3.ProjectOnPlane(agent.desiredVelocity, transform.up).normalized * speed + CalculateAvoidance());
+            if (IsOnUsableNavMesh())
+            {
+                agent.destination = dest;
+                GoInDirection(Vector3.ProjectOnPlane(agent.desiredVelocity, transform.up).normalized * speed + CalculateAvoidance());
+            }
+            else
+            {
+                GoInDirection(Vector3.ProjectOnPlane(dest - transform.position, transform.up).normalized * speed);
+            }
         }
+    }
+
+    public bool IsOnUsableNavMesh(float sampleRadius = 0.6f, float maxFootHeightDelta = 1.25f)
+    {
+        if (!agent.enabled || !agent.isOnNavMesh)
+            return false;
+
+        Vector3 capsuleCenterWorld = capsuleCollider != null
+            ? transform.TransformPoint(capsuleCollider.center)
+            : transform.position;
+
+        float feetOffset = capsuleCollider != null
+            ? Mathf.Max(0f, capsuleCollider.height * 0.5f - capsuleCollider.radius)
+            : 0.9f;
+
+        Vector3 feetPosition = capsuleCenterWorld - transform.up * feetOffset;
+
+        // updatePosition is disabled, so validate navmesh proximity against the feet, not pivot.
+        if (!NavMesh.SamplePosition(feetPosition, out NavMeshHit hit, sampleRadius, NavMesh.AllAreas))
+            return false;
+
+        Vector3 delta = hit.position - feetPosition;
+        Vector3 planarDelta = Vector3.ProjectOnPlane(delta, transform.up);
+        float verticalDelta = Vector3.Dot(delta, transform.up);
+
+        return planarDelta.sqrMagnitude <= sampleRadius * sampleRadius
+               && Mathf.Abs(verticalDelta) <= maxFootHeightDelta;
     }
 
     public void RotateInDirection()
@@ -311,7 +358,7 @@ public class EnemyStateManager : MonoBehaviour
         if (targetTransform == null) return false;
 
         NavMeshPath path = new NavMeshPath();
-        if (agent.isActiveAndEnabled && agent.isOnNavMesh)
+        if (agent.isActiveAndEnabled && IsOnUsableNavMesh())
         {
             if (agent.CalculatePath(targetTransform.position, path))
             {
@@ -341,8 +388,27 @@ public class EnemyStateManager : MonoBehaviour
     {
         //Debug.Log("Juggle");
         movementController.resetVelocity();
-        movementController.Dash(dir, 4f, 25, 10);
+        movementController.Dash(dir, 2f, 12.5f, 5);
         SwitchState(FalterState);
+    }
+
+    public void DeathKnockback(Vector3 dir, float damage)
+    {
+        damage = Mathf.Max(damage, 70);
+        //lastDamage += damage;
+        Debug.Log("Last Damage: " + damage);
+        //if (movementController.GetIsDashing())
+        //{
+            movementController.resetVelocity();
+            movementController.StopDash();  
+            
+            movementController.Dash(dir, 2f * damage / 120, 12.5f * damage / 120, 5 * damage / 120);
+        //}
+        //else
+        //{
+        //    movementController.Dash(dir, 2f * lastDamage / 20, 12.5f * lastDamage / 20, 5 * lastDamage / 20);
+        //}
+        
     }
 
     private Vector3 CalculateAvoidance()
@@ -443,5 +509,11 @@ public class EnemyStateManager : MonoBehaviour
     public void SetTarget(Transform target)
     {
         targetTransform = target; 
+    }
+
+    public void SpawnCorpse()
+    {
+        GameObject x = Object.Instantiate(enemyConfig.deathParticle, transform.position - transform.up * (capsuleCollider.height / 2.1f), Quaternion.LookRotation(transform.forward, transform.up));
+        Object.Destroy(x, 30);
     }
 }

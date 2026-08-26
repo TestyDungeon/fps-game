@@ -21,7 +21,7 @@ public class GrapplePoint : MonoBehaviour
     {
         if (isEnabled)
         {
-            if(Vector3.Distance(PlayerHitResponder.Instance.transform.position, transform.position) < activationRange)
+            if(Vector3.Distance(PlayerMovement.Instance.transform.position, transform.position) < activationRange)
             {
                 if(doOnce == false)
                 {

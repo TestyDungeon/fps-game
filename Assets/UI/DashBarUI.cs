@@ -3,28 +3,39 @@ using UnityEngine;
 
 public class DashBarUI : MonoBehaviour
 {
-    private PlayerMovement pm;
     [SerializeField] private Image fill;
+
+    private PlayerMovement pm;
 
     void Awake()
     {
-        if (pm == null)
-            pm = FindAnyObjectByType<PlayerMovement>();
+        Player.OnPlayerSpawned += HandlePlayerSpawned;
 
+        if (Player.Instance != null)
+        {
+            HandlePlayerSpawned();
+        }
     }
 
-    void OnEnable()
+    void OnDestroy()
     {
+        Player.OnPlayerSpawned -= HandlePlayerSpawned;
+
+        if (pm != null)
+            pm.OnDash -= OnDash;
+    }
+
+    private void HandlePlayerSpawned()
+    {
+        if (pm != null)
+            pm.OnDash -= OnDash;
+
+        pm = Player.Instance.Movement;
+
         if (pm != null)
         {
             pm.OnDash += OnDash;
         }
-    }
-
-    void OnDisable()
-    {
-        if (pm != null)
-            pm.OnDash -= OnDash;
     }
 
     private void OnDash(int maxDashAmount, int currentDashAmount, float dashCooldown)

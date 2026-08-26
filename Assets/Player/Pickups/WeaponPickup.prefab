@@ -255,3 +255,6 @@ MonoBehaviour:
   rotationSpeed: 200
   amplitude: 0.1
   frequency: 1
+  playSound: 1
+  soundType: 10
+  volume: 0.4

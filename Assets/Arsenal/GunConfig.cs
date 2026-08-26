@@ -1,21 +1,21 @@
 using UnityEngine;
-using Animancer;
 
 [CreateAssetMenu(fileName = "Gun Config", menuName = "Guns/Gun Config")]
 public class GunConfig : ScriptableObject
 {
     [Header("Important Setup")]
     public GameObject muzzleFlashPrefab;
+    public GameObject bulletCasePrefab = null;
+    public float bulletCaseDelay = 0.3f;
     public TrailRenderer bulletTrail;
-    public LayerMask layerMask = ~(1 << 3);
+    [HideInInspector] public LayerMask layerMask = (1 << 1 | 1 << 15);
     
-    
+    [Header("SFX")]
     public AudioClip[] shootSFX;
     public float volume = 1;
     public AudioClip[] altStartSFX;
-    
-    [Header("Animations")]
-    public ClipTransition shootAnimation;
+    public AudioClip[] caseFallSFX;
+    public float caseFallVolume = 1;
 
     [Header("Camera Recoil")]
     public float recoilAmountCamera;

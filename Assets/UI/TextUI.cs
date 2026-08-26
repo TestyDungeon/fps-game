@@ -22,4 +22,9 @@ public class TextUI : MonoBehaviour
         tmp.text = text_;
         tmp.alpha = 1;
     } 
+
+    public void SetSize(float size)
+    {
+        tmp.fontSize = size;
+    } 
 }

@@ -28,7 +28,9 @@ public enum SoundType
     FALLING_WIND_START,
     FALLING_WIND_LOOP,
     GRAPPLE_END,
-    GRAPPLE_POINT
+    GRAPPLE_POINT,
+    
+    CORPSE_EXPLOSION
 }
 
 [System.Serializable]
@@ -83,7 +85,7 @@ public class SoundManager : MonoBehaviour
         return source;
     }
 
-    public static void StopLoop(AudioSource source)
+    public static void StopLoop(AudioSource source, float fadeOut)
     {
         if (source == null)
             return;

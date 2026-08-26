@@ -37,6 +37,7 @@ public class MovementController : MonoBehaviour
     Vector3 changedDir = Vector3.zero;
 
     int layerMaskEnemy = ~(1 << 6 | 1 << 12 | 1 << 10);
+    int layerMaskEnemyDead = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10);
     int layerMaskPlayer = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10);
     int layerMaskPlayerDash = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10 | 1 << 8);
     [HideInInspector] public int layerMask;
@@ -61,6 +62,7 @@ public class MovementController : MonoBehaviour
 
     public Vector3 Move(Vector3 velocity)
     {
+        Debug.DrawRay(transform.position, gravityVec * 5, Color.cyan);
         bool wasGrounded = GroundCheck();
         if (dashing)
         {
@@ -69,7 +71,7 @@ public class MovementController : MonoBehaviour
                 if(Vector3.Angle(hit.normal, dashDir) >= 90 && Vector3.Angle(transform.up, hit.normal) < maxClimbAngle)
                     dashDir = mathlib.ProjectOnPlaneOblique(dashDir, hit.normal, -transform.up);
             }
-            Debug.Log("Dash speed: " + dashSpeed);
+            //Debug.Log("Dash speed: " + dashSpeed);
             Vector3 dashMove = CollideAndSlide(transform.position, dashDir * dashSpeed * Time.fixedDeltaTime, false);
             //Collider[] cols = Physics.OverlapCapsule(
             //transform.position + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
@@ -181,9 +183,12 @@ public class MovementController : MonoBehaviour
             pos + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
             pos - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
             capsuleColliderRadius, vel.normalized, out RaycastHit hit, dist,
-            dashing ? layerMaskPlayerDash : layerMask, QueryTriggerInteraction.Ignore))
+            dashing && tag == "Player" ? layerMaskPlayerDash : layerMask, QueryTriggerInteraction.Ignore))
         {
-
+            //if(tag == "Player")
+            //{
+            //    Debug.Log("Collision: " + hit.transform.name);
+            //}
             Vector3 newVel = vel.normalized * (hit.distance - offset);
             float angle = Vector3.Angle(transform.up, hit.normal);
 
@@ -279,7 +284,7 @@ public class MovementController : MonoBehaviour
 
     public bool GroundCheck()
     {
-        if (Physics.SphereCast(transform.position, capsuleColliderRadius, -transform.up, out RaycastHit hit, capsuleColliderHeight/4 + 0.3f, layerMask, QueryTriggerInteraction.Ignore))
+        if (Physics.SphereCast(transform.position, capsuleColliderRadius - 0.01f, -transform.up, out RaycastHit hit, capsuleColliderHeight/4 + 0.3f, layerMask, QueryTriggerInteraction.Ignore))
         {
             return true;
         }
@@ -287,7 +292,7 @@ public class MovementController : MonoBehaviour
     }
     public bool GroundCheck(out RaycastHit hit)
     {
-        if (Physics.SphereCast(transform.position, capsuleColliderRadius, -transform.up, out hit, capsuleColliderHeight/4 + 0.3f, layerMask, QueryTriggerInteraction.Ignore))
+        if (Physics.SphereCast(transform.position, capsuleColliderRadius - 0.01f, -transform.up, out hit, capsuleColliderHeight/4 + 0.3f, layerMask, QueryTriggerInteraction.Ignore))
         {
             return true;
         }
@@ -297,6 +302,7 @@ public class MovementController : MonoBehaviour
     public void addVelocity(Vector3 x)
     {
         externalVelocity += x;
+        //Debug.Log("Vel: " + x.magnitude);
     }
 
 
@@ -313,6 +319,11 @@ public class MovementController : MonoBehaviour
     public void SetVelocitySpeed(float x)
     {
         vel = vel.normalized * x;
+    }
+
+    public float GetVerticalSpeed()
+    {
+        return Vector3.Dot(vel, transform.up);
     }
 
     public void resetVerticalVelocity()
@@ -335,6 +346,11 @@ public class MovementController : MonoBehaviour
     public void setGravityVec(Vector3 x)
     {
         gravityVec = x;
+    }
+
+    public Vector3 GetGravityVec()
+    {
+        return gravityVec;
     }
 
     public float GetGravityAlignSpeed()
@@ -428,5 +444,11 @@ public class MovementController : MonoBehaviour
             dashing = false;
             dashCoroutine = null;
         }
+    }
+
+    public void SetEnemyLayerMaskToDead()
+    {
+        layerMask = layerMaskEnemyDead;
+        
     }
 }

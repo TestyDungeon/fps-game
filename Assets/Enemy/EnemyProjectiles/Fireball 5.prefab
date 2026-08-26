@@ -9855,7 +9855,7 @@ MonoBehaviour:
   projectileStart: {fileID: 0}
   projectileSpeed: 30
   damage: 20
-  targetMagnetism: 0.1
+  targetMagnetism: 0.5
   knockback: 3
 --- !u!114 &-1691998244720001938
 MonoBehaviour:

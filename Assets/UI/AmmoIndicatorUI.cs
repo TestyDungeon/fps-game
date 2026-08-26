@@ -3,41 +3,49 @@ using UnityEngine;
 
 public class AmmoIndicatorUI : MonoBehaviour
 {
+    [SerializeField] private TextMeshProUGUI text;
+
     private Inventory inventory;
     private IAmmoHandler ammoHandler;
-    [SerializeField] private TextMeshProUGUI text;
 
     void Awake()
     {
-        if (inventory == null)
-            inventory = FindAnyObjectByType<Inventory>();
-    }
+        Player.OnPlayerSpawned += HandlePlayerSpawned;
 
-    //void Start()
-    //{
-    //    if(ammoHandler != null)
-    //    {
-    //        //ammoHandler = inventory.GetCurrent() as IAmmoHandler;
-    //        ammoHandler.OnAmmoChanged += OnAmmoChanged;
-    //        OnAmmoChanged(ammoHandler.GetAmmo());
-    //    }
-    //}
-
-    void OnEnable()
-    {
-        if (inventory != null)
+        if (Player.Instance != null)
         {
-            inventory.OnSlotChanged += OnSlotChanged;
+            HandlePlayerSpawned();
         }
     }
 
-    void OnDisable()
+    void OnDestroy()
+    {
+        Player.OnPlayerSpawned -= HandlePlayerSpawned;
+
+        if (inventory != null)
+            inventory.OnSlotChanged -= OnSlotChanged;
+
+        if (ammoHandler != null)
+            ammoHandler.OnAmmoChanged -= OnAmmoChanged;
+    }
+
+    private void HandlePlayerSpawned()
     {
         if (inventory != null)
             inventory.OnSlotChanged -= OnSlotChanged;
 
         if (ammoHandler != null)
             ammoHandler.OnAmmoChanged -= OnAmmoChanged;
+        ammoHandler = null;
+        text.SetText("");
+
+        inventory = Player.Instance.Inventory;
+
+        if (inventory != null)
+        {
+            inventory.OnSlotChanged += OnSlotChanged;
+            OnSlotChanged(inventory.GetCurrent());
+        }
     }
 
     private void OnSlotChanged(Item item)
@@ -49,7 +57,6 @@ public class AmmoIndicatorUI : MonoBehaviour
         {
             ammoHandler = handler;
             ammoHandler.OnAmmoChanged += OnAmmoChanged;
-            //Debug.Log("Slot Changed : " + ammoHandler.GetAmmo());
             text.SetText(ammoHandler.GetAmmo().ToString());
         }
         else
@@ -57,12 +64,10 @@ public class AmmoIndicatorUI : MonoBehaviour
             ammoHandler = null;
             text.SetText("");
         }
-        
     }
 
     private void OnAmmoChanged(int maxAmmo, int ammo)
     {
-        //Debug.Log("Ammo: " + ammo);
         text.SetText(ammo.ToString());
     }
 }
