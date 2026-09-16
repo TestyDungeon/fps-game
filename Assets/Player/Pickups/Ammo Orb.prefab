@@ -52,11 +52,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lootType: 0
-  amount: 2
+  amount: 4
   item: {fileID: 0}
   rotationSpeed: 0
   amplitude: 0
   frequency: 0
+  playSound: 0
+  soundType: 0
+  volume: 0
 --- !u!114 &6294658833297103974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -70,11 +73,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lootType: 2
-  amount: 0
+  amount: 1
   item: {fileID: 0}
   rotationSpeed: 0
   amplitude: 0
   frequency: 0
+  playSound: 0
+  soundType: 0
+  volume: 0
 --- !u!114 &2164385304304566403
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -88,11 +94,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lootType: 1
-  amount: 1
+  amount: 2
   item: {fileID: 0}
   rotationSpeed: 0
   amplitude: 0
   frequency: 0
+  playSound: 0
+  soundType: 0
+  volume: 0
 --- !u!33 &3849916910002914586
 MeshFilter:
   m_ObjectHideFlags: 0

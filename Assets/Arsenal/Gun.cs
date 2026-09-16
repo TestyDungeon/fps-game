@@ -60,6 +60,7 @@ public class Gun : Item, IAmmoHandler
         if(animator != null)
             animator.Play("Shoot", 0, 1);
         
+        Player.Instance.CameraRecoil.ApplyRecoil(-5, 6, 4, false);
         SetLights(false);
         //
     }
@@ -238,7 +239,9 @@ public class Gun : Item, IAmmoHandler
         {
             animator.Play("Shoot", 0, 0);
         }
+        Player.Instance.CameraRecoil.ResetRecoil();
         cameraRecoil.ApplyRecoil(gunConfig.recoilAmountCamera, gunConfig.recoilSpeedCamera, gunConfig.returnSpeedCamera);
+        cameraRecoil.ApplyScreenShake(gunConfig.recoilAmountCamera);
         SpawnMuzzleFlash();
         StartCoroutine(SpawnBulletCase());
         if(gunConfig.ammoPerShot != 0) 

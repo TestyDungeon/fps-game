@@ -39,6 +39,7 @@ public class EnemyProjectile : MonoBehaviour
         layerMask = playerLayerMask;
         //player_camera = GameObject.Find("Camera").GetComponent<Camera>();
         direction = transform.forward;
+        Debug.DrawRay(prePos, direction, Color.cyan, 1);
         prePos = transform.position;
         //layer_mask = ~layer_mask;
         Destroy(gameObject, 5);
@@ -77,7 +78,7 @@ public class EnemyProjectile : MonoBehaviour
         direction = direction.normalized;
         //SpawnParticles();
         transform.Translate(direction * projectileSpeed * Time.fixedDeltaTime, Space.World);
-        Debug.DrawLine(prePos, transform.position, Color.cyan, 5);
+        //Debug.DrawLine(prePos, transform.position, Color.cyan, 5);
         if(Physics.BoxCast(prePos, size/2, direction, out RaycastHit hit, Quaternion.identity, Vector3.Distance(prePos, transform.position), layerMask, QueryTriggerInteraction.Collide))
         {
             

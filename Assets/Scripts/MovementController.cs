@@ -1,5 +1,4 @@
 using System.Collections;
-using Unity.Mathematics;
 using UnityEngine;
 
 public class MovementController : MonoBehaviour
@@ -64,6 +63,10 @@ public class MovementController : MonoBehaviour
     {
         Debug.DrawRay(transform.position, gravityVec * 5, Color.cyan);
         bool wasGrounded = GroundCheck();
+
+        velocity += externalVelocity;
+        
+
         if (dashing)
         {
             if(GroundCheck(out RaycastHit hit))
@@ -72,7 +75,7 @@ public class MovementController : MonoBehaviour
                     dashDir = mathlib.ProjectOnPlaneOblique(dashDir, hit.normal, -transform.up);
             }
             //Debug.Log("Dash speed: " + dashSpeed);
-            Vector3 dashMove = CollideAndSlide(transform.position, dashDir * dashSpeed * Time.fixedDeltaTime, false);
+            Vector3 dashMove = CollideAndSlide(transform.position, ((dashDir * dashSpeed) + velocity) * Time.fixedDeltaTime, false);
             //Collider[] cols = Physics.OverlapCapsule(
             //transform.position + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
             //transform.position - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
@@ -83,7 +86,7 @@ public class MovementController : MonoBehaviour
             externalVelocity = Vector3.zero;
             vel = Vector3.zero;
 
-            return vel;
+            return velocity * 0.95f;
         }
 
         if (changedDir != Vector3.zero)
@@ -105,7 +108,7 @@ public class MovementController : MonoBehaviour
             ResolvePenetration();
         }
 
-        velocity += externalVelocity;
+        
         externalVelocity = Vector3.zero;
         
         Vector3 displacement = velocity * Time.fixedDeltaTime;
@@ -120,24 +123,36 @@ public class MovementController : MonoBehaviour
         Vector3 resolvedLateral = CollideAndSlide(transform.position, lateralDisp, false);
         
         Vector3 stepUp = Vector3.zero;
+        Vector3 stepForwardFallBack = Vector3.zero;
         if(resolvedLateral.sqrMagnitude < lateralDisp.sqrMagnitude)
         {
             recursionDepth = 0;
             Vector3 resolvedLateralStepUp = CollideAndSlide(transform.position, transform.up * stepHeight, true);
+            //resolvedLateralStepUp = transform.up * stepHeight;
             recursionDepth = 0;
-            Vector3 resolvedLateralStepForward = CollideAndSlide(transform.position + resolvedLateralStepUp, lateralDisp, true);
-            if(resolvedLateralStepForward.sqrMagnitude > resolvedLateral.sqrMagnitude && Mathf.Approximately(resolvedLateralStepUp.sqrMagnitude, stepHeight * stepHeight))
+            Vector3 resolvedLateralStepForward = CollideAndSlide(transform.position + resolvedLateralStepUp, lateralDisp/*.normalized * Mathf.Max(lateralDisp.magnitude, 0.12f) /* + lateralDisp.normalized * 0.1f*/, true);
+            if(resolvedLateralStepForward.sqrMagnitude > resolvedLateral.sqrMagnitude)
             {
                 recursionDepth = 0;
-                Vector3 resolvedLateralStepDown = CollideAndSlide(transform.position + resolvedLateralStepUp * 2 + resolvedLateralStepForward, -transform.up * stepHeight * 2, true);
+                Vector3 resolvedLateralStepDown = CollideAndSlide(transform.position + resolvedLateralStepUp + resolvedLateralStepForward, -transform.up * stepHeight, true);
 
-                Vector3 onStepPosition = (transform.position + resolvedLateralStepUp * 2) + resolvedLateralStepForward + resolvedLateralStepDown;
+                Vector3 onStepPosition = transform.position + resolvedLateralStepUp + resolvedLateralStepForward + resolvedLateralStepDown;
                 Vector3 onStepVector = onStepPosition - transform.position;
 
                 if(Vector3.ProjectOnPlane(onStepVector, transform.up).sqrMagnitude > resolvedLateral.sqrMagnitude)
                 {
-                    resolvedLateral = Vector3.ProjectOnPlane(onStepVector, transform.up);
-                    stepUp = Vector3.Project(onStepVector, transform.up);
+                    Debug.Log("Step: " + Vector3.Dot(lateralDisp, Vector3.ProjectOnPlane(onStepVector, transform.up)));
+                    if(Vector3.Angle(lateralDisp, Vector3.ProjectOnPlane(onStepVector, transform.up)) < 10)
+                    {
+                        resolvedLateral = Vector3.ProjectOnPlane(onStepVector, transform.up);
+                        stepUp = Vector3.Project(onStepVector, transform.up);
+                        //stepForwardFallBack = lateralDisp.normalized * (lateralDisp.magnitude > 0.12f ? 0 : 0.12f);
+                        
+                    }
+                    else
+                    {
+                        
+                    }
                 }
             }
             

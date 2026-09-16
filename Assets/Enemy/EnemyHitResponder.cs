@@ -78,13 +78,13 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         
         if(hurtBox.enabled == true && enemyHealth.GetHealth() <= 0)
         {
-            state.DeathKnockback((transform.position - source.position).normalized  + source.up * 0.25f, lastDamage);
+            state.DeathKnockback((transform.position - source.position).normalized + source.up * 0.5f, lastDamage);
         }
         //StartCoroutine(WhiteMaterialChange());
 
 
-        if(Time.time - lastFalter > 4)
-            enemyHealth.SetPosture(enemyHealth.GetPosture() - damageAmount * 2.5f);
+        if(Time.time - lastFalter > 1)
+            enemyHealth.SetPosture(enemyHealth.GetPosture() - damageAmount * 5f);
         
 
         //if(enemyHealth.GetHealth() < enemyHealth.GetMaxHealth() * 0.4)
@@ -115,7 +115,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         if(state.GetCurrentState() is EnemyStaggerState)
         {
             GameObject orb = Instantiate(GameManager.Instance.healthOrb, transform.position, Quaternion.identity);
-            orb.GetComponent<Rigidbody>().AddForce(Vector3.up * 1, ForceMode.Force);
+            orb.GetComponent<Rigidbody>().AddForce(Vector3.up * 0.5f, ForceMode.Force);
             Destroy(orb, 8);
             enemyHealth.TakeDamage(enemyHealth.GetMaxHealth());
         }
@@ -163,7 +163,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
 
     public IEnumerator SetHurtBoxToDead()
     {
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.1f);
         hurtBox.enabled = false;
         hurtBoxDead.enabled = true;
 

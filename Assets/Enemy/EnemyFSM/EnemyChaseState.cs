@@ -16,6 +16,7 @@ public class EnemyChaseState : EnemyBaseState
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
+        enemy.RotateInDirection();
         //Debug.Log("Reach" + enemy.IsTargetReachable()  + "OnNavmesh" + enemy.agent.isOnNavMesh);
         //enemy.RotateInDirection(enemy.agent.desiredVelocity);
         enemy.traversalBehavior.Chase(enemy);

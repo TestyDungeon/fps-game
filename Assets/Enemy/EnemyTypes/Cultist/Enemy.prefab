@@ -98,7 +98,6 @@ MonoBehaviour:
   rigidbodies: []
   ehr: {fileID: 0}
   canAttack: 1
-  animancer: {fileID: 0}
   animEvents: {fileID: 0}
   smrs: []
   staggerMat: {fileID: 0}
@@ -320,7 +319,7 @@ ParticleSystem:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  moveWithTransform: 1
+  moveWithTransform: 0
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
   randomSeed: 0
@@ -5072,8 +5071,8 @@ Transform:
   m_GameObject: {fileID: 2364292694486836854}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0, y: 0.951, z: -0.236}
-  m_LocalScale: {x: 1.82, y: 1.82, z: 1.82}
+  m_LocalPosition: {x: 0, y: 0.75, z: -0.236}
+  m_LocalScale: {x: 1.7, y: 1.7, z: 1.7}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 671354363355088989}
@@ -5317,7 +5316,7 @@ Transform:
   m_GameObject: {fileID: 7030657432616711628}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.4, z: 0}
+  m_LocalPosition: {x: 0, y: 0.021, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5377,9 +5376,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.63
-  m_Height: 2.9
+  m_Height: 2.8171964
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Center: {x: 1.6501921e-18, y: -0.041401863, z: 9.233061e-15}
 --- !u!114 &4205977909745216748
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5632,6 +5631,10 @@ PrefabInstance:
     - target: {fileID: 8356538690890272372, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
       propertyPath: m_Layer
       value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 8417361359673230750, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8417361359673230750, guid: de10f63aa8d492a42b6175c672e21cf3, type: 3}
       propertyPath: m_Materials.Array.size

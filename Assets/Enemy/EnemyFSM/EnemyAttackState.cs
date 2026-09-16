@@ -14,7 +14,7 @@ public class EnemyAttackState : EnemyBaseState
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
-
+        enemy.RotateToTarget();
         if (enemy.GetVectorToTarget().sqrMagnitude > enemy.enemyConfig.endAttackRange * enemy.enemyConfig.endAttackRange || !enemy.IsTargetInSight())
         {
             if (enemy.canAttack)

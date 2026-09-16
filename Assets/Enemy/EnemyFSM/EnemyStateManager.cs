@@ -142,7 +142,7 @@ public class EnemyStateManager : MonoBehaviour
 
         
 
-        RotateInDirection();
+        
 
         currentState.FixedUpdateState(this);
         Friction();
@@ -260,7 +260,7 @@ public class EnemyStateManager : MonoBehaviour
 
     public bool IsTargetInSight()
     {
-        if (Physics.SphereCast(transform.position, 0.5f, targetTransform.position - transform.position, out RaycastHit hit, 100, layermask))
+        if (Physics.Raycast(transform.position, targetTransform.position - transform.position, out RaycastHit hit, 100, layermask))
         {
             //Debug.Log("SIGHT " + hit.transform.name + " TARGET " + targetTransform.name);
             if (hit.transform == targetTransform)
@@ -330,6 +330,16 @@ public class EnemyStateManager : MonoBehaviour
         Quaternion targetRotation = Quaternion.LookRotation(flatDir.normalized, transform.up);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * enemyConfig.rotationSpeed);
     }
+
+    public void RotateToTarget()
+    {
+        Vector3 flatDir = Vector3.ProjectOnPlane(targetTransform.position - transform.position, transform.up);
+        if (flatDir.sqrMagnitude < 0.001f) return;
+        
+        Quaternion targetRotation = Quaternion.LookRotation(flatDir.normalized, transform.up);
+        transform.rotation = targetRotation;
+    }
+
 
 
     public Vector3 GetRandomReachablePointOnNavMesh(float range = 10, int maxAttempts = 10)
@@ -402,7 +412,7 @@ public class EnemyStateManager : MonoBehaviour
             movementController.resetVelocity();
             movementController.StopDash();  
             
-            movementController.Dash(dir, 2f * damage / 120, 12.5f * damage / 120, 5 * damage / 120);
+            movementController.Dash(dir, 2f * (damage / 120), 12.5f * (damage / 120), 5 * (damage / 120));
         //}
         //else
         //{

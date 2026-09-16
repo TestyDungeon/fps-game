@@ -16,6 +16,7 @@ MonoBehaviour:
   maxHealth: 300
   chaseSpeed: 4
   wanderSpeed: 4
+  wanderDuration: 1
   rotationSpeed: 3
   maxJumpDistance: 30
   gravity: 30
@@ -27,7 +28,7 @@ MonoBehaviour:
   startAttackRange: 40
   endAttackRange: 45
   meleeAttackRange: 3
-  attackCooldown: 0.1
+  attackCooldown: 0
   layerMask:
     serializedVersion: 2
     m_Bits: 8

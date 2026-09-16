@@ -20,7 +20,6 @@ public class EnemyDeadState : EnemyBaseState
         //Object.Destroy(x, 100);
         //enemy.movementController.addVelocity(enemy.lastDamageVector * 0.3f);
         enemy.movementController.SetEnemyLayerMaskToDead();
-
         //if(enemy.rigidbodies.Length > 0)
         //{
         //    enemy.SetRagdollColliders(true);

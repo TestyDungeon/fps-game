@@ -15,7 +15,7 @@ MonoBehaviour:
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 7703ace7cd973424087b710123029a52, type: 3}
   bulletCasePrefab: {fileID: 1147123391096741731, guid: cc40d7b68a50c8947a05eb3582c55052, type: 3}
   bulletCaseDelay: 0.1
-  bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
+  bulletTrail: {fileID: 0}
   layerMask:
     serializedVersion: 2
     m_Bits: 32695
@@ -31,10 +31,10 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 9d1713923337b8645b44ab08a39cb90a, type: 3}
   caseFallVolume: 0.2
   recoilAmountCamera: 2
-  recoilSpeedCamera: 14
+  recoilSpeedCamera: 8
   returnSpeedCamera: 8
   allowButtonHold: 1
-  damage: 20
+  damage: 22
   ammoType: 0
   range: 300
   force: 20

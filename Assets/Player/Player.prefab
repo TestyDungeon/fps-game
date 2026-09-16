@@ -907,7 +907,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerPivot: {fileID: 6537709611539033917}
-  playerMovementConfig: {fileID: 11400000, guid: 5f543a7b1b5949a45afad8c284cd7606, type: 2}
+  playerMovementConfig: {fileID: 11400000, guid: 97b51aa87f7111e4497085e9b3ae7d51, type: 2}
   playerCamera: {fileID: 1861544086572792814}
   defaultFOV: 0
   targetFov: 0
@@ -956,7 +956,7 @@ MonoBehaviour:
   bobVerticalAmount: 0.04
   bobHorizontalAmount: 0.025
   cameraBobFrequency: 10
-  cameraBobVerticalAmount: 0.3
+  cameraBobVerticalAmount: 0
   cameraTransform: {fileID: 4218251603925791753}
 --- !u!114 &8195254735978504675
 MonoBehaviour:
@@ -1214,7 +1214,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &6316201502308039426
 Transform:
   m_ObjectHideFlags: 0
@@ -1499,8 +1499,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 0.35
-  m_Range: 2.39
+  m_Intensity: 0.2
+  m_Range: 1.5
   m_SpotAngle: 39.98408
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10

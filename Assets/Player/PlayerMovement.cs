@@ -417,7 +417,7 @@ public class PlayerMovement : MonoBehaviour
         GUI.Label(new Rect(0, 15, 400, 200),
         "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
         "Velocity: " + ups + "\n" +
-        "Grounded: " + movementController.GroundCheck() + "\n" +
+        "Grounded: " + movementController.GroundCheck(out RaycastHit hit) + "angle: " + Vector3.Angle(transform.up, hit.normal) + "\n" +
         "Jumps: " + jumpsLeft + "\n" +
         "Jumped?: " + jumped + "\n" +
         "Gravity Align Speed: " + movementController.GetGravityAlignSpeed() + "\n" +

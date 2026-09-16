@@ -16,18 +16,27 @@ public class EnemyFalterState : EnemyBaseState
         //GameObject.Destroy(enemy.gameObject, 1);
         //enemy.enemyAttack.StopAttack();
         //enemy.SetNavmeshAgent(false);
-        particles = Object.Instantiate(enemy.enemyConfig.falterParticlesPrefab, enemy.transform.position + enemy.transform.up * (enemy.height / 2), Quaternion.LookRotation(enemy.transform.forward, enemy.transform.up), enemy.transform);
+        //particles = Object.Instantiate(enemy.enemyConfig.falterParticlesPrefab, enemy.transform.position + enemy.transform.up * (enemy.height / 2), Quaternion.LookRotation(enemy.transform.forward, enemy.transform.up), enemy.transform);
+    
+        if(enemy.animator != null)
+        {
+            //if(enemy.movementController.GroundCheck())
+            //    enemy.animator.Play("Idle");
+            //else
+            //    enemy.animator.Play("Air");
+
+            if (enemy.movementController.GroundCheck())
+            {
+                enemy.animator.Play("Falter");
+            }
+        }
+
+        //enemy.RotateToTarget();
     }
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
-        if(enemy.animator != null)
-        {
-            if(enemy.movementController.GroundCheck())
-                enemy.animator.Play("Idle");
-            else
-                enemy.animator.Play("Air");
-        }
+        //enemy.RotateToTarget();
 
         if (switchCoroutine != null) return;
 

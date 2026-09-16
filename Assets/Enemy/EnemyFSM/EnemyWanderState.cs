@@ -8,12 +8,13 @@ public class EnemyWanderState : EnemyBaseState
     public override void EnterState(EnemyStateManager enemy)
     {
         enemy.SetNavmeshAgent(true);
-        enemy.StartCoroutine(enemy.SwitchState(enemy.ChaseState, 1f, 2f));
+        enemy.StartCoroutine(enemy.SwitchState(enemy.ChaseState, enemy.enemyConfig.wanderDuration * 1.2f, enemy.enemyConfig.wanderDuration * 0.8f));
         
     }
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
+        enemy.RotateInDirection();
         bool reachedDestination = (enemy.transform.position - dest).sqrMagnitude < 2 * 2;
 
         if (Time.time - lastTime > 1.5f || reachedDestination)

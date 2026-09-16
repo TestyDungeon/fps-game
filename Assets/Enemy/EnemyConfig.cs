@@ -8,6 +8,7 @@ public class EnemyConfig : ScriptableObject
     public int maxHealth;
     public float chaseSpeed = 7;
     public float wanderSpeed = 7;
+    public float wanderDuration = 1;
     public float rotationSpeed = 7;
     public float maxJumpDistance = 30;
     public float gravity = 30;

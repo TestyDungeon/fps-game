@@ -16,7 +16,7 @@ public class Interactor : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F))
         {
-            if(Physics.Raycast(origin.position, origin.forward, out RaycastHit hit, range, layerMask))
+            if(Physics.Raycast(origin.position, origin.forward, out RaycastHit hit, range, layerMask, QueryTriggerInteraction.Collide))
             {
                 Debug.Log("Name: " + hit.transform.name);
                 hit.transform.GetComponent<IInteractable>().Interact();

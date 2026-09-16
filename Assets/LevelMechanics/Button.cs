@@ -1,17 +1,16 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Button : MonoBehaviour, IInteractable
 {
-    public GameObject receiver;
-    public IInteractable receiverInterface;
-    void Awake()
-    {
-        receiverInterface = receiver.GetComponent<IInteractable>();
-    }
+    public List<Door> doors;
 
     public void Interact()  
     {
-        //SoundManager.PlaySound(SoundType.PICKUP_KEY, 1);
-        receiverInterface.Interact();
+        SoundManager.PlaySound(SoundType.SHIELD_BLOCK, 0.2f);
+        foreach(Door door in doors)
+        {
+            door.Open(true);
+        }
     }
 }

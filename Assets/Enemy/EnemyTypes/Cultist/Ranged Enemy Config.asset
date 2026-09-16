@@ -16,10 +16,11 @@ MonoBehaviour:
   maxHealth: 160
   chaseSpeed: 5
   wanderSpeed: 4
+  wanderDuration: 0.8
   rotationSpeed: 8
   maxJumpDistance: 30
   gravity: 20
-  falterDuration: 0.4
+  falterDuration: 0.3
   falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
   wanderRadius: 10
   damage: 5

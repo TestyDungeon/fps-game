@@ -113,7 +113,6 @@ public class RangedAttack : IAttackBehavior
 {
     float lastAttackTime = -Time.time;
     private int bulletStartInd;
-    private Vector3 target;
     private int attackCount = 0;
 
     public void ExecuteAttack(EnemyStateManager enemy)
@@ -122,7 +121,7 @@ public class RangedAttack : IAttackBehavior
          // Set immediately to prevent duplicate calls from FixedUpdate
         SoundManager.PlaySound(enemy.enemyConfig.preAttackSFX, enemy.transform.position, 1, 0.96f);
         attackCount++;
-        target = enemy.targetTransform.position;
+        
         enemy.animator.Play("Attack", 0, 0f);
 
         var events = enemy.animEvents.GetEvents("Attack");
@@ -138,10 +137,10 @@ public class RangedAttack : IAttackBehavior
         });
 
         // Reset when animation ends
-        events.Add(1f, () => 
+        events.Add(0.8f, () => 
         {
             
-            enemy.StartCoroutine(enemy.ResetAttack(enemy.WanderState));
+            enemy.StartCoroutine(enemy.ResetAttack(enemy.ChaseState));
             enemy.animator.Play("Attack");
 
         });
@@ -161,13 +160,13 @@ public class RangedAttack : IAttackBehavior
         float x = Random.Range(-enemy.enemyConfig.spread, enemy.enemyConfig.spread);
         float y = Random.Range(-enemy.enemyConfig.spread, enemy.enemyConfig.spread);
 
-        Vector3 direction = target - enemy.bulletStart[bulletStartInd].position + new Vector3(x, y, 0);
+        Vector3 direction = enemy.targetTransform.position - enemy.bulletStart[bulletStartInd].position + new Vector3(x, y, 0);
         
         EnemyProjectile projectile = Object.Instantiate(enemy.enemyConfig.projectile, enemy.bulletStart[bulletStartInd].position, Quaternion.LookRotation(direction)).GetComponent<EnemyProjectile>();
         if(attackCount >= 3)
         {
-            projectile.ChangeParryable(true);
-            attackCount = 0;
+            //projectile.ChangeParryable(true);
+            attackCount = 0;    
         }
         projectile.SetTarget(enemy.targetTransform);
         projectile.SetParent(enemy.transform);
@@ -264,8 +263,8 @@ public class BorovAttack : IAttackBehavior
         Vector3 direction = target - enemy.bulletStart[bulletStartInd].position + new Vector3(x, y, 0);
         
         EnemyProjectile projectile = Object.Instantiate(enemy.enemyConfig.projectile, enemy.bulletStart[bulletStartInd].position, Quaternion.LookRotation(direction)).GetComponent<EnemyProjectile>();
-        if(attackCount == 3 || attackCount == 6)
-            projectile.ChangeParryable(true);
+        //if(attackCount == 3 || attackCount == 6)
+        //    projectile.ChangeParryable(true);
         projectile.SetTarget(enemy.targetTransform);
         projectile.SetParent(enemy.transform);
     }
@@ -417,7 +416,7 @@ public class MeleeTraversal : ITraversalBehavior
 
 public class RangedTraversal : ITraversalBehavior
 {
-    private float chaseDuration = Random.Range(0.6f, 1f);
+    private float chaseDuration = Random.Range(0.2f, 0.4f);
     private float chaseStartTime = float.NaN;
     
     private bool chaseTimerStarted = false;
@@ -429,18 +428,19 @@ public class RangedTraversal : ITraversalBehavior
             chaseTimerStarted = true;
         }
 
-        if(enemy.GetVectorToTarget().sqrMagnitude > enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange 
-        || !enemy.IsTargetInSight() 
-        || !Physics.BoxCast(enemy.bulletStart[0].position, new Vector3(0.5f, 0.5f, 0.5f), enemy.targetTransform.position - enemy.bulletStart[0].position, enemy.transform.rotation, enemy.enemyConfig.attackRange, enemy.playerLayer) 
-        /*|| (Time.time - chaseStartTime) < chaseDuration*/)
-        {
-            enemy.GoToTarget(enemy.enemyConfig.chaseSpeed);
-        }
-        else
+        if(enemy.GetVectorToTarget().sqrMagnitude < enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange 
+        && enemy.IsTargetInSight() 
+        && Physics.BoxCast(enemy.bulletStart[0].position, new Vector3(0.5f, 0.5f, 0.5f), enemy.targetTransform.position - enemy.bulletStart[0].position, enemy.transform.rotation, enemy.enemyConfig.attackRange, enemy.playerLayer) 
+        && (Time.time - chaseStartTime) > chaseDuration)
         {
             chaseTimerStarted = false;
             enemy.SwitchState(enemy.AttackState);
             return;
+        }
+        else
+        {
+            enemy.GoToTarget(enemy.enemyConfig.chaseSpeed);
+            
         }
         
     }

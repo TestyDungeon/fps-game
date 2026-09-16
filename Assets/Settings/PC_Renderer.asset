@@ -15,7 +15,7 @@ MonoBehaviour:
   m_Active: 1
   settings:
     posterizeMaterial: {fileID: 2100000, guid: 7ea3dfe5a7555864c934aeab4bd5b7ba, type: 2}
-    stepCount: 32
+    stepCount: 64
     renderPassEvent: 600
     cameraFilterMode: 2
     cameraName: UICamera

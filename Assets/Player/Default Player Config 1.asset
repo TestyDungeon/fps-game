@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MAX_SPEED: 50
   speed: 10
-  accel: 9
-  airSpeed: 5
-  airMaxSpeed: 22
-  airAccel: 7
+  accel: 7
+  airSpeed: 6
+  airMaxSpeed: 8
+  airAccel: 5
   airControl: 0
-  friction: 5
-  stopSpeed: 0.1
+  friction: 4
+  stopSpeed: 3
   jumpsAmount: 1
   jumpStrength: 10
   dashAmount: 0

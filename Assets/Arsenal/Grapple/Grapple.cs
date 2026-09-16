@@ -26,8 +26,9 @@ public class Grapple : Item
     private AudioSource audioSource = null;
     private LayerMask layerMask = (1 << 0 | 1 << 8);
 
-    void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         currentSpeed = startSpeed;
         lr = GetComponent<LineRenderer>();
         lr.enabled = false;
@@ -67,6 +68,8 @@ public class Grapple : Item
                 currentSpeed *= Mathf.Pow(acceleration, Time.fixedDeltaTime);
             //Debug.Log("Current Speed: " + currentSpeed);
             mc.Dash((grapplePoint - player.transform.position).normalized, Vector3.Distance(grapplePoint, player.transform.position) - 3, currentSpeed);
+            //mc.SetDashSpeed(currentSpeed);
+            //mc.SetDashDir((grapplePoint - player.transform.position).normalized);
         }
     }
 
@@ -89,7 +92,7 @@ public class Grapple : Item
         if (Physics.Raycast(cameraPivot.position, dir, out hit, range, layerMask, QueryTriggerInteraction.Collide)
         || Physics.SphereCast(cameraPivot.position, 2, dir, out hit, range, layerMask, QueryTriggerInteraction.Collide))
         {
-            if (!hit.transform.CompareTag("Enemy"))
+            if (hit.transform.gameObject.layer != LayerMask.NameToLayer("Enemy"))
                 return;
 
             started = true;
@@ -141,7 +144,7 @@ public class Grapple : Item
     private void LaunchGrapple()
     {
         currentSpeed = Mathf.Max(Vector3.Dot((grapplePoint - player.transform.position).normalized, mc.getVelocity()), startSpeed);
-        mc.resetVelocity();
+        //mc.resetVelocity();
         mc.Dash((grapplePoint - player.transform.position).normalized, Vector3.Distance(grapplePoint, player.transform.position) - 3, currentSpeed, currentSpeed / 2);
     }
 

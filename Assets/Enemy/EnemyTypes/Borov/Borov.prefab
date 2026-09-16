@@ -344,7 +344,6 @@ MonoBehaviour:
   rigidbodies: []
   ehr: {fileID: 0}
   canAttack: 1
-  animancer: {fileID: 0}
   animEvents: {fileID: 0}
   smrs: []
   staggerMat: {fileID: 0}
@@ -590,6 +589,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 7743387453185120100}
     m_Modifications:
     - target: {fileID: -9165797768001435688, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -9165797768001435688, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
       propertyPath: m_Materials.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -654,6 +657,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -1526964690268444965, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1526964690268444965, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
       propertyPath: m_Materials.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -670,6 +677,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7603786706384944740, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7603786706384944740, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
       propertyPath: m_Materials.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -677,6 +688,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
       objectReference: {fileID: 2100000, guid: bbc6c41c140a60a4a8369a86718ffe21, type: 2}
+    - target: {fileID: 8417361359673230750, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8417361359673230750, guid: 5f4d08f7b61405d4287a5d339d17cc9b, type: 3}
       propertyPath: m_Materials.Array.size
       value: 2
