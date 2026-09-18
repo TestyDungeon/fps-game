@@ -37,7 +37,8 @@ public class EnemyFalterState : EnemyBaseState
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
         //enemy.RotateToTarget();
-
+        if(!enemy.movementController.GroundCheck())
+                enemy.animator.Play("Air");
         if (switchCoroutine != null) return;
 
         //if ( && firstGroundHit)

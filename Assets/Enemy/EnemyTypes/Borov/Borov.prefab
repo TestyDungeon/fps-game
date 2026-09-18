@@ -368,7 +368,8 @@ MonoBehaviour:
   gravityAlignSpeedOnFieldChange: 0.02
   gravityAlignStep: 0.01
   maxClimbAngle: 55
-  stepHeight: 0.25
+  stepHeight: 0.6
+  stepClearance: 0.02
   layerMask: 0
 --- !u!114 &5668845252224047452
 MonoBehaviour:

@@ -20,11 +20,11 @@ public class MovementController : MonoBehaviour
     [Header("Parameters")]
     [SerializeField] private float maxClimbAngle = 55;
     [SerializeField] private float stepHeight = 0.25f;
+    [SerializeField] private float stepClearance = 0.02f;
     private bool InGravityField = false;
     private int maxRecursion = 3;
     private int recursionDepth;
     float offset = 0.01f;
-    private float stepOffset;
     
     private Vector3 dashDir;
     private float dashSpeed;
@@ -34,6 +34,12 @@ public class MovementController : MonoBehaviour
     Vector3 vel = Vector3.zero;
     Vector3 gravityVec = Vector3.down;
     Vector3 changedDir = Vector3.zero;
+
+
+    private bool hitWall;
+    private RaycastHit wallHit;
+
+    private float pendingStepSmooth = 0;
 
     int layerMaskEnemy = ~(1 << 6 | 1 << 12 | 1 << 10);
     int layerMaskEnemyDead = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10);
@@ -56,7 +62,6 @@ public class MovementController : MonoBehaviour
         capsuleCollider = GetComponent<CapsuleCollider>();
         capsuleColliderRadius = capsuleCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
         capsuleColliderHeight = capsuleCollider.height * transform.lossyScale.y;
-        stepOffset = -(capsuleColliderHeight / 2) + stepHeight;
     }
 
     public Vector3 Move(Vector3 velocity)
@@ -120,42 +125,17 @@ public class MovementController : MonoBehaviour
         
 
         recursionDepth = 0;
+        hitWall = false;
         Vector3 resolvedLateral = CollideAndSlide(transform.position, lateralDisp, false);
-        
+
         Vector3 stepUp = Vector3.zero;
-        Vector3 stepForwardFallBack = Vector3.zero;
-        if(resolvedLateral.sqrMagnitude < lateralDisp.sqrMagnitude)
+        if (hitWall && wasGrounded && TryStep(lateralDisp, wallHit, out float lift))
         {
+            stepUp = transform.up * lift;
             recursionDepth = 0;
-            Vector3 resolvedLateralStepUp = CollideAndSlide(transform.position, transform.up * stepHeight, true);
-            //resolvedLateralStepUp = transform.up * stepHeight;
-            recursionDepth = 0;
-            Vector3 resolvedLateralStepForward = CollideAndSlide(transform.position + resolvedLateralStepUp, lateralDisp/*.normalized * Mathf.Max(lateralDisp.magnitude, 0.12f) /* + lateralDisp.normalized * 0.1f*/, true);
-            if(resolvedLateralStepForward.sqrMagnitude > resolvedLateral.sqrMagnitude)
-            {
-                recursionDepth = 0;
-                Vector3 resolvedLateralStepDown = CollideAndSlide(transform.position + resolvedLateralStepUp + resolvedLateralStepForward, -transform.up * stepHeight, true);
-
-                Vector3 onStepPosition = transform.position + resolvedLateralStepUp + resolvedLateralStepForward + resolvedLateralStepDown;
-                Vector3 onStepVector = onStepPosition - transform.position;
-
-                if(Vector3.ProjectOnPlane(onStepVector, transform.up).sqrMagnitude > resolvedLateral.sqrMagnitude)
-                {
-                    Debug.Log("Step: " + Vector3.Dot(lateralDisp, Vector3.ProjectOnPlane(onStepVector, transform.up)));
-                    if(Vector3.Angle(lateralDisp, Vector3.ProjectOnPlane(onStepVector, transform.up)) < 10)
-                    {
-                        resolvedLateral = Vector3.ProjectOnPlane(onStepVector, transform.up);
-                        stepUp = Vector3.Project(onStepVector, transform.up);
-                        //stepForwardFallBack = lateralDisp.normalized * (lateralDisp.magnitude > 0.12f ? 0 : 0.12f);
-                        
-                    }
-                    else
-                    {
-                        
-                    }
-                }
-            }
-            
+            resolvedLateral = CollideAndSlide(transform.position + stepUp, lateralDisp, false);
+            pendingStepSmooth += lift;   // for the camera, below
+            //Player.Instance.CameraRecoil.StepSmooth(lift);
         }
         
 
@@ -182,6 +162,9 @@ public class MovementController : MonoBehaviour
         
         Vector3 totalResolved = resolvedLateral + resolvedVertical;
         vel = totalResolved / Time.fixedDeltaTime;
+
+        StepDownSnap(wasGrounded, velocity, stepUp);
+
         return vel;
     }
 
@@ -206,6 +189,11 @@ public class MovementController : MonoBehaviour
             //}
             Vector3 newVel = vel.normalized * (hit.distance - offset);
             float angle = Vector3.Angle(transform.up, hit.normal);
+            if (!GravityPass && !hitWall && angle > maxClimbAngle)
+            {
+                hitWall = true;
+                wallHit = hit;
+            }
 
             if (newVel.magnitude <= offset)
                 newVel = Vector3.zero;
@@ -222,6 +210,71 @@ public class MovementController : MonoBehaviour
             return newVel + CollideAndSlide(newPos, vecOnPlane, GravityPass);
         }
         return vel;
+    }
+
+    
+
+    private void CapsulePoints(Vector3 pos, out Vector3 p1, out Vector3 p2)
+    {
+        Vector3 h = transform.up * (capsuleColliderHeight * 0.5f - capsuleColliderRadius);
+        p1 = pos + h;
+        p2 = pos - h;
+    }
+
+    private bool TryStep(Vector3 lateralDisp, RaycastHit wall, out float lift)
+    {
+        lift = 0f;
+        Vector3 up   = transform.up;
+        Vector3 dir  = Vector3.ProjectOnPlane(lateralDisp, up).normalized;
+        Vector3 foot = transform.position - up * (capsuleColliderHeight * 0.5f);
+
+        // wall point brought down to foot height, nudged just past the face
+        Vector3 onFace   = wall.point - Vector3.Project(wall.point - foot, up);
+        Vector3 rayStart = onFace + dir * (offset * 2f) + up * (stepHeight + offset);
+
+        if (!Physics.Raycast(rayStart, -up, out RaycastHit tread, stepHeight + offset * 2f,
+                             layerMask, QueryTriggerInteraction.Ignore))
+            return false;                                   // ledge, nothing to stand on
+
+        if (Vector3.Angle(up, tread.normal) > maxClimbAngle)
+            return false;                                   // too steep to stand on
+
+        lift = Vector3.Dot(tread.point - foot, up);
+        if (lift <= offset || lift > stepHeight) return false;
+
+        lift += stepClearance;                              // clear the edge with the round bottom
+
+        CapsulePoints(transform.position + up * lift, out Vector3 a, out Vector3 b);
+        return !Physics.CheckCapsule(a, b, capsuleColliderRadius - 0.02f,
+                                     layerMask, QueryTriggerInteraction.Ignore);
+    }
+
+    public float ConsumeStepSmooth()
+    {
+        float x = pendingStepSmooth;
+        pendingStepSmooth = 0;
+        return x;
+    }
+
+    private void StepDownSnap(bool wasGrounded, Vector3 velocity, Vector3 stepUp)
+    {
+        if (!wasGrounded || stepUp != Vector3.zero) return;
+        if (Vector3.Dot(velocity, transform.up) > 0f) return;   // jumping/being launched — let it fly
+
+        Vector3 up = transform.up;
+        CapsulePoints(transform.position, out Vector3 a, out Vector3 b);
+
+        if (Physics.CapsuleCast(a, b, capsuleColliderRadius, -up, out RaycastHit g,
+                                 stepHeight + offset, layerMask, QueryTriggerInteraction.Ignore)
+            && Vector3.Angle(up, g.normal) <= maxClimbAngle)
+        {
+            float drop = Mathf.Max(g.distance - offset, 0f);
+            if (drop > 0f)
+            {
+                transform.position -= up * drop;
+                pendingStepSmooth -= drop;   // camera eases the drop the same way it eases a rise
+            }
+        }
     }
 
 
@@ -279,8 +332,8 @@ public class MovementController : MonoBehaviour
                     x, x.transform.position, x.transform.rotation,
                     out Vector3 dir, out float dis))
                 {
-                    transform.position += dir * (dis + 0.1f);
-                    Debug.DrawRay(transform.position, dir * (dis + 0.1f), Color.cyan, 1);
+                    transform.position += dir * (dis + offset);
+                    //Debug.DrawRay(transform.position, dir * (dis + 0.1f), Color.cyan, 1);
                 }
             }
             ResolvePenetration(recursion + 1);

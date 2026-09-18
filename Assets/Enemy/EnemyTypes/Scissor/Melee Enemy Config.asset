@@ -12,41 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e418edc69801dff46935680310e60aca, type: 3}
   m_Name: Melee Enemy Config
   m_EditorClassIdentifier: 
-  idleAnimation:
-    _FadeDuration: 0.25
-    _Speed: 1
-    _Events:
-      _NormalizedTimes: []
-      _Callbacks: []
-      _Names: []
-    _Clip: {fileID: 7400000, guid: 983fbd86c5e27b145b6ede812e81ec52, type: 2}
-    _NormalizedStartTime: NaN
-  walkAnimation:
-    _FadeDuration: 0.25
-    _Speed: 1
-    _Events:
-      _NormalizedTimes: []
-      _Callbacks: []
-      _Names: []
-    _Clip: {fileID: 7400000, guid: 3df99b13676bc5b479658bfe4c24f990, type: 2}
-    _NormalizedStartTime: NaN
-  attackAnimation:
-    _FadeDuration: 0.25
-    _Speed: 1
-    _Events:
-      _NormalizedTimes: []
-      _Callbacks: []
-      _Names: []
-    _Clip: {fileID: 7400000, guid: 52c421976c541064caafb50e15a1c5d7, type: 2}
-    _NormalizedStartTime: NaN
   enemyName: Melee Enemy
   maxHealth: 100
   chaseSpeed: 10
   wanderSpeed: 7
+  wanderDuration: 1
   rotationSpeed: 3
   maxJumpDistance: 30
   gravity: 20
-  falterDuration: 0.4
+  falterDuration: 0.3
   falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
   wanderRadius: 10
   damage: 12
@@ -76,6 +50,3 @@ MonoBehaviour:
   deathSFX:
   - {fileID: 8300000, guid: 93927255ccad83e4e971f796b204ac3a, type: 3}
   staggerMaterial: {fileID: 2100000, guid: eda80e8ba2a7b3b4e865ef9341aef92b, type: 2}
-  references:
-    version: 2
-    RefIds: []

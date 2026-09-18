@@ -30,7 +30,7 @@ public class DashBarUI : MonoBehaviour
         if (pm != null)
             pm.OnDash -= OnDash;
 
-        pm = Player.Instance.Movement;
+        pm = Player.Instance.PlayerMovement;
 
         if (pm != null)
         {

@@ -7,9 +7,8 @@ public class CameraRecoil : MonoBehaviour
     private float returnSpeed;
     private Vector3 currentRecoil;
     private Vector3 targetRecoil;
-    private Transform transform_;
     private Vector3 origin;
-    private Vector3 prePos;
+    private float stepOffset;
 
     private Vector2 screenShake = new Vector2(0, 0);
 
@@ -17,7 +16,6 @@ public class CameraRecoil : MonoBehaviour
     {
 
         origin = transform.localPosition;  
-        prePos = transform.localPosition;
     }
 
 
@@ -30,16 +28,18 @@ public class CameraRecoil : MonoBehaviour
         targetRecoil = Vector3.Lerp(targetRecoil, Vector3.zero, ExpStep(returnSpeed, dt));
         currentRecoil = Vector3.Lerp(currentRecoil, targetRecoil, ExpStep(recoilSpeed, dt));
  
-
+        
+        transform.localPosition = Vector3.Lerp(transform.localPosition, origin, Time.deltaTime * 4);
         transform.localRotation = Quaternion.Euler(currentRecoil/* + new Vector3(screenShake.x, screenShake.y, 0)*/);
-
         screenShake = Vector2.MoveTowards(screenShake, Vector2.zero, Time.deltaTime * 0.1f);
     }
 
     void LateUpdate()
     {
-        prePos = transform.localPosition;
+        //StepSmooth();
+        //transform.localPosition = Vector3.Lerp(transform.localPosition, origin, Time.deltaTime * 6f);
     }
+
 
     private static float ExpStep(float speed, float dt)
     {
@@ -72,5 +72,19 @@ public class CameraRecoil : MonoBehaviour
     {
         screenShake = Vector2.one * screenShakeAmount_ * 0.5f;
         targetRecoil += new Vector3(0, 0, Random.Range(-1f, 1f) * Mathf.Abs(screenShakeAmount_));
+    }
+
+    public void StepSmooth()
+    {
+        stepOffset += Player.Instance.MovementController.ConsumeStepSmooth();                         // adds pendingStepSmooth, clears it
+        stepOffset = Mathf.MoveTowards(stepOffset, 0f, 6f * Time.deltaTime);
+        transform.localPosition = origin - transform.up * stepOffset;
+    }
+
+    public void StepSmooth(float amount)
+    {
+        stepOffset += Player.Instance.MovementController.ConsumeStepSmooth();                         // adds pendingStepSmooth, clears it
+        stepOffset = Mathf.MoveTowards(stepOffset, 0f, 6f * Time.deltaTime);
+        transform.localPosition -= Vector3.up * Mathf.Clamp(amount, 0, 0.05f);
     }
 }

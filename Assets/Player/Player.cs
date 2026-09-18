@@ -11,7 +11,8 @@ public class Player : MonoBehaviour
 
     public Health Health { get; private set; }
     public Inventory Inventory { get; private set; }
-    public PlayerMovement Movement { get; private set; }
+    public PlayerMovement PlayerMovement { get; private set; }
+    public MovementController MovementController { get; private set; }
 
     public CameraRecoil CameraRecoil { get; private set; }
 
@@ -21,7 +22,8 @@ public class Player : MonoBehaviour
 
         Health = GetComponent<Health>();
         Inventory = GetComponent<Inventory>();
-        Movement = GetComponent<PlayerMovement>();
+        PlayerMovement = GetComponent<PlayerMovement>();
+        MovementController = GetComponent<MovementController>();
         CameraRecoil = GetComponentInChildren<CameraRecoil>();
         OnPlayerSpawned?.Invoke();
     }
