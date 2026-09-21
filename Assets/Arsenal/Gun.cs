@@ -38,8 +38,6 @@ public class Gun : Item, IAmmoHandler
     private GameObject newProjectile;
     private Projectile projectileComponent;
 
-    private PlayerStats playerStats;
-
     [SerializeField] protected bool IsReadyToShoot => alt ? readyToShootAlt : readyToShoot;
 
     
@@ -73,7 +71,6 @@ public class Gun : Item, IAmmoHandler
     protected override void Start()
     {
         base.Start();
-        playerStats = player.GetComponent<PlayerStats>();
         cameraRecoil = player.GetComponentInChildren<CameraRecoil>();
         lights = GetComponentsInChildren<Light>();
         Debug.Log(lights.Length);
@@ -260,7 +257,6 @@ public class Gun : Item, IAmmoHandler
 
     virtual protected void Shoot(Vector3 dir)
     {
-        damageMultiplier = playerStats.GetDamageMultiplier(gunConfig.ammoType);
 
         if(gunConfig.projectilePrefab == null)
         {
@@ -280,7 +276,7 @@ public class Gun : Item, IAmmoHandler
 
         RaycastHit hit;
 
-        if (Physics.Raycast(start, dir, out hit, gunConfig.range, (1 << 0 | 1 << 15), QueryTriggerInteraction.Collide))
+        if (Physics.Raycast(start, dir, out hit, gunConfig.range, (1 << 0 | 1 << 15 | 1 << 14), QueryTriggerInteraction.Collide))
         {
             Debug.Log("HIT: " + hit.transform.name);
             target = hit.point;

@@ -56,7 +56,7 @@ public class EnemyStateManager : MonoBehaviour
 
     private TextMeshProUGUI text;
     private Image healthFill;
-    private Image postureFill;
+    private Image armorFill;
     private LookAtConstraint lookAtConstraint;
     
     [HideInInspector] public bool canAttack = true;
@@ -88,8 +88,8 @@ public class EnemyStateManager : MonoBehaviour
         enemyHealth = GetComponent<Health>();
         enemyHealth.SetMaxHealth(enemyConfig.maxHealth);
         enemyHealth.SetHealth(enemyConfig.maxHealth);
-        enemyHealth.SetMaxPosture(enemyConfig.maxHealth);
-        enemyHealth.SetPosture(enemyConfig.maxHealth);
+        enemyHealth.SetMaxArmor(enemyConfig.maxHealth);
+        enemyHealth.SetArmor(enemyConfig.maxHealth);
 
         animator = GetComponentInChildren<Animator>();
 
@@ -106,7 +106,7 @@ public class EnemyStateManager : MonoBehaviour
 
     void Start()
     {
-        // Debug ui above enemy, for health, posture, current state, etc,
+        // Debug ui above enemy, for health, armor, current state, etc,
         text = GetComponentInChildren<TextMeshProUGUI>();
         if(text != null)
         {
@@ -121,8 +121,8 @@ public class EnemyStateManager : MonoBehaviour
         {
             if(img.name == "Health")
                 healthFill = img; 
-            if(img.name == "Posture")
-                postureFill = img; 
+            if(img.name == "Armor")
+                armorFill = img; 
         }
         
         rigidbodies = GetComponentsInChildren<Rigidbody>();
@@ -151,11 +151,11 @@ public class EnemyStateManager : MonoBehaviour
         if(text != null)
         {
             text.SetText("S: " + currentState + "\n" +
-                        "A:" + canAttack + "\n" +
+                        "Grounded " + movementController.GroundCheck() + "\n" +
                         "IsOnNav:" + IsOnUsableNavMesh());
 
             healthFill.fillAmount = (float)enemyHealth.GetHealth() / enemyHealth.GetMaxHealth();
-            postureFill.fillAmount = (float)enemyHealth.GetPosture() / enemyHealth.GetMaxPosture();
+            armorFill.fillAmount = (float)enemyHealth.GetArmor() / enemyHealth.GetMaxArmor();
         }
         
     }
@@ -200,7 +200,7 @@ public class EnemyStateManager : MonoBehaviour
             GoInDirection(agent.desiredVelocity.normalized * speed + CalculateAvoidance());
             lookDir = agent.desiredVelocity;
         }
-        else if (movementController.GroundCheck() && !IsTargetReachable())
+        else if (movementController.GroundCheck())
         {
             animator.Play("Walk");
             GoInDirection(Vector3.ProjectOnPlane(GetVectorToTarget(), transform.up).normalized * speed);
@@ -253,9 +253,15 @@ public class EnemyStateManager : MonoBehaviour
             newspeed = 0;
         newspeed /= speed;
         
-        enemyVelocity[0] *= newspeed;
-        enemyVelocity[1] *= newspeed;
-        enemyVelocity[2] *= newspeed;
+        //enemyVelocity[0] *= newspeed;
+        //enemyVelocity[1] *= newspeed;
+        //enemyVelocity[2] *= newspeed;
+
+        Vector3 verticalVel = Vector3.Project(enemyVelocity, transform.up);
+        Vector3 horizontalVel = enemyVelocity - verticalVel;
+
+        // Apply friction only to horizontal components
+        enemyVelocity = (horizontalVel * newspeed) + verticalVel;
     }
 
     public bool IsTargetInSight()
@@ -263,7 +269,7 @@ public class EnemyStateManager : MonoBehaviour
         if (Physics.Raycast(transform.position, targetTransform.position - transform.position, out RaycastHit hit, 100, layermask))
         {
             //Debug.Log("SIGHT " + hit.transform.name + " TARGET " + targetTransform.name);
-            if (hit.transform == targetTransform)
+            if (Vector3.Dot(transform.forward, hit.transform.position - transform.position) > 0 && hit.transform == targetTransform)
             {
                 return true;
             }
@@ -274,6 +280,8 @@ public class EnemyStateManager : MonoBehaviour
 
     public void GoInDirection(Vector3 dir)
     {
+        Debug.DrawRay(transform.position, dir, Color.green, 5);
+        Debug.Log("MOVE: " + dir);
         lookDir = dir;
         enemyVelocity = Vector3.Project(enemyVelocity, transform.up) + Vector3.ProjectOnPlane(dir, transform.up).normalized * dir.magnitude;
     }
@@ -402,17 +410,17 @@ public class EnemyStateManager : MonoBehaviour
         SwitchState(FalterState);
     }
 
-    public void DeathKnockback(Vector3 dir, float damage)
+    public void DeathKnockback(Vector3 knockback)
     {
-        damage = Mathf.Max(damage, 70);
+        //damage = Mathf.Max(damage, 70);
         //lastDamage += damage;
-        Debug.Log("Last Damage: " + damage);
+        Debug.Log("Last Damage: " + knockback.magnitude);
         //if (movementController.GetIsDashing())
         //{
             movementController.resetVelocity();
-            movementController.StopDash();  
-            
-            movementController.Dash(dir, 2f * (damage / 120), 12.5f * (damage / 120), 5 * (damage / 120));
+            movementController.StopDash(); 
+            float mult = Mathf.Clamp01(knockback.magnitude / 100);
+            movementController.Dash(knockback.normalized, 2 * (0.5f + mult), 12.5f * (0.5f + mult), 5 * (0.5f + mult));
         //}
         //else
         //{

@@ -21,7 +21,7 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
 
     void Start()
     {
-        health = GetComponentInParent<Health>();
+        health = Player.Instance.Health;
         gameManager = FindAnyObjectByType<GameManager>();
         melee = FindAnyObjectByType<Kick>();
     }
@@ -44,8 +44,17 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
 
         Player.Instance.CameraRecoil.ApplyRecoil(5, 9, 9);
         SoundManager.PlaySound(SoundType.HURT, 0.3f);
-        health.SetHealth(health.GetHealth() - damageAmount);
-        health.HealthChanged();
+        float armorAmount = health.GetArmor();
+        float armorDamage = 0; 
+            Debug.Log("Armor: " + health.GetArmor());
+        if(armorAmount > 0)
+        {
+            armorDamage = armorAmount > 50 ? damageAmount / 2 : damageAmount / 3;
+            health.SetArmor(health.GetArmor() - armorDamage);
+        }
+
+        float healthDamage = damageAmount - armorDamage;
+        health.SetHealth((int)((float)health.GetHealth() - healthDamage));
 
         if (health.GetHealth() <= 0 && health.isAlive)
             Death();

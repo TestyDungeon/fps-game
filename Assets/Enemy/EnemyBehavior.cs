@@ -69,8 +69,8 @@ public class MeleeAttack : IAttackBehavior
     private void Hit(EnemyStateManager enemy)
     {
         SoundManager.PlaySound(enemy.enemyConfig.attackSFX, enemy.transform.position, 0.3f);
-        Debug.DrawRay(enemy.meleeAttackCollider.transform.position,
-            enemy.meleeAttackCollider.bounds.size * enemy.transform.lossyScale.x / 2, Color.cyan, 2);
+        //Debug.DrawRay(enemy.meleeAttackCollider.transform.position,
+        //    enemy.meleeAttackCollider.bounds.size * enemy.transform.lossyScale.x / 2, Color.cyan, 2);
         //Object.Instantiate(enemy.enemyConfig.falterParticlesPrefab, enemy.meleeAttackCollider.transform.position, Quaternion.identity);
         Collider[] cols = Physics.OverlapBox(
             enemy.meleeAttackCollider.transform.position,
@@ -437,10 +437,14 @@ public class RangedTraversal : ITraversalBehavior
             enemy.SwitchState(enemy.AttackState);
             return;
         }
-        else
+        else if(enemy.GetVectorToTarget().sqrMagnitude > 2 * 2)
         {
             enemy.GoToTarget(enemy.enemyConfig.chaseSpeed);
             
+        }
+        else
+        {
+            enemy.SwitchState(enemy.WanderState);
         }
         
     }

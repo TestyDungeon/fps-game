@@ -123,6 +123,7 @@ MonoBehaviour:
   stepHeight: 0.6
   stepClearance: 0.02
   layerMask: 0
+  layerMaskStep: 0
 --- !u!114 &7003416070906085369
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -209,7 +210,7 @@ NavMeshAgent:
   m_AutoBraking: 1
   m_AutoRepath: 1
   m_Height: 2.95
-  m_BaseOffset: 1.44
+  m_BaseOffset: 1.74
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
 --- !u!1 &2324632975926496506
@@ -383,7 +384,7 @@ GameObject:
   m_Component:
   - component: {fileID: 379717339414343057}
   - component: {fileID: 3021480769482483346}
-  m_Layer: 8
+  m_Layer: 2
   m_Name: Attack Collider
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // Sits on the same GameObject as PlayerMovement/Health/Inventory. Its only job
 // is being "the current player" — holding references to its parts and telling
@@ -26,5 +27,14 @@ public class Player : MonoBehaviour
         MovementController = GetComponent<MovementController>();
         CameraRecoil = GetComponentInChildren<CameraRecoil>();
         OnPlayerSpawned?.Invoke();
+    }
+
+    void OnEnable()  => SceneManager.sceneLoaded += OnSceneLoaded;
+    void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Health.HealthChanged();
+        Health.ArmorChanged();
     }
 }

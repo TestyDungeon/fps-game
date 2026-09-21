@@ -3,6 +3,7 @@ using UnityEngine;
 public class Explosion : MonoBehaviour
 {
     public GunConfig gunConfig;
+    private int layerMask = 1 << 15 | 1 << 16 | 1 << 8 | 1 << 3;
 
     void Awake()
     {
@@ -11,41 +12,45 @@ public class Explosion : MonoBehaviour
     void Start()
     {
 
-        var surrounding_objects = Physics.OverlapSphere(transform.position, gunConfig.explosionRadius, ~0, QueryTriggerInteraction.Ignore);
+        var surrounding_objects = Physics.OverlapSphere(transform.position, gunConfig.explosionRadius, layerMask, QueryTriggerInteraction.Collide);
         SoundManager.PlaySound(SoundType.ROCKETEXPLODE, transform.position, 0.2f);
         foreach (var obj in surrounding_objects)
         {
-            MovementController mc = obj.GetComponent<MovementController>();
             float dist = (transform.position - obj.transform.position).magnitude;
-            Vector3 dir = (obj.transform.position - transform.position).normalized;
-            Rigidbody rb = obj.GetComponent<Rigidbody>();
-            if (mc != null)
+            if(obj.TryGetComponent<MovementController>(out MovementController mc))
             {
-                if(mc.tag == "Enemy")
+                Vector3 dir = (obj.transform.position - transform.position).normalized;
+                Rigidbody rb = obj.GetComponent<Rigidbody>();
+                if (mc != null)
                 {
-                    dir = Vector3.Project(dir, mc.GetGravityVec()).normalized;   
-                    EnemyStateManager esm = obj.GetComponent<EnemyStateManager>();
-                    esm.SwitchState(esm.FalterState); 
-                }
+                    if(mc.tag == "Enemy")
+                    {
+                        dir = Vector3.Project(dir, mc.GetGravityVec()).normalized;   
+                        EnemyStateManager esm = obj.GetComponent<EnemyStateManager>();
+                        esm.SwitchState(esm.FalterState); 
+                    }
 
-                if(dist > (gunConfig.explosionRadius * 0.5))
-                {
-                    mc.addVelocity(gunConfig.force * dir * 0.5f);
+                    if(dist > (gunConfig.explosionRadius * 0.5))
+                    {
+                        mc.addVelocity(gunConfig.force * dir * 0.5f);
+                    }
+                    else
+                    {
+
+                        mc.addVelocity(gunConfig.force * dir);
+                    }
                 }
-                else
-                {
-                    
-                    mc.addVelocity(gunConfig.force * dir);
-                }
+                
             }
-            IDamageable victim = obj.GetComponent<IDamageable>();
-            if (victim != null && dist <= gunConfig.explosionRadius)
+
+            if (obj.TryGetComponent<IDamageable>(out IDamageable victim) && dist <= gunConfig.explosionRadius)
             {
                 if(obj.tag == "Player")
-                    victim.TakeDamage(PlayerMovement.Instance.transform, Mathf.FloorToInt(CalculateDamage(gunConfig.explosionRadius, dist) * 0.1f));
+                    victim.TakeDamage(PlayerMovement.Instance.transform, Mathf.FloorToInt(CalculateDamage(gunConfig.explosionRadius, dist) * 0.5f));
                 else
                     victim.TakeDamage(PlayerMovement.Instance.transform, CalculateDamage(gunConfig.explosionRadius, dist));
             }
+            
             //if (rb != null)
             //    rb.AddExplosionForce(explosionForceRB, transform.position, explosionRadius, 3, ForceMode.Impulse);
         }

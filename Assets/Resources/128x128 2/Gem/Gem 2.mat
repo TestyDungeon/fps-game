@@ -24,9 +24,10 @@ Material:
   m_Shader: {fileID: 4800000, guid: ee7e4c9a5f6364b688a332c67fc32cca, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _EMISSION
   m_InvalidKeywords: []
-  m_LightmapFlags: 4
+  m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2000
@@ -39,7 +40,7 @@ Material:
     m_TexEnvs:
     - _BaseMap:
         m_Texture: {fileID: 2800000, guid: 54903d989c3799b46af55ee146692473, type: 3}
-        m_Scale: {x: 0.18, y: 0.18}
+        m_Scale: {x: 0.1, y: 0.1}
         m_Offset: {x: 0.69, y: -0.22}
     - _BumpMap:
         m_Texture: {fileID: 0}
@@ -141,7 +142,7 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 0.46698093, b: 0.46698093, a: 0.92941177}
-    - _EmissionColor: {r: 0.047058824, g: 0.047058824, b: 0.047058824, a: 1}
+    - _EmissionColor: {r: 0.13207549, g: 0.13207549, b: 0.13207549, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -116,15 +116,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GravityEnabled: 1
-  GlobalGravityEnabled: 1
+  GlobalGravityEnabled: 0
   gravity: 30
-  targetGravityAlignSpeed: 0.5
-  gravityAlignSpeedOnFieldChange: 0.02
-  gravityAlignStep: 0.01
+  targetGravityAlignSpeed: 0.2
+  gravityAlignSpeedOnFieldChange: 0.005
+  gravityAlignStep: 0.05
   maxClimbAngle: 55
   stepHeight: 0.6
   stepClearance: 0.02
-  layerMask: 0
+  layerMask: -5193
 --- !u!114 &7003416070906085369
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Ranged Enemy Config
   m_EditorClassIdentifier: 
   enemyName: Ranged Enemy
-  maxHealth: 160
-  chaseSpeed: 5
+  maxHealth: 180
+  chaseSpeed: 7
   wanderSpeed: 4
   wanderDuration: 0.8
   rotationSpeed: 8

@@ -30,20 +30,11 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 1a34b0062afa97c478daf8ed5a4f6af3, type: 3}
   - {fileID: 8300000, guid: 9d1713923337b8645b44ab08a39cb90a, type: 3}
   caseFallVolume: 0.15
-  shootAnimation:
-    _FadeDuration: 0.25
-    _Speed: 1
-    _Events:
-      _NormalizedTimes: []
-      _Callbacks: []
-      _Names: []
-    _Clip: {fileID: -7453387558714718212, guid: 8ac583e55987f614caa1f3cfa168f648, type: 3}
-    _NormalizedStartTime: NaN
   recoilAmountCamera: 1
   recoilSpeedCamera: 14
   returnSpeedCamera: 15
   allowButtonHold: 1
-  damage: 30
+  damage: 25
   ammoType: 0
   range: 300
   force: 20
@@ -66,6 +57,3 @@ MonoBehaviour:
   ricoshetSpeedLoss: 0
   mass: 1
   altConfig: {fileID: 11400000, guid: 47ad83526b4f7074cbe47fb8dc6da2a1, type: 2}
-  references:
-    version: 2
-    RefIds: []

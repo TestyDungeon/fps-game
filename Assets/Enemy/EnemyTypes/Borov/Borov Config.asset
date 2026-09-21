@@ -20,7 +20,7 @@ MonoBehaviour:
   rotationSpeed: 3
   maxJumpDistance: 30
   gravity: 30
-  falterDuration: 1
+  falterDuration: 0.3
   falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
   wanderRadius: 10
   damage: 5

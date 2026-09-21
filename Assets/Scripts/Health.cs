@@ -4,18 +4,21 @@ using UnityEngine;
 public class Health : MonoBehaviour
 {
     public event Action<float, float> OnHealthChanged;
+    public event Action<float, float> OnArmorChanged;
     public event Action OnDeath;
-    private int maxHealth;
+    [SerializeField] private int maxHealth;
     [HideInInspector] public int health;
     [HideInInspector] public bool isAlive = true;
-    private float maxPosture = 100;
-    private float posture;
+    private float maxArmor;
+    private float armor;
     
 
     void Awake()
     {
-        health = maxHealth;
-        posture = maxPosture;
+        SetHealth(maxHealth);
+        
+        SetMaxArmor(maxHealth);
+        SetArmor(maxArmor);
     }
 
     public virtual void TakeDamage(int damageAmount, Vector3 damagePoint = default, Vector3 normal = default)
@@ -40,6 +43,12 @@ public class Health : MonoBehaviour
     public void HealthChanged()
     {
         OnHealthChanged?.Invoke(health, maxHealth);
+        
+    }
+
+    public void ArmorChanged()
+    {
+        OnArmorChanged?.Invoke(armor, maxArmor);
         
     }
 
@@ -78,30 +87,31 @@ public class Health : MonoBehaviour
 
     public void SetHealth(int health_)
     {
-        health = health_;
+        health = Mathf.Max(health_, 0);
         HealthChanged();
     }
 
 
 
-    public float GetMaxPosture()
+    public float GetMaxArmor()
     {
-        return maxPosture;
+        return maxArmor;
     }
 
-    public void SetMaxPosture(int maxPosture_)
+    public void SetMaxArmor(int maxArmor_)
     {
-        maxPosture = maxPosture_;
+        maxArmor = maxArmor_;
     }
 
-    public float GetPosture()
+    public float GetArmor()
     {
-        return posture;
+        return armor;
     }
 
-    public void SetPosture(float posture_)
+    public void SetArmor(float armor_)
     {
-        posture = posture_;
+        armor = Mathf.Max(armor_, 0);
+        ArmorChanged();
     }
 
     

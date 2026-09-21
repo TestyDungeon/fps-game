@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MovementController : MonoBehaviour
@@ -41,11 +42,14 @@ public class MovementController : MonoBehaviour
 
     private float pendingStepSmooth = 0;
 
-    int layerMaskEnemy = ~(1 << 6 | 1 << 12 | 1 << 10);
+    int layerMaskEnemy = 1 << 0 | 1 << 3 | 1 << 8;
+    int layerMaskEnemyStep = 1 << 0 | 1 << 3;
     int layerMaskEnemyDead = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10);
     int layerMaskPlayer = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10);
     int layerMaskPlayerDash = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10 | 1 << 8);
     [HideInInspector] public int layerMask;
+    [HideInInspector] public int layerMaskStep;
+
 
     Coroutine dashCoroutine;
 
@@ -54,10 +58,13 @@ public class MovementController : MonoBehaviour
         if (tag == "Player")
         {
             layerMask = layerMaskPlayer;
+            layerMaskStep = layerMaskPlayer;
         }
         else if (tag == "Enemy")
         {
             layerMask = layerMaskEnemy;
+            layerMaskStep = layerMaskEnemyStep;
+            
         }
         capsuleCollider = GetComponent<CapsuleCollider>();
         capsuleColliderRadius = capsuleCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.z);
@@ -66,7 +73,7 @@ public class MovementController : MonoBehaviour
 
     public Vector3 Move(Vector3 velocity)
     {
-        Debug.DrawRay(transform.position, gravityVec * 5, Color.cyan);
+        //Debug.DrawRay(transform.position, gravityVec * 5, Color.cyan);
         bool wasGrounded = GroundCheck();
 
         velocity += externalVelocity;
@@ -80,6 +87,7 @@ public class MovementController : MonoBehaviour
                     dashDir = mathlib.ProjectOnPlaneOblique(dashDir, hit.normal, -transform.up);
             }
             //Debug.Log("Dash speed: " + dashSpeed);
+            recursionDepth = 0;
             Vector3 dashMove = CollideAndSlide(transform.position, ((dashDir * dashSpeed) + velocity) * Time.fixedDeltaTime, false);
             //Collider[] cols = Physics.OverlapCapsule(
             //transform.position + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
@@ -129,6 +137,8 @@ public class MovementController : MonoBehaviour
         Vector3 resolvedLateral = CollideAndSlide(transform.position, lateralDisp, false);
 
         Vector3 stepUp = Vector3.zero;
+        if (hitWall)
+            Debug.Log($"[{tag}] hitWall={hitWall} wasGrounded={wasGrounded} — attempting TryStep");
         if (hitWall && wasGrounded && TryStep(lateralDisp, wallHit, out float lift))
         {
             stepUp = transform.up * lift;
@@ -177,9 +187,11 @@ public class MovementController : MonoBehaviour
 
         float dist = vel.magnitude + offset;
         
+        CapsulePoints(pos, out Vector3 p1, out Vector3 p2);
+
         if (Physics.CapsuleCast(
-            pos + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
-            pos - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
+            p1,
+            p2,
             capsuleColliderRadius, vel.normalized, out RaycastHit hit, dist,
             dashing && tag == "Player" ? layerMaskPlayerDash : layerMask, QueryTriggerInteraction.Ignore))
         {
@@ -189,6 +201,8 @@ public class MovementController : MonoBehaviour
             //}
             Vector3 newVel = vel.normalized * (hit.distance - offset);
             float angle = Vector3.Angle(transform.up, hit.normal);
+            if (!GravityPass)
+                Debug.Log($"[{tag}] cast hit {hit.collider.name} angle={angle:F1} normal={hit.normal} climbLimit={maxClimbAngle} depth={recursionDepth}");
             if (!GravityPass && !hitWall && angle > maxClimbAngle)
             {
                 hitWall = true;
@@ -232,21 +246,47 @@ public class MovementController : MonoBehaviour
         Vector3 onFace   = wall.point - Vector3.Project(wall.point - foot, up);
         Vector3 rayStart = onFace + dir * (offset * 2f) + up * (stepHeight + offset);
 
-        if (!Physics.Raycast(rayStart, -up, out RaycastHit tread, stepHeight + offset * 2f,
-                             layerMask, QueryTriggerInteraction.Ignore))
+        RaycastHit[] treads = Physics.RaycastAll(rayStart, -up, stepHeight + offset * 2f,
+                     layerMaskStep, QueryTriggerInteraction.Ignore);
+
+        if (treads.Length <= 0)
+        {
+            Debug.Log($"[{tag}] TryStep: no tread found from {rayStart}");
             return false;                                   // ledge, nothing to stand on
+        }
+        else
+        {
+            foreach(RaycastHit tread in treads)
+            {
+                if(tread.transform == transform)
+                    continue;
 
-        if (Vector3.Angle(up, tread.normal) > maxClimbAngle)
-            return false;                                   // too steep to stand on
+                if (Vector3.Angle(up, tread.normal) > maxClimbAngle)
+                {
+                    Debug.Log($"[{tag}] TryStep: tread too steep ({Vector3.Angle(up, tread.normal):F1})");
+                    return false;                                   // too steep to stand on
+                }
 
-        lift = Vector3.Dot(tread.point - foot, up);
-        if (lift <= offset || lift > stepHeight) return false;
+                lift = Vector3.Dot(tread.point - foot, up);
+                if (lift <= offset || lift > stepHeight)
+                {
+                    Debug.Log($"[{tag}] TryStep: lift {lift:F3} out of range (stepHeight={stepHeight})");
+                    return false;
+                }
 
-        lift += stepClearance;                              // clear the edge with the round bottom
+                lift += stepClearance;                              // clear the edge with the round bottom
 
-        CapsulePoints(transform.position + up * lift, out Vector3 a, out Vector3 b);
-        return !Physics.CheckCapsule(a, b, capsuleColliderRadius - 0.02f,
-                                     layerMask, QueryTriggerInteraction.Ignore);
+                CapsulePoints(transform.position + up * lift, out Vector3 a, out Vector3 b);
+                bool blocked = Physics.CheckCapsule(a, b, capsuleColliderRadius - 0.02f,
+                                             layerMaskStep, QueryTriggerInteraction.Ignore);
+                if (blocked)
+                    Debug.Log($"[{tag}] TryStep: capsule blocked after lift {lift:F3}");
+                return !blocked;
+            }
+            return false;
+        }
+
+        
     }
 
     public float ConsumeStepSmooth()
@@ -332,7 +372,7 @@ public class MovementController : MonoBehaviour
                     x, x.transform.position, x.transform.rotation,
                     out Vector3 dir, out float dis))
                 {
-                    transform.position += dir * (dis + offset);
+                    transform.position += dir * (dis + 0.1f);
                     //Debug.DrawRay(transform.position, dir * (dis + 0.1f), Color.cyan, 1);
                 }
             }

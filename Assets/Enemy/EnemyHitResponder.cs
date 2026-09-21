@@ -13,6 +13,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
     private Collider hurtBoxDead;
     private bool isCorpse = false;
     private float lastDamage = 0;
+    private Vector3 deathKnockbackVector = Vector3.zero;
 
     void Awake()
     {
@@ -32,18 +33,19 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
 
     void FixedUpdate()
     {
-        lastDamage = Mathf.MoveTowards(lastDamage, 0, Time.fixedDeltaTime * 200);
-        if(enemyHealth.GetPosture() < enemyHealth.GetMaxPosture())
+        deathKnockbackVector = Vector3.MoveTowards(deathKnockbackVector, Vector3.zero, Time.fixedDeltaTime * 100);
+        //lastDamage = Mathf.MoveTowards(lastDamage, 0, Time.fixedDeltaTime * 200);
+        if(enemyHealth.GetArmor() < enemyHealth.GetMaxArmor())
         {
-            //Debug.Log("Posture " + enemyHealth.GetPosture());
-            enemyHealth.SetPosture(enemyHealth.GetPosture() + Time.fixedDeltaTime * 60f);
+            //Debug.Log("Armor " + enemyHealth.GetArmor());
+            enemyHealth.SetArmor(enemyHealth.GetArmor() + Time.fixedDeltaTime * 120f);
         }
     }
 
     public void TakeDamage(Transform source, int damageAmount, Vector3 damagePoint, Vector3 normal)
     {
         state.lastDamageVector = (damagePoint - source.position).normalized * damageAmount;
-        lastDamage += damageAmount;
+        deathKnockbackVector += (transform.position - source.position).normalized * damageAmount;
         //state.SetTarget(source);
         SoundManager.PlaySound(state.enemyConfig.hurtSFX, transform.position, 0.01f, 0.7f);
         //if(state.GetCurrentState() is EnemyFalterState && !state.movementController.GroundCheck())
@@ -78,13 +80,14 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         
         if(hurtBox.enabled == true && enemyHealth.GetHealth() <= 0)
         {
-            state.DeathKnockback((transform.position - source.position).normalized + source.up * 0.5f, lastDamage);
+            state.DeathKnockback((Vector3.ProjectOnPlane(deathKnockbackVector, transform.up).normalized * deathKnockbackVector.magnitude) + transform.up * deathKnockbackVector.magnitude * 0.25f);
+            
         }
         //StartCoroutine(WhiteMaterialChange());
 
 
         if(Time.time - lastFalter > 1)
-            enemyHealth.SetPosture(enemyHealth.GetPosture() - damageAmount * 5f);
+            enemyHealth.SetArmor(enemyHealth.GetArmor() - damageAmount * 5f);
         
 
         //if(enemyHealth.GetHealth() < enemyHealth.GetMaxHealth() * 0.4)
@@ -95,11 +98,12 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         
 
 
-        if(enemyHealth.GetPosture() <= 0)
+        if(enemyHealth.GetArmor() <= 0)
         {
             if(state.GetCurrentState() is not EnemyStaggerState)
             {
                 lastFalter = Time.time;
+            enemyHealth.SetArmor(enemyHealth.GetMaxArmor());
                 state.SwitchState(state.FalterState);
             }
         }
