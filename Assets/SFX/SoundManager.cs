@@ -49,12 +49,9 @@ public class SoundManager : MonoBehaviour
     void Awake()
     {
         instance = this;
-    }
-
-    void Start()
-    {
         audioSource = GetComponent<AudioSource>();
     }
+
 
     public static void PlaySound(SoundType sound, float volume = 1)
     {
@@ -96,6 +93,8 @@ public class SoundManager : MonoBehaviour
 
     public static void PlaySound(AudioClip sound, float volume = 1)
     {
+        if (instance == null)
+            instance = FindAnyObjectByType<SoundManager>();
 
         GameObject tempAudio = new GameObject("TempAudio");
         tempAudio.transform.position = instance.transform.position;

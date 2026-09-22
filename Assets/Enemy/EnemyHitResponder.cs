@@ -80,7 +80,11 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         
         if(hurtBox.enabled == true && enemyHealth.GetHealth() <= 0)
         {
-            state.DeathKnockback((Vector3.ProjectOnPlane(deathKnockbackVector, transform.up).normalized * deathKnockbackVector.magnitude) + transform.up * deathKnockbackVector.magnitude * 0.25f);
+            Vector3 up = Vector3.zero;
+            if(state.movementController.GroundCheck() && Vector3.Angle(transform.up, deathKnockbackVector) >= 90)
+                up = transform.up * deathKnockbackVector.magnitude * 0.25f;
+
+            state.DeathKnockback((Vector3.ProjectOnPlane(deathKnockbackVector, transform.up).normalized * deathKnockbackVector.magnitude) + up);
             
         }
         //StartCoroutine(WhiteMaterialChange());

@@ -28,7 +28,7 @@ public class Gun : Item, IAmmoHandler
     protected float lastTime;
     Vector3 direction;
 
-    protected Animator animator = null;
+    
     //protected AnimancerComponent animancer = null;
 
     private CameraRecoil cameraRecoil;
@@ -46,7 +46,7 @@ public class Gun : Item, IAmmoHandler
     {
         base.Awake();
         originalConfig = gunConfig;
-        animator = GetComponentInChildren<Animator>();
+        
         lights = GetComponentsInChildren<Light>();
         
         readyToShoot = true;
@@ -55,10 +55,11 @@ public class Gun : Item, IAmmoHandler
 
     void OnEnable()
     {
-        if(animator != null)
-            animator.Play("Shoot", 0, 1);
+        //f(animator != null)
+        //   animator.Play("Shoot", 0, 1);
+        if(gunConfig.equipSFX != null)
+            SoundManager.PlaySound(gunConfig.equipSFX, gunConfig.equipVolume);
         
-        Player.Instance.CameraRecoil.ApplyRecoil(-5, 6, 4, false);
         SetLights(false);
         //
     }
@@ -394,7 +395,7 @@ public class Gun : Item, IAmmoHandler
         yield return new WaitForSeconds(gunConfig.bulletCaseDelay);
         if(gunConfig.bulletCasePrefab != null)
         {
-            GameObject particles = Instantiate(gunConfig.bulletCasePrefab, bulletCaseStart.position, transform.rotation, transform);
+            GameObject particles = Instantiate(gunConfig.bulletCasePrefab, bulletCaseStart.position, transform.rotation, transform.parent);
             Destroy(particles, 2f);
             yield return new WaitForSeconds(0.3f);
             SoundManager.PlaySound(gunConfig.caseFallSFX, gunConfig.caseFallVolume);

@@ -12,9 +12,8 @@ public class CameraRecoil : MonoBehaviour
 
     private Vector2 screenShake = new Vector2(0, 0);
 
-    void Start()
+    void Awake()
     {
-
         origin = transform.localPosition;  
     }
 

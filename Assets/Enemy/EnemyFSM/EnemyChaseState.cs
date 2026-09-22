@@ -12,18 +12,24 @@ public class EnemyChaseState : EnemyBaseState
         //}
         enemy.SetNavmeshAgent(true);
         enemy.audioSource.enabled = true;
+        enemy.UpdateTargetPosition();
     }
 
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
-        enemy.RotateInDirection();
         //Debug.Log("Reach" + enemy.IsTargetReachable()  + "OnNavmesh" + enemy.agent.isOnNavMesh);
         //enemy.RotateInDirection(enemy.agent.desiredVelocity);
-        enemy.traversalBehavior.Chase(enemy);
         if(!enemy.IsTargetReachable() && enemy.IsOnUsableNavMesh() && enemy.GetCurrentState() == enemy.ChaseState)
         {
             enemy.SwitchState(enemy.WanderState);
         }
+        enemy.traversalBehavior.Chase(enemy);
+        enemy.RotateInDirection();
+
+        //if ((enemy.transform.position - enemy.targetTransform.position).sqrMagnitude < 2 * 2)
+        //{
+        //    enemy.SwitchState(enemy.AttackState);
+        //}
         
     }
 

@@ -128,8 +128,15 @@ public class PickupCollector : MonoBehaviour, ICustomTriggerReceiver
                 {
                     playerHealth.Heal(amount);
                     return true;
-                }      
+                }
                 break;
+            case LootType.Armor:
+                if (!playerHealth.IsFullArmor())
+                {
+                    playerHealth.SetArmor(playerHealth.GetArmor() + amount);
+                    return true;
+                }  
+                break;    
 
             case LootType.Key:
                 {

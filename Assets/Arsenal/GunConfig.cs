@@ -11,6 +11,8 @@ public class GunConfig : ScriptableObject
     [HideInInspector] public LayerMask layerMask = (1 << 1 | 1 << 15);
     
     [Header("SFX")]
+    public AudioClip equipSFX;
+    public float equipVolume = 1;
     public AudioClip[] shootSFX;
     public float volume = 1;
     public AudioClip[] altStartSFX;

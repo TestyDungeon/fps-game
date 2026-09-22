@@ -17,7 +17,7 @@ MonoBehaviour:
   chaseSpeed: 10
   wanderSpeed: 7
   wanderDuration: 1
-  rotationSpeed: 3
+  rotationSpeed: 10
   maxJumpDistance: 30
   gravity: 20
   falterDuration: 0.3

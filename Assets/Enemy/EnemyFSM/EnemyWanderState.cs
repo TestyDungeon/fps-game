@@ -4,7 +4,6 @@ public class EnemyWanderState : EnemyBaseState
 {
     Vector3 dest;
     float lastTime = -1;
-    float lastTimeArrived = -1;
     public override void EnterState(EnemyStateManager enemy)
     {
         enemy.SetNavmeshAgent(true);

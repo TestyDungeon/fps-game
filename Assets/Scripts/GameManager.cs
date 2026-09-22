@@ -61,7 +61,11 @@ public class GameManager : MonoBehaviour
     public void Restart()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        isGameOver = false;
         Time.timeScale = 1;
+        UI.Instance.gameOverUI.SetActive(false);
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Confined;
     }
 
     public void GameOver()

@@ -36,7 +36,7 @@ public class MeleeAttack : IAttackBehavior
 
         events.Add(0.25f, () =>
         {
-            enemy.MoveToTarget(8);
+            enemy.GoToTarget(8, false);
         });
 
         events.Add(0.35f, () =>
@@ -44,18 +44,18 @@ public class MeleeAttack : IAttackBehavior
             Hit(enemy);
 
             enemy.lookDir = enemy.GetVectorToTarget();
-            enemy.MoveToTarget(8);
+            enemy.GoToTarget(8, false);
         });
 
         events.Add(0.5f, () =>
         {
-            enemy.MoveToTarget(8);
+            enemy.GoToTarget(8, false);
         });
 
         events.Add(0.65f, () =>
         {
             Hit(enemy);
-            enemy.MoveToTarget(8);
+            enemy.GoToTarget(8, false);
         });
 
         events.Add(0.8f, () =>
@@ -399,9 +399,9 @@ public class MeleeTraversal : ITraversalBehavior
 {
     public void Chase(EnemyStateManager enemy)
     {
-        if(enemy.GetVectorToTarget().sqrMagnitude > enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange || !enemy.IsTargetInSight())
+        if(enemy.GetVectorToTarget().sqrMagnitude > enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange)
         {
-            
+            enemy.UpdateTargetPosition();
             enemy.GoToTarget(enemy.enemyConfig.chaseSpeed);
             
         }
@@ -424,27 +424,21 @@ public class RangedTraversal : ITraversalBehavior
     {
         if(!chaseTimerStarted)
         {
+            
             chaseStartTime = Time.time;
             chaseTimerStarted = true;
         }
 
-        if(enemy.GetVectorToTarget().sqrMagnitude < enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange 
-        && enemy.IsTargetInSight() 
-        && Physics.BoxCast(enemy.bulletStart[0].position, new Vector3(0.5f, 0.5f, 0.5f), enemy.targetTransform.position - enemy.bulletStart[0].position, enemy.transform.rotation, enemy.enemyConfig.attackRange, enemy.playerLayer) 
-        && (Time.time - chaseStartTime) > chaseDuration)
-        {
-            chaseTimerStarted = false;
-            enemy.SwitchState(enemy.AttackState);
-            return;
-        }
-        else if(enemy.GetVectorToTarget().sqrMagnitude > 2 * 2)
+        if(enemy.GetVectorToTarget().sqrMagnitude > enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange 
+        || !enemy.IsTargetInSight(0.5f)
+        || (Time.time - chaseStartTime) < chaseDuration)
         {
             enemy.GoToTarget(enemy.enemyConfig.chaseSpeed);
-            
         }
         else
         {
-            enemy.SwitchState(enemy.WanderState);
+            chaseTimerStarted = false;
+            enemy.SwitchState(enemy.AttackState);
         }
         
     }

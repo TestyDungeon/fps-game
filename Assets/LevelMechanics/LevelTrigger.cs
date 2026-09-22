@@ -87,6 +87,7 @@ public class LevelTrigger : MonoBehaviour
                 Instantiate(GameManager.Instance.enemySpawnParticles, enemy.transform);
                 enemy.SetActive(true);
                 EnemyStateManager state = enemy.GetComponent<EnemyStateManager>();
+                yield return null;
                 state.SwitchState(state.ChaseState);
                 
                 SoundManager.PlaySound(SoundType.ENEMY_SPAWN, enemy.transform.position, 0.6f, 0.6f);

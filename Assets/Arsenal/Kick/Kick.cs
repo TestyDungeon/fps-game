@@ -22,7 +22,6 @@ public class Kick : Item, IAmmoHandler
     [SerializeField] private BoxCollider swordCollider;
     private Vector3 swordSize;
 
-    private Animator animator; 
  
     private MovementController mc;
     private int layerMask = 1 << 6;
@@ -37,7 +36,6 @@ public class Kick : Item, IAmmoHandler
     protected override void Start()
     {
         base.Start();
-        animator = GetComponentInChildren<Animator>();
         pm = player.GetComponent<PlayerMovement>();
         mc = player.GetComponent<MovementController>();
         transform_ = transform.parent;

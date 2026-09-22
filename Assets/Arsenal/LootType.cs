@@ -9,6 +9,7 @@ namespace GravityGUN.Data
         MeleeAmmo,
 
         Health,
+        Armor,
 
         Key,
 

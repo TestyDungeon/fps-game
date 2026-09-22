@@ -19,6 +19,8 @@ MonoBehaviour:
   layerMask:
     serializedVersion: 2
     m_Bits: 32695
+  equipSFX: {fileID: 8300000, guid: 152860dac3c95a84dbe0b9a1b313c209, type: 3}
+  equipVolume: 0.2
   shootSFX:
   - {fileID: 8300000, guid: 23cd2f050e3860041812b256d899e3b9, type: 3}
   volume: 0.85
@@ -32,15 +34,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 1cfff36de2433084a94c22bd70ba8910, type: 3}
   - {fileID: 8300000, guid: 391e8df9b4f9826478a42ea748c42c7f, type: 3}
   caseFallVolume: 0.1
-  shootAnimation:
-    _FadeDuration: 0.25
-    _Speed: 1
-    _Events:
-      _NormalizedTimes: []
-      _Callbacks: []
-      _Names: []
-    _Clip: {fileID: 0}
-    _NormalizedStartTime: NaN
   recoilAmountCamera: 3
   recoilSpeedCamera: 20
   returnSpeedCamera: 5
@@ -68,6 +61,3 @@ MonoBehaviour:
   ricoshetSpeedLoss: 0
   mass: 0
   altConfig: {fileID: 11400000, guid: 823b100a84dce514bbde58cf337b0ec3, type: 2}
-  references:
-    version: 2
-    RefIds: []

@@ -87,11 +87,17 @@ public class Health : MonoBehaviour
 
     public void SetHealth(int health_)
     {
-        health = Mathf.Max(health_, 0);
+        health = health_;
         HealthChanged();
     }
 
 
+
+
+    public bool IsFullArmor()
+    {
+        return armor >= maxArmor;
+    }
 
     public float GetMaxArmor()
     {

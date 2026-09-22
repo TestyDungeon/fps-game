@@ -19,6 +19,8 @@ MonoBehaviour:
   layerMask:
     serializedVersion: 2
     m_Bits: 32695
+  equipSFX: {fileID: 8300000, guid: 152860dac3c95a84dbe0b9a1b313c209, type: 3}
+  equipVolume: 0.2
   shootSFX:
   - {fileID: 8300000, guid: 0ba1cdbeaa0c6b74687fa82cfc348ba0, type: 3}
   volume: 0.25

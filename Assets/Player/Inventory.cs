@@ -65,12 +65,14 @@ public class Inventory : MonoBehaviour
             alwaysOnSlots[i].SetInventory(this);
         }
 
-        if(slots.Length > 0)
-            EquipItem(0);
+        
     }
 
     void Start()
     {
+        if(slots.Length > 0)
+            EquipItem(0);
+            
         AddAmmo(LootType.BulletAmmo, maxAmmoCount[LootType.BulletAmmo] / 2);
         AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo] / 2);
         AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo] / 2);

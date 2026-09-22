@@ -39,9 +39,9 @@ public class EnemyStateManager : MonoBehaviour
     //[HideInInspector] public float sight;
     [HideInInspector] public Animator animator;
     [HideInInspector] public Vector3 enemyVelocity = Vector3.zero;
-    private int layermask = (1 << 0 | 1 << 3 | 1 << 14);
+    [HideInInspector] public int layerMask = 1 << 0 | 1 << 3 | 1 << 14;
 
-    [HideInInspector] public int playerLayer = 1 << 3;
+    [HideInInspector] public int playerLayer = 1 << 3 | 1 << 8;
     private int enemyLayer = 1 << 8;
 
     private float avoidanceRadius = 2;
@@ -93,19 +93,32 @@ public class EnemyStateManager : MonoBehaviour
 
         animator = GetComponentInChildren<Animator>();
 
+        weaveSign = Random.value < 0.5f ? 1f : -1f;
+        weaveTimer = Random.Range(zigzagMinDuration, zigzagMaxDuration);
+
         capsuleCollider = GetComponent<CapsuleCollider>();
         height = capsuleCollider.height;
         //sight = GetComponentInChildren<SphereCollider>().radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z);
         
         movementController = GetComponent<MovementController>();
         movementController.SetGravity(enemyConfig.gravity);
-        
+
         currentState = IdleState;
         currentState.EnterState(this);
+        
+        
+
+
     }
 
     void Start()
     {
+
+        if (targetTransform == null)
+        {
+            targetTransform = PlayerMovement.Instance.transform;
+        }
+
         // Debug ui above enemy, for health, armor, current state, etc,
         text = GetComponentInChildren<TextMeshProUGUI>();
         if(text != null)
@@ -135,11 +148,11 @@ public class EnemyStateManager : MonoBehaviour
     
     void FixedUpdate()
     {
+        
         if (targetTransform == null)
         {
             targetTransform = PlayerMovement.Instance.transform;
         }
-
         
 
         
@@ -151,7 +164,7 @@ public class EnemyStateManager : MonoBehaviour
         if(text != null)
         {
             text.SetText("S: " + currentState + "\n" +
-                        "Grounded " + movementController.GroundCheck() + "\n" +
+                        "TargetInSight " + IsTargetInSight() + "\n" +
                         "IsOnNav:" + IsOnUsableNavMesh());
 
             healthFill.fillAmount = (float)enemyHealth.GetHealth() / enemyHealth.GetMaxHealth();
@@ -189,37 +202,97 @@ public class EnemyStateManager : MonoBehaviour
     }
 
 
-    public void GoToTarget(float speed)
+    [Header("Zigzag Steering")]
+    float zigzagAmplitude = 0.3f;
+    float zigzagMinDuration = 0.4f; // seconds per side before flipping
+    float zigzagMaxDuration = 0.8f;
+    float zigzagLookAhead = 1.5f;
+
+    private float weaveSign;
+    private float weaveTimer;
+
+    [Header("Target Path Sampling")]
+    [SerializeField] private float targetSampleRadius = 3f; // must be >= max jump apex height + margin
+
+    // Projects the target's (possibly airborne) position onto the NavMesh so path
+    // queries don't fail just because the target jumped above the walkable surface.
+    private bool TryGetTargetNavPoint(out Vector3 point)
+    {
+        if (NavMesh.SamplePosition(targetTransform.position - targetTransform.up * 1, out NavMeshHit hit, targetSampleRadius, NavMesh.AllAreas))
+        {
+            point = hit.position;
+            return true;
+        }
+        point = targetTransform.position;
+        return false;
+    }
+
+    public void GoToTarget(float speed, bool anim = true)
     {
         if (IsOnUsableNavMesh())
         {
-            agent.destination = targetTransform.position;
-            if(IsInvoking("GetRandomReachablePointOnNavMesh"))
-                CancelInvoke("GetRandomReachablePointOnNavMesh");
-            animator.Play("Walk");
-            GoInDirection(agent.desiredVelocity.normalized * speed + CalculateAvoidance());
-            lookDir = agent.desiredVelocity;
+            //if(IsInvoking("GetRandomReachablePointOnNavMesh"))
+            //    CancelInvoke("GetRandomReachablePointOnNavMesh");
+            if(anim)
+                animator.Play("Walk");
+
+            Vector3 direction = ZigZag(agent.desiredVelocity.normalized);
+
+            GoInDirection(direction * speed + CalculateAvoidance());
+            //lookDir = direction;
         }
         else if (movementController.GroundCheck())
         {
-            animator.Play("Walk");
-            GoInDirection(Vector3.ProjectOnPlane(GetVectorToTarget(), transform.up).normalized * speed);
+            if(anim)
+                animator.Play("Walk");
+
+            if(IsTargetInSight())
+                GoInDirection(Vector3.ProjectOnPlane(GetVectorToTarget(), transform.up).normalized * speed);
+            else
+            {
+                SwitchState(WanderState);
+            }
         }
     }
 
+    private Vector3 ZigZag(Vector3 forwardDir)
+    {
+        weaveTimer -= Time.fixedDeltaTime;
+        if (weaveTimer <= 0f)
+        {
+            weaveSign *= -1f;
+            weaveTimer = Random.Range(zigzagMinDuration, zigzagMaxDuration);
+        }
+        Vector3 sideDir = Vector3.Cross(transform.up, forwardDir);
+        Vector3 steerDir = (forwardDir + sideDir * weaveSign * zigzagAmplitude).normalized;
+        Vector3 lookAheadPoint = transform.position + steerDir * zigzagLookAhead;
+        if (NavMesh.Raycast(transform.position, lookAheadPoint, out NavMeshHit navHit, NavMesh.AllAreas))
+        {
+            steerDir = forwardDir;
+        }
+        return steerDir;
+    }
+/*
     public void MoveToTarget(float speed)
     {
         if (IsOnUsableNavMesh())
         {
-            agent.destination = targetTransform.position;
-            if(IsInvoking("GetRandomReachablePointOnNavMesh"))
-                CancelInvoke("GetRandomReachablePointOnNavMesh");
+            if (TryGetTargetNavPoint(out Vector3 targetPoint))
+                agent.destination = targetPoint;
+
+            //if(IsInvoking("GetRandomReachablePointOnNavMesh"))
+            //    CancelInvoke("GetRandomReachablePointOnNavMesh");
             
             GoInDirection(agent.desiredVelocity.normalized * speed + CalculateAvoidance());
-            lookDir = agent.desiredVelocity;
+            //lookDir = agent.desiredVelocity;
         }
     }
-
+*/
+    public void UpdateTargetPosition()
+    {
+        if (TryGetTargetNavPoint(out Vector3 targetPoint))
+            agent.destination = targetPoint;
+    }
 
     public Vector3 GetVectorToTarget()
     {
@@ -266,8 +339,25 @@ public class EnemyStateManager : MonoBehaviour
 
     public bool IsTargetInSight()
     {
-        if (Physics.Raycast(transform.position, targetTransform.position - transform.position, out RaycastHit hit, 100, layermask))
+        if (Physics.Raycast(transform.position, targetTransform.position - transform.position, out RaycastHit hit, 100, layerMask))
         {
+            if(hit.transform != targetTransform)
+                return false;
+            //Debug.Log("SIGHT " + hit.transform.name + " TARGET " + targetTransform.name);
+            if (Vector3.Dot(transform.forward, hit.transform.position - transform.position) > 0 && hit.transform == targetTransform)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public bool IsTargetInSight(float radius)
+    {
+        if (Physics.BoxCast(transform.position, Vector3.one * radius, targetTransform.position - transform.position, out RaycastHit hit, transform.rotation, 100, layerMask, QueryTriggerInteraction.Ignore))
+        {
+            if(hit.transform != targetTransform)
+                return false;
             //Debug.Log("SIGHT " + hit.transform.name + " TARGET " + targetTransform.name);
             if (Vector3.Dot(transform.forward, hit.transform.position - transform.position) > 0 && hit.transform == targetTransform)
             {
@@ -280,10 +370,10 @@ public class EnemyStateManager : MonoBehaviour
 
     public void GoInDirection(Vector3 dir)
     {
-        Debug.DrawRay(transform.position, dir, Color.green, 5);
-        Debug.Log("MOVE: " + dir);
-        lookDir = dir;
+        //Debug.DrawRay(transform.position, dir, Color.green, 5);
+        //Debug.Log("MOVE: " + dir);
         enemyVelocity = Vector3.Project(enemyVelocity, transform.up) + Vector3.ProjectOnPlane(dir, transform.up).normalized * dir.magnitude;
+        lookDir = dir;
     }
 
     public void GoToDestination(Vector3 dest, float speed)
@@ -374,11 +464,12 @@ public class EnemyStateManager : MonoBehaviour
     public bool IsTargetReachable()
     {
         if (targetTransform == null) return false;
+        if (!TryGetTargetNavPoint(out Vector3 targetPoint)) return false;
 
         NavMeshPath path = new NavMeshPath();
         if (agent.isActiveAndEnabled && IsOnUsableNavMesh())
         {
-            if (agent.CalculatePath(targetTransform.position, path))
+            if (agent.CalculatePath(targetPoint, path))
             {
                 return path.status == NavMeshPathStatus.PathComplete;
             }
@@ -386,7 +477,7 @@ public class EnemyStateManager : MonoBehaviour
         else
         {
             // Fallback if agent is disabled or not on mesh
-            if (NavMesh.CalculatePath(transform.position, targetTransform.position, NavMesh.AllAreas, path))
+            if (NavMesh.CalculatePath(transform.position, targetPoint, NavMesh.AllAreas, path))
             {
                 return path.status == NavMeshPathStatus.PathComplete;
             }

@@ -42,7 +42,7 @@ public class MovementController : MonoBehaviour
 
     private float pendingStepSmooth = 0;
 
-    int layerMaskEnemy = 1 << 0 | 1 << 3 | 1 << 8;
+    int layerMaskEnemy = 1 << 0 | 1 << 3 | 1 << 8 | 1 << 14;
     int layerMaskEnemyStep = 1 << 0 | 1 << 3;
     int layerMaskEnemyDead = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10);
     int layerMaskPlayer = ~(1 << 3 | 1 << 6 | 1 << 12 | 1 << 10);

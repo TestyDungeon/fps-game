@@ -223,7 +223,7 @@ GameObject:
   - component: {fileID: 5098686705519492268}
   - component: {fileID: 3553333731716520975}
   m_Layer: 5
-  m_Name: Posture
+  m_Name: Armor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -448,7 +448,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 1
+  m_PresetInfoIsWorld: 0
 --- !u!114 &8263541161944933726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -606,7 +606,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8156915083797413830}
   m_Layer: 5
-  m_Name: PostureBar
+  m_Name: ArmorBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
