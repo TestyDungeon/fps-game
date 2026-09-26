@@ -27,6 +27,9 @@ public class MovementController : MonoBehaviour
     private int recursionDepth;
     float offset = 0.01f;
     
+    public bool isGrounded { get; private set; }
+    public RaycastHit GroundHit { get; private set; }
+
     private Vector3 dashDir;
     private float dashSpeed;
     private bool dashing = false;
@@ -74,7 +77,7 @@ public class MovementController : MonoBehaviour
     public Vector3 Move(Vector3 velocity)
     {
         //Debug.DrawRay(transform.position, gravityVec * 5, Color.cyan);
-        bool wasGrounded = GroundCheck();
+        bool wasGrounded = isGrounded;
 
         velocity += externalVelocity;
         
@@ -98,6 +101,8 @@ public class MovementController : MonoBehaviour
             transform.position += dashMove;
             externalVelocity = Vector3.zero;
             vel = Vector3.zero;
+
+            RefreshIsGrounded();
 
             return velocity * 0.95f;
         }
@@ -173,7 +178,9 @@ public class MovementController : MonoBehaviour
         Vector3 totalResolved = resolvedLateral + resolvedVertical;
         vel = totalResolved / Time.fixedDeltaTime;
 
-        StepDownSnap(wasGrounded, velocity, stepUp);
+        //StepDownSnap(wasGrounded, velocity, stepUp);
+        
+        RefreshIsGrounded();
 
         return vel;
     }
@@ -201,8 +208,8 @@ public class MovementController : MonoBehaviour
             //}
             Vector3 newVel = vel.normalized * (hit.distance - offset);
             float angle = Vector3.Angle(transform.up, hit.normal);
-            if (!GravityPass)
-                Debug.Log($"[{tag}] cast hit {hit.collider.name} angle={angle:F1} normal={hit.normal} climbLimit={maxClimbAngle} depth={recursionDepth}");
+            //if (!GravityPass)
+            //    Debug.Log($"[{tag}] cast hit {hit.collider.name} angle={angle:F1} normal={hit.normal} climbLimit={maxClimbAngle} depth={recursionDepth}");
             if (!GravityPass && !hitWall && angle > maxClimbAngle)
             {
                 hitWall = true;
@@ -212,7 +219,7 @@ public class MovementController : MonoBehaviour
             if (newVel.magnitude <= offset)
                 newVel = Vector3.zero;
 
-
+            
             Vector3 newPos = pos + newVel;
 
             Vector3 vecOnPlane = Vector3.ProjectOnPlane(vel - newVel, hit.normal);
@@ -389,22 +396,38 @@ public class MovementController : MonoBehaviour
         addVelocity(dashDir * postDashSpeed);
     }
 
-
-    public bool GroundCheck()
+    private void RefreshIsGrounded()
     {
-        if (Physics.SphereCast(transform.position, capsuleColliderRadius - 0.01f, -transform.up, out RaycastHit hit, capsuleColliderHeight/4 + 0.3f, layerMask, QueryTriggerInteraction.Ignore))
+        // the corrected check: short reach below the feet, normal angle <= maxClimbAngle
+        isGrounded = GroundCheck(out RaycastHit hit);
+        GroundHit = hit;
+    }
+
+
+    //private bool GroundCheck()
+    //{
+    //    if (Physics.SphereCast(transform.position, capsuleColliderRadius - 0.01f, -transform.up, out RaycastHit hit, capsuleColliderHeight/4 + 0.3f, layerMask, QueryTriggerInteraction.Ignore))
+    //    {
+    //        return true;
+    //    }
+    //    return false;
+    //}
+    private bool GroundCheck(out RaycastHit hit)
+    {
+        CapsulePoints(transform.position, out Vector3 p1, out Vector3 p2);
+        if (Physics.CapsuleCast(p1, p2, capsuleColliderRadius - 0.01f, -transform.up, out hit, 0.04f, layerMask, QueryTriggerInteraction.Ignore))
         {
-            return true;
+            if(Vector3.Angle(transform.up, hit.normal) < maxClimbAngle)
+                return true;
+            else
+                return false;
         }
         return false;
     }
-    public bool GroundCheck(out RaycastHit hit)
+
+    public void SetIsGrounded(bool state)
     {
-        if (Physics.SphereCast(transform.position, capsuleColliderRadius - 0.01f, -transform.up, out hit, capsuleColliderHeight/4 + 0.3f, layerMask, QueryTriggerInteraction.Ignore))
-        {
-            return true;
-        }
-        return false;
+        isGrounded = state;
     }
 
     public void addVelocity(Vector3 x)

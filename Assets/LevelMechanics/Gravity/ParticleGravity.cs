@@ -15,6 +15,8 @@ public class ParticleGravity : MonoBehaviour
 
     private int layerMask = 1 << 9;
 
+    private float count = 1;
+
     void Start()
     {
         _particleSystem = GetComponent<ParticleSystem>();
@@ -26,6 +28,17 @@ public class ParticleGravity : MonoBehaviour
 
     void LateUpdate()
     {
+        if(count == 1)
+        {
+            count = 1;
+        }
+        else
+        {
+            count++;
+            return;
+            
+        }
+
         int maxParticles = _mainModule.maxParticles;
         if (_particles == null || _particles.Length < maxParticles)
         {
@@ -51,7 +64,7 @@ public class ParticleGravity : MonoBehaviour
             float modifier = customGravityModifier.Evaluate(ageFraction);
 
             // 4. Apply force: v = v + g * dt
-            Vector3 acceleration = gravityDir * gravityMagnitude * modifier;
+            Vector3 acceleration = gravityDir * gravityMagnitude * 1 * modifier;
             Vector3 deltaV = acceleration * deltaTime;
 
             // 5. Convert back if simulation is local

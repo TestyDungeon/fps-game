@@ -22,7 +22,7 @@ public class EnemyAirFalterState : EnemyBaseState
         if(enemy.animator != null)
             enemy.animator.Play("Idle");
         //enemy.movementController.Move(enemy.enemyVelocity); 
-        if((Time.time - startTime) > 0.1f && enemy.movementController.GroundCheck())
+        if((Time.time - startTime) > 0.1f && enemy.movementController.isGrounded)
         {
             enemy.SwitchState(enemy.ChaseState);
         }

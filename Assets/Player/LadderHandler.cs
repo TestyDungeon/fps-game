@@ -33,7 +33,7 @@ public class LadderHandler : MonoBehaviour, ICustomTriggerReceiver
             {
                 if(mc.GetVerticalSpeed() < -3)
                 {
-                    if(!mc.GroundCheck())
+                    if(!mc.isGrounded)
                         mc.addVelocity(mc.transform.up * 0.5f);
 
                 }

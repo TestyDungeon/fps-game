@@ -48,7 +48,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         deathKnockbackVector += (transform.position - source.position).normalized * damageAmount;
         //state.SetTarget(source);
         SoundManager.PlaySound(state.enemyConfig.hurtSFX, transform.position, 0.01f, 0.7f);
-        //if(state.GetCurrentState() is EnemyFalterState && !state.movementController.GroundCheck())
+        //if(state.GetCurrentState() is EnemyFalterState && !state.movementController.isGrounded)
         //{
 //
         //    Debug.Log("AIR JUGGLE");
@@ -81,14 +81,18 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         if(hurtBox.enabled == true && enemyHealth.GetHealth() <= 0)
         {
             Vector3 up = Vector3.zero;
-            if(state.movementController.GroundCheck() && Vector3.Angle(transform.up, deathKnockbackVector) >= 90)
+            if(state.movementController.isGrounded && Vector3.Angle(transform.up, deathKnockbackVector) >= 90)
                 up = transform.up * deathKnockbackVector.magnitude * 0.25f;
 
             state.DeathKnockback((Vector3.ProjectOnPlane(deathKnockbackVector, transform.up).normalized * deathKnockbackVector.magnitude) + up);
             
         }
         //StartCoroutine(WhiteMaterialChange());
-
+        //if (!state.movementController.isGrounded)
+        //{
+        //    state.movementController.resetNegativeVerticalVelocity();
+        //    state.movementController.addVelocity(transform.up * 3);
+        //}
 
         if(Time.time - lastFalter > 1)
             enemyHealth.SetArmor(enemyHealth.GetArmor() - damageAmount * 5f);

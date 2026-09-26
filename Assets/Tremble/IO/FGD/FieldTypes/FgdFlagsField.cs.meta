@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 86f42cfbe8b54eeeaf7d8102766a3fba
+timeCreated: 1774358034
+AssetOrigin:
+  serializedVersion: 1
+  productId: 277805
+  packageName: Tremble - Map Importer
+  packageVersion: 1.11.1
+  assetPath: Assets/Tremble/IO/FGD/FieldTypes/FgdFlagsField.cs
+  uploadId: 939664

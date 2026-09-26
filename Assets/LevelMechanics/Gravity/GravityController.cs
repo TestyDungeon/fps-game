@@ -35,7 +35,9 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
             // and the new one is non-spherical (high priority), swap it.
             if (prioritizedField == null || 
                 (prioritizedField.GetComponent<GravityFieldSpherical>() != null && 
-                 other.GetComponent<GravityFieldSpherical>() == null))
+                 other.GetComponent<GravityFieldSpherical>() == null) || 
+                (prioritizedField.GetComponent<GravityFieldCylindrical>() != null && 
+                 other.GetComponent<GravityFieldCylindrical>() == null))
             {
                 prioritizedField = other;
             }
@@ -77,7 +79,7 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
                     prioritizedField = null;
                     foreach (Collider col in gravityFields)
                     {
-                        if (col.GetComponent<GravityFieldSpherical>() == null)
+                        if (col.GetComponent<GravityFieldSpherical>() == null && col.GetComponent<GravityFieldCylindrical>() == null)
                         {
                             prioritizedField = col;
                             break;

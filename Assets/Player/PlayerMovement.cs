@@ -10,8 +10,6 @@ public class PlayerMovement : MonoBehaviour
 
     private MovementController movementController;
 
-    private Sway sway;
-
     [SerializeField] private PlayerMovementConfig playerMovementConfig;
     private Vector3 playerVelocity = Vector3.zero;
     private bool isPlayingFootsteps = false;
@@ -66,28 +64,27 @@ public class PlayerMovement : MonoBehaviour
         defaultWeaponFOV = weaponCamera.fieldOfView;
         targetWeaponFov = defaultWeaponFOV;
         movementController = GetComponent<MovementController>();
-        sway = GetComponent<Sway>();
         jumpsLeft = playerMovementConfig.jumpsAmount;
         //traceDistance = movementController.capsuleCollider.height/2 + slopeSticking;
     }
 
     private void Update()
     {
-        if(!wasGrounded && movementController.GroundCheck())
+        if(!wasGrounded && movementController.isGrounded)
         {
-            sway.CameraLandBob(lastVerticalSpeed);
+            Player.Instance.Sway.CameraLandBob(lastVerticalSpeed);
+            Player.Instance.Sway.OnLand();
             //Debug.Log("Percent " + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14));
             //SoundManager.PlaySound(SoundType.LANDING, 0.4f + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14) * 0.6f);
         }
         MoveInput();
-        JumpButton();
         FOV();
         DashButton();
     }
 
     private void FixedUpdate()
     {
-        if (movementController.GroundCheck())
+        if (movementController.isGrounded)
         {
            dashInvokes = 1; 
         }
@@ -99,10 +96,11 @@ public class PlayerMovement : MonoBehaviour
             dashInvokes--;
         }
         AirMove();
+        JumpButton();
         
         playerVelocity = movementController.Move(playerVelocity);
 
-        //if (movementController.GroundCheck() && playerVelocity.sqrMagnitude > 25 && !isPlayingFootsteps)
+        //if (movementController.isGrounded && playerVelocity.sqrMagnitude > 25 && !isPlayingFootsteps)
         //    StartCoroutine(PlayFootStepsSound());
 
         WindSound();
@@ -110,7 +108,7 @@ public class PlayerMovement : MonoBehaviour
 
     void LateUpdate()
     {
-        wasGrounded = movementController.GroundCheck();
+        wasGrounded = movementController.isGrounded;
         lastVerticalSpeed = movementController.GetVerticalSpeed();
     }
 
@@ -136,7 +134,7 @@ public class PlayerMovement : MonoBehaviour
 
         wishdir = wishvel;
         wishdir = Vector3.Normalize(wishdir);
-        wishspeed = wishdir.magnitude * (movementController.GroundCheck() ? playerMovementConfig.speed : playerMovementConfig.airSpeed);
+        wishspeed = wishdir.magnitude * (movementController.isGrounded ? playerMovementConfig.speed : playerMovementConfig.airSpeed);
         Debug.DrawRay(transform.position, wishdir, Color.yellow);
 
         if (wishspeed > playerMovementConfig.MAX_SPEED)
@@ -145,7 +143,7 @@ public class PlayerMovement : MonoBehaviour
             wishspeed = playerMovementConfig.MAX_SPEED;
         }
 
-        if (movementController.GroundCheck())
+        if (movementController.isGrounded)
         {
             
             Friction();
@@ -267,7 +265,7 @@ public class PlayerMovement : MonoBehaviour
 
         drop = 0;
 
-        if (movementController.GroundCheck())
+        if (movementController.isGrounded)
         {
             control = speed < playerMovementConfig.stopSpeed ? playerMovementConfig.stopSpeed : speed;
             drop += control * playerMovementConfig.friction * Time.deltaTime;
@@ -288,33 +286,36 @@ public class PlayerMovement : MonoBehaviour
 
     private void JumpButton()
     {
-        if ((!movementController.GroundCheck(out RaycastHit hit) || Vector3.Angle(hit.normal, transform.up) > 65) && jumpsLeft <= 0)
+        if ((!movementController.isGrounded || Vector3.Angle(movementController.GroundHit.normal, transform.up) > 65) && jumpsLeft <= 0)
         {
             
             return;
         }
-        else if(movementController.GroundCheck() && !jumped)
+        else if(movementController.isGrounded && !jumped)
         {
             StopCoroutine(CoyoteJump());
             jumpsLeft = playerMovementConfig.jumpsAmount;
         }
 
-        if (!movementController.GroundCheck() && !jumped && !coyoteUsed)
+        if (!movementController.isGrounded && !jumped && !coyoteUsed)
             StartCoroutine(CoyoteJump());
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKey(KeyCode.Space))
         {
+            Player.Instance.Sway.OnJump();
+            UI.Instance.UISway.StartCoroutine(UI.Instance.UISway.OnJump());
             jumped = true;
             jumpsLeft--;
             
             movementController.resetVerticalVelocity();
+            movementController.SetIsGrounded(false);
             playerVelocity += transform.up * playerMovementConfig.jumpStrength;
             //movementController.addVelocityContextual(transform.up * playerConfig.jumpStrength);
-            //if(movementController.GroundCheck())
+            //if(movementController.isGrounded)
                 SoundManager.PlaySound(SoundType.JUMP, 0.4f);
         }
 
-        if (movementController.GroundCheck() && !Input.GetKey(KeyCode.Space))
+        if (movementController.isGrounded && !Input.GetKey(KeyCode.Space))
         {
             coyoteUsed = false;
             jumped = false;
@@ -324,7 +325,7 @@ public class PlayerMovement : MonoBehaviour
     private void WindSound()
     {
         float volume = 0.25f;
-        if (movementController.GroundCheck())
+        if (movementController.isGrounded)
         {
             windStartMult = 0;
             lastGroundedTime = Time.time;
@@ -417,7 +418,7 @@ public class PlayerMovement : MonoBehaviour
         GUI.Label(new Rect(0, 15, 400, 200),
         "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
         "Velocity: " + ups + "\n" +
-        "Grounded: " + movementController.GroundCheck(out RaycastHit hit) + "angle: " + Vector3.Angle(transform.up, hit.normal) + "\n" +
+        "Grounded: " + movementController.isGrounded + "angle: " + Vector3.Angle(transform.up, movementController.GroundHit.normal) + "\n" +
         "Jumps: " + jumpsLeft + "\n" +
         "Jumped?: " + jumped + "\n" +
         "Gravity Align Speed: " + movementController.GetGravityAlignSpeed() + "\n" +

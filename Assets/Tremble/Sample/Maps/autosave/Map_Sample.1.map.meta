@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 42a1ab83b6789475c8d93a7a2004ebd5
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: ab79840212e84ded961df5ef93736275, type: 3}
+  processors: []
+  splitMesh: 1
+  maxMeshSurfaceArea: 3000
+  smoothingAngle: 45
+  extraCommandLineArgs: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 277805
+  packageName: Tremble - Map Importer
+  packageVersion: 1.11.1
+  assetPath: Assets/Tremble/Sample/Maps/autosave/Map_Sample.1.map
+  uploadId: 939664

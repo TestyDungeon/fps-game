@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -60,7 +61,12 @@ public class Sway : MonoBehaviour
 
         if(transform_ != null && inventory.GetCurrent().GetCanUse())
         {
-            CalculateSway();
+            if(mc.isGrounded)
+                CalculateSway();
+            else
+            {
+                swayPos = Vector3.Lerp(swayPos, Vector3.zero, Time.deltaTime * 10);
+            }
         }
         CalculateRotation();
         CalculateBob();
@@ -102,7 +108,7 @@ public class Sway : MonoBehaviour
         swayCamPos.y = -mouseInput.y * cameraSway;
 
         swayPos.x = Mathf.Clamp(-transform_.InverseTransformDirection(velocity).x, -5, 5) * horizontalVelocitySway;
-        swayPos.y = Mathf.Clamp(-transform_.InverseTransformDirection(velocity).y, -2, 5) * verticalVelocitySway;
+        swayPos.y = Mathf.Lerp(swayPos.y, Mathf.Clamp(-transform_.InverseTransformDirection(velocity).y, -2, 5) * verticalVelocitySway, Time.deltaTime * 5);
     }
 
     private void CalculateRotation()
@@ -113,8 +119,8 @@ public class Sway : MonoBehaviour
 
     private void CalculateBob()
     {
-        float horizontalVelocity = new Vector3(velocity.x, 0, velocity.z).magnitude;
-        if (horizontalVelocity > 3f && mc.GroundCheck())
+        float horizontalVelocity = Vector3.ProjectOnPlane(velocity, transform.up).magnitude;
+        if (horizontalVelocity > 3f && mc.isGrounded)
         {
             bobTimer = Time.time * bobFrequency;
             bobPos.y = Mathf.Sin(bobTimer + landItemTimingOffset) * bobVerticalAmount;
@@ -140,7 +146,7 @@ public class Sway : MonoBehaviour
     {
         if(transform_ != null)
         {
-            transform_.localPosition = Vector3.Lerp(transform_.localPosition, swayPos+swayCamPos + ((Time.time - lastLanded) > 0.1f ? bobPos : bobPos /*landBobVector * 0.15f*/), Time.deltaTime * 5);
+            transform_.localPosition = Vector3.Lerp(transform_.localPosition, swayPos+swayCamPos + bobPos, Time.deltaTime * 5);
             transform_.localRotation = Quaternion.Lerp(transform_.localRotation, Quaternion.Euler(rot), Time.deltaTime * rotRate);
         }
         
@@ -148,7 +154,7 @@ public class Sway : MonoBehaviour
         
         foreach(Item i in inventory.GetAlwaysOn())
         {
-            i.transform.localPosition = Vector3.Lerp(i.transform.localPosition, swayPos+swayCamPos + ((Time.time - lastLanded) > 0.1f ? bobPos : bobPos /*landBobVector * 0.15f*/), Time.deltaTime * 10);
+            i.transform.localPosition = Vector3.Lerp(i.transform.localPosition, swayPos+swayCamPos + bobPos, Time.deltaTime * 10);
             i.transform.localRotation = Quaternion.Lerp(i.transform.localRotation, Quaternion.Euler(rot), Time.deltaTime * 15);
         }
     }
@@ -169,6 +175,24 @@ public class Sway : MonoBehaviour
         //landBobVector = new Vector3(0, -0.5f * Mathf.Clamp01(Mathf.Abs(verticalSpeed) / 10), 0);
         Debug.Log("Land: " + Mathf.Clamp01(Mathf.Abs(Mathf.Min(verticalSpeed, 0)) / 10));
         lastLanded = Time.time;
+    }
+
+
+    public void OnJump()
+    {
+        swayPos += new Vector3(0, 0.2f, 0);
+    }
+
+    public void OnLand()
+    {
+        //StartCoroutine(Delay());
+
+        IEnumerator Delay()
+        {
+            yield return new WaitForSeconds(0.01f);
+            if(Player.Instance.MovementController.isGrounded)
+                swayPos += new Vector3(0, -0.1f, 0);
+        }
     }
 
     //public void ItemLandBob(float verticalSpeed)

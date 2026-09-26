@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Melee Enemy Config
   m_EditorClassIdentifier: 
   enemyName: Melee Enemy
-  maxHealth: 100
-  chaseSpeed: 10
+  maxHealth: 50
+  chaseSpeed: 15
   wanderSpeed: 7
   wanderDuration: 1
   rotationSpeed: 10

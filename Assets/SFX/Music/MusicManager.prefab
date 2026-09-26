@@ -53,7 +53,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 89c382767c549ab43b94aa4917b25d1f, type: 3}
   - {fileID: 8300000, guid: da992178ffe58be41b1da5e578a8c6e6, type: 3}
   currentTrack: {fileID: 0}
-  volume: 0.1
+  volume: 0.06
   fadeDuration: 3
 --- !u!82 &1489488838519369916
 AudioSource:

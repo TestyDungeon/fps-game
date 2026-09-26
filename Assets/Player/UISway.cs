@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,9 +9,18 @@ using UnityEngine;
 public class UISway : MonoBehaviour
 {
     [SerializeField] private List<RectTransform> uiTransforms;
-    [SerializeField] private List<RectTransform> hudTransforms;
+    [SerializeField] private RectTransform hudTransform;
 
     private Vector3 rot;
+    private Vector3 hudOrigin;
+
+    private Vector3 hudTargetPosition;
+
+    void Awake()
+    {
+        hudOrigin = hudTransform.transform.localPosition;
+        hudTargetPosition = hudOrigin;       
+    }
 
     void OnEnable()
     {
@@ -34,9 +44,12 @@ public class UISway : MonoBehaviour
             ApplyUIRotation();
         }
 
-        if (hudTransforms.Count > 0)
+        if (hudTransform != null)
         {
             ApplyHUDRotation();
+            ApplyHUDPosition();
+            //if(Player.Instance.MovementController.isGrounded || Vector3.Distance(hudTransform.position, hudTargetPosition) < 2)
+            //    hudTargetPosition = hudOrigin;
         }
     }
 
@@ -50,9 +63,19 @@ public class UISway : MonoBehaviour
 
     private void ApplyHUDRotation()
     {
-        foreach (Transform hudTransform in hudTransforms)
-        {
-            hudTransform.localRotation = Quaternion.Lerp(hudTransform.localRotation, Quaternion.Euler(rot * 1.5f), Time.deltaTime * 5);
-        }
+        hudTransform.localRotation = Quaternion.Lerp(hudTransform.localRotation, Quaternion.Euler(rot * 1.5f), Time.deltaTime * 5);
+        
+    }
+
+    private void ApplyHUDPosition()
+    {
+        hudTransform.localPosition = Vector3.Lerp(hudTransform.localPosition, hudTargetPosition, Time.deltaTime * 7);
+    }
+
+    public IEnumerator OnJump()
+    {
+        hudTargetPosition = hudOrigin + new Vector3(0, 25, 0);
+        yield return new WaitForSeconds(0.05f);
+        hudTargetPosition = hudOrigin;
     }
 }

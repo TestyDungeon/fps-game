@@ -56,6 +56,10 @@ public class GravityField : MonoBehaviour
                     {
                         sphericalField = field;
                     }
+                    if (field is GravityFieldCylindrical)
+                    {
+                        sphericalField = field;
+                    }
                 }
             }
         }

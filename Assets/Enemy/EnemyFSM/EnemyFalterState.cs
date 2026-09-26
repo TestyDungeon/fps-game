@@ -20,12 +20,12 @@ public class EnemyFalterState : EnemyBaseState
     
         if(enemy.animator != null)
         {
-            //if(enemy.movementController.GroundCheck())
+            //if(enemy.movementController.isGrounded)
             //    enemy.animator.Play("Idle");
             //else
             //    enemy.animator.Play("Air");
 
-            if (enemy.movementController.GroundCheck())
+            if (enemy.movementController.isGrounded)
             {
                 enemy.animator.Play("Falter");
             }
@@ -37,12 +37,12 @@ public class EnemyFalterState : EnemyBaseState
     public override void FixedUpdateState(EnemyStateManager enemy)
     {
         //enemy.RotateToTarget();
-        if(!enemy.movementController.GroundCheck())
+        if(!enemy.movementController.isGrounded)
                 enemy.animator.Play("Air");
         if (switchCoroutine != null) return;
 
         //if ( && firstGroundHit)
-        if(enemy.movementController.GetIsDashing() == false && enemy.movementController.GroundCheck())
+        if(enemy.movementController.GetIsDashing() == false && enemy.movementController.isGrounded)
         {
             switchCoroutine = enemy.StartCoroutine(enemy.SwitchState(enemy.ChaseState, enemy.enemyConfig.falterDuration, enemy.enemyConfig.falterDuration));
         }

@@ -48,9 +48,9 @@ public class Item : MonoBehaviour
     {
         if(animator != null)
             animator.Play("Equip");
-        Player.Instance.CameraRecoil.ApplyRecoil(-7, 6, 1, false);
+        Player.Instance.CameraRecoil.ApplyRecoil(-4, 6, 1, false);
         yield return new WaitForSeconds(0.1f);
-        Player.Instance.CameraRecoil.ApplyRecoil(-7, 10, 5, false);
+        Player.Instance.CameraRecoil.ApplyRecoil(-4, 10, 5, false);
         canUse = true;
     }
 

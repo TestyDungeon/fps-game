@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Borov Config
   m_EditorClassIdentifier: 
   enemyName: Borov
-  maxHealth: 300
+  maxHealth: 3
   chaseSpeed: 4
   wanderSpeed: 4
   wanderDuration: 1

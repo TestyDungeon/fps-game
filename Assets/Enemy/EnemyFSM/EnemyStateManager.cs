@@ -241,7 +241,7 @@ public class EnemyStateManager : MonoBehaviour
             GoInDirection(direction * speed + CalculateAvoidance());
             //lookDir = direction;
         }
-        else if (movementController.GroundCheck())
+        else if (movementController.isGrounded)
         {
             if(anim)
                 animator.Play("Walk");
@@ -315,7 +315,7 @@ public class EnemyStateManager : MonoBehaviour
 
         drop = 0;
 
-        if (movementController.GroundCheck())
+        if (movementController.isGrounded)
         {
             control = speed < 0.1f ? 0.1f : speed;
             drop += control * 6 * Time.deltaTime;

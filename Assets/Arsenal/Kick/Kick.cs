@@ -120,7 +120,7 @@ public class Kick : Item, IAmmoHandler
             Collider[] overlap = Physics.OverlapBox(transform.TransformPoint(shieldCollider.center), shieldSize/2, Quaternion.identity, layerMask, QueryTriggerInteraction.Ignore);
             if(overlap.Length > 0)
             {
-                if (!mc.GroundCheck() && !parried)
+                if (!mc.isGrounded && !parried)
                 {
                     
                     parried = true;
@@ -163,7 +163,7 @@ public class Kick : Item, IAmmoHandler
 
         if(cols.Length > 0)
         {
-            groundCheckPreDash = mc.GroundCheck();
+            groundCheckPreDash = mc.isGrounded;
             //mc.Dash(!groundCheckPreDash ? transform.forward : Vector3.ProjectOnPlane(transform.forward, player.transform.up).normalized, Mathf.Clamp((cols[0].transform.position - transform.position).magnitude - 0.5f, 0, 100), 30, 0);
             //if (!stagger)
             //{
@@ -196,7 +196,7 @@ public class Kick : Item, IAmmoHandler
                     float timeScale = 0.1f;
                     EnemyProjectile proj = col.GetComponent<EnemyProjectile>();
                     proj.Deflected(transform.position, transform.forward);
-                    if (!mc.GroundCheck())
+                    if (!mc.isGrounded)
                     {
                         mc.resetVerticalVelocity();
                         mc.addVelocity(player.transform.up * 5);

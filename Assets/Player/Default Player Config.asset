@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Default Player Config
   m_EditorClassIdentifier: 
   MAX_SPEED: 50
-  speed: 10
+  speed: 8
   accel: 9
   airSpeed: 13
   airMaxSpeed: 13

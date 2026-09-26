@@ -33,7 +33,7 @@ public class Dash : Item
 
     void FixedUpdate()
     {
-        if(dashLeft < dashAmount && !IsInvoking("ResetDash") && mc.GroundCheck())
+        if(dashLeft < dashAmount && !IsInvoking("ResetDash") && mc.isGrounded)
         {
             
             Invoke("ResetDash", dashCooldown);

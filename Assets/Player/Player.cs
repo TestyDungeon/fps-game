@@ -16,16 +16,18 @@ public class Player : MonoBehaviour
     public MovementController MovementController { get; private set; }
 
     public CameraRecoil CameraRecoil { get; private set; }
+    public Sway Sway { get; private set; }
 
     void Awake()
     {
         Instance = this;
-
+        
         Health = GetComponent<Health>();
         Inventory = GetComponent<Inventory>();
         PlayerMovement = GetComponent<PlayerMovement>();
         MovementController = GetComponent<MovementController>();
         CameraRecoil = GetComponentInChildren<CameraRecoil>();
+        Sway = GetComponentInChildren<Sway>();
         OnPlayerSpawned?.Invoke();
     }
 

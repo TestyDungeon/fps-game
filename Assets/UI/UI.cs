@@ -9,6 +9,7 @@ public class UI : MonoBehaviour
     public GameObject levelEndUI;
 
     public Camera UICamera;
+    public UISway UISway { get; private set; }
     
     public GameObject[] UIs;
     public TextUI textUI;
@@ -24,5 +25,7 @@ public class UI : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
         }
+
+        UISway = GetComponent<UISway>();
     }
 }

@@ -39,7 +39,7 @@ public class PlayerMovement2 : MonoBehaviour
     private void FixedUpdate()
     {
         playerVelocity = movementController.Move(playerVelocity);
-        if (movementController.GroundCheck() && playerVelocity.sqrMagnitude > 25)
+        if (movementController.isGrounded && playerVelocity.sqrMagnitude > 25)
             StartCoroutine(PlayFootStepsSound());
     }
 
@@ -91,7 +91,7 @@ public class PlayerMovement2 : MonoBehaviour
             wishspeed = playerConfig.MAX_SPEED;
         }
 
-        if (movementController.GroundCheck())
+        if (movementController.isGrounded)
         {
             Friction();
             Accelerate(wishdir, wishspeed);
@@ -159,7 +159,7 @@ public class PlayerMovement2 : MonoBehaviour
 
         drop = 0;
 
-        if (movementController.GroundCheck())
+        if (movementController.isGrounded)
         {
             control = speed < playerConfig.stopSpeed ? playerConfig.stopSpeed : speed;
             drop += control * playerConfig.friction * Time.deltaTime;
@@ -178,7 +178,7 @@ public class PlayerMovement2 : MonoBehaviour
 
     private void JumpButton()
     {
-        if (!movementController.GroundCheck())
+        if (!movementController.isGrounded)
         {
             return;
         }
@@ -203,7 +203,7 @@ public class PlayerMovement2 : MonoBehaviour
         GUI.Label(new Rect(0, 15, 400, 100),
         "Speed: " + Mathf.Round(ups.magnitude * 100) / 100 + "ups\n" +
         "Velocity: " + ups + "\n" +
-        "Grounded: " + movementController.GroundCheck());
+        "Grounded: " + movementController.isGrounded);
     }
 
     IEnumerator PlayFootStepsSound()
