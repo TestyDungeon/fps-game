@@ -4992,7 +4992,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &6067338213166115551
 Transform:
   m_ObjectHideFlags: 0
@@ -5022,6 +5022,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DecalPrefab: {fileID: 2204318513479173227, guid: 375779d9a5962b74c80bdbd60ba6bf46, type: 3}
   part: {fileID: 0}
+  decalIndex: 0
 --- !u!198 &9126777454496636763
 ParticleSystem:
   m_ObjectHideFlags: 0

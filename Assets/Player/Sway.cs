@@ -16,7 +16,7 @@ public class Sway : MonoBehaviour
     private Vector3 velocity = Vector3.zero;
     private Vector3 swayPos;
     private Vector3 swayCamPos;
-    private Vector3 rot;
+    private Vector3 itemRot;
     private Inventory inventory;
     private MovementController mc;
 
@@ -30,14 +30,19 @@ public class Sway : MonoBehaviour
     [SerializeField] private float cameraBobFrequency = 5f;
     [SerializeField] private float cameraBobVerticalAmount = 0.05f;
     [SerializeField] private Transform cameraTransform;
-    private Vector3 cameraBobPos;
-    private float cameraBobTimer = 0f;
+    private Vector3 camBobPos;
+    private float camBobTimer = 0f;
     private Vector3 landBobVector;
 
     private float lastLanded = -1;
 
     private float landItemTimingOffset = 0;
     private float landCameraTimingOffset = 0;
+
+    private Vector3 jumpBobPos = Vector3.zero;
+    private Vector3 tJumpBobPos = Vector3.zero;
+    private Vector3 landCamBobPos = Vector3.zero;
+    private Vector3 tLandCamBobPos = Vector3.zero;
 
     public static event Action<Vector3> OnRotationChanged;
     //[SerializeField] List<RectTransform> uiTransforms;
@@ -51,44 +56,48 @@ public class Sway : MonoBehaviour
 
     void Update()
     {
+        GetInput();
+        GetVelocity();
+
         if(inventory.GetCurrent() != null)
         {
             transform_ = inventory.GetCurrent()?.gameObject.transform;
         }
 
-        GetInput();
-        GetVelocity();
+        ItemVelocitySway();
+        ItemLookSway();
+        ItemRotation();
+        ItemBob();
 
-        if(transform_ != null && inventory.GetCurrent().GetCanUse())
-        {
-            if(mc.isGrounded)
-                CalculateSway();
-            else
-            {
-                swayPos = Vector3.Lerp(swayPos, Vector3.zero, Time.deltaTime * 10);
-            }
-        }
-        CalculateRotation();
-        CalculateBob();
+        CameraBob();
 
-        if(transform_ != null && inventory.GetCurrent().GetCanUse())
-        {
-            ApplySwayRotation();
-        }
+        JumpBob();
+        LandBob();
+        //if(transform_ != null && inventory.GetCurrent().GetCanUse())
+        //{
+        //    ApplySwayRotation();
+        //}
 
-        ApplyCameraBob();
+        //ApplyCameraBob();
             
-        OnRotationChanged?.Invoke(rot);
+        OnRotationChanged?.Invoke(itemRot);
 
-        //if(uiTransforms.Count > 0)
-        //{
-        //    ApplyUIRotation();
-        //}
 
-        //if(hudTransforms.Count > 0)
-        //{
-        //    ApplyHUDRotation();
-        //}
+        if(transform_ != null)
+        {
+            transform_.localPosition = swayPos + bobPos + swayCamPos + jumpBobPos;
+            transform_.localRotation = Quaternion.Euler(itemRot);
+        }
+        
+        
+        
+        foreach(Item i in inventory.GetAlwaysOn())
+        {
+            i.transform.localPosition = swayPos + bobPos + swayCamPos + jumpBobPos;
+            i.transform.localRotation = Quaternion.Euler(itemRot);
+        }
+
+        cameraTransform.localPosition = camBobPos + landCamBobPos;
     }
     
     private void GetInput()
@@ -102,46 +111,75 @@ public class Sway : MonoBehaviour
         velocity = mc.getVelocity();
     }
 
-    private void CalculateSway()
+    private void ItemVelocitySway()
     {
-        swayCamPos.x = -mouseInput.x * cameraSway;
-        swayCamPos.y = -mouseInput.y * cameraSway;
-
-        swayPos.x = Mathf.Clamp(-transform_.InverseTransformDirection(velocity).x, -5, 5) * horizontalVelocitySway;
-        swayPos.y = Mathf.Lerp(swayPos.y, Mathf.Clamp(-transform_.InverseTransformDirection(velocity).y, -2, 5) * verticalVelocitySway, Time.deltaTime * 5);
+        Vector3 tSwayPos = swayPos;
+        tSwayPos.x = Mathf.Clamp(-transform_.InverseTransformDirection(velocity).x, -5, 5) * horizontalVelocitySway;
+        tSwayPos.y = Mathf.Lerp(swayPos.y, Mathf.Clamp(-transform_.InverseTransformDirection(velocity).y, -2, 5) * verticalVelocitySway, Time.deltaTime * 5);
+        swayPos = Vector3.Lerp(swayPos, tSwayPos, Time.deltaTime * 5);
     }
 
-    private void CalculateRotation()
+    private void ItemLookSway()
     {
-        rot.x = Mathf.Clamp(-mouseInput.y * itemRotation, -5, 5);
-        rot.y = Mathf.Clamp(mouseInput.x * itemRotation, -5, 5);
+        Vector3 tSwayCamPos = swayCamPos;
+        tSwayCamPos.x = -mouseInput.x * cameraSway;
+        tSwayCamPos.y = -mouseInput.y * cameraSway;
+        swayCamPos = Vector3.Lerp(swayCamPos, tSwayCamPos, Time.deltaTime * 5);
     }
 
-    private void CalculateBob()
+    private void ItemRotation()
+    {
+        Vector3 tItemRot = Vector3.zero;
+        tItemRot.x = Mathf.Clamp(-mouseInput.y * itemRotation, -5, 5);
+        tItemRot.y = Mathf.Clamp(mouseInput.x * itemRotation, -5, 5);
+        itemRot = Vector3.Lerp(itemRot, tItemRot, Time.deltaTime * rotRate);
+    }
+
+    private void ItemBob()
     {
         float horizontalVelocity = Vector3.ProjectOnPlane(velocity, transform.up).magnitude;
-        if (horizontalVelocity > 3f && mc.isGrounded)
+        Vector3 tBobPos = bobPos;
+        if (horizontalVelocity > 3f && (mc.isGrounded || (Time.time - mc.lastTimeGrounded) < 0.1f))
         {
             bobTimer = Time.time * bobFrequency;
-            bobPos.y = Mathf.Sin(bobTimer + landItemTimingOffset) * bobVerticalAmount;
-            bobPos.x = Mathf.Cos(bobTimer * 0.5f) * bobHorizontalAmount;
+            tBobPos.y = Mathf.Sin(bobTimer + landItemTimingOffset) * bobVerticalAmount;
+            tBobPos.x = Mathf.Cos(bobTimer * 0.5f) * bobHorizontalAmount;
 
-            cameraBobTimer = Time.time * cameraBobFrequency;
-            cameraBobPos.y = Mathf.Sin(cameraBobTimer + landCameraTimingOffset) * cameraBobVerticalAmount;
+            //cameraBobTimer = Time.time * cameraBobFrequency;
+            //cameraBobPos.y = Mathf.Sin(cameraBobTimer + landCameraTimingOffset) * cameraBobVerticalAmount;
         }
         else
         {
             bobTimer = Time.time * bobFrequency / 10;
-            bobPos.y = Mathf.Sin(bobTimer + landItemTimingOffset) * bobVerticalAmount  / 5;
-            bobPos.x = 0; 
+            tBobPos.y = Mathf.Sin(bobTimer + landItemTimingOffset) * bobVerticalAmount  / 5;
+            tBobPos.x = 0; 
 
             //cameraBobTimer = Time.time * cameraBobFrequency / 10;
-            cameraBobPos.y = 0 /*Mathf.Sin(cameraBobTimer) * cameraBobVerticalAmount  / 5*/;
+            //cameraBobPos.y = 0 /*Mathf.Sin(cameraBobTimer) * cameraBobVerticalAmount  / 5*/;
             //bobTimer = 0f;  // Reset when stationary
             //bobPos = Vector3.Lerp(bobPos, Vector3.zero, 10 * Time.deltaTime);
         }
+
+        bobPos = Vector3.Lerp(bobPos, tBobPos, Time.deltaTime * 5);
     }
 
+    private void CameraBob()
+    {
+        float horizontalVelocity = Vector3.ProjectOnPlane(velocity, transform.up).magnitude;
+        Vector3 tCamBobPos = camBobPos;
+        if (horizontalVelocity > 3f && (mc.isGrounded || (Time.time - mc.lastTimeGrounded) < 0.1f))
+        {
+            camBobTimer = Time.time * cameraBobFrequency;
+            tCamBobPos.y = Mathf.Sin(camBobTimer + landCameraTimingOffset) * cameraBobVerticalAmount;
+        }
+        else
+        {
+            tCamBobPos.y = 0;
+        }
+
+        camBobPos = Vector3.Lerp(camBobPos, tCamBobPos, Time.deltaTime * 5);
+    }
+    /*
     private void ApplySwayRotation()
     {
         if(transform_ != null)
@@ -158,19 +196,20 @@ public class Sway : MonoBehaviour
             i.transform.localRotation = Quaternion.Lerp(i.transform.localRotation, Quaternion.Euler(rot), Time.deltaTime * 15);
         }
     }
-
-    private void ApplyCameraBob()
-    {
-        if(cameraTransform != null)
-        {
-            
-            cameraTransform.localPosition = Vector3.Lerp(cameraTransform.localPosition, (Time.time - lastLanded) > 0.1f ? cameraBobPos : cameraBobPos /*landBobVector*/, Time.deltaTime * 5);
-        }
-    }
-
+    */
+    
+    //private void ApplyCameraBob()
+    //{
+    //    if(cameraTransform != null)
+    //    {
+    //        
+    //        cameraTransform.localPosition = Vector3.Lerp(cameraTransform.localPosition, (Time.time - lastLanded) > 0.1f ? cameraBobPos : cameraBobPos /*landBobVector*/, Time.deltaTime * 5);
+    //    }
+    //}
+    
     public void CameraLandBob(float verticalSpeed)
     {
-        landCameraTimingOffset = -cameraBobTimer + 135;
+        landCameraTimingOffset = -camBobTimer + 135;
         landItemTimingOffset = -bobTimer + 135;
         //landBobVector = new Vector3(0, -0.5f * Mathf.Clamp01(Mathf.Abs(verticalSpeed) / 10), 0);
         Debug.Log("Land: " + Mathf.Clamp01(Mathf.Abs(Mathf.Min(verticalSpeed, 0)) / 10));
@@ -180,19 +219,27 @@ public class Sway : MonoBehaviour
 
     public void OnJump()
     {
-        swayPos += new Vector3(0, 0.2f, 0);
+        tJumpBobPos = new Vector3(0, 0.2f, 0);
     }
 
-    public void OnLand()
+    private void JumpBob()
     {
-        //StartCoroutine(Delay());
+        jumpBobPos = Vector3.Lerp(jumpBobPos, tJumpBobPos, Time.deltaTime * 5);
+        tJumpBobPos = Vector3.Lerp(tJumpBobPos, Vector3.zero, Time.deltaTime * 10);
+    }
 
-        IEnumerator Delay()
-        {
-            yield return new WaitForSeconds(0.01f);
-            if(Player.Instance.MovementController.isGrounded)
-                swayPos += new Vector3(0, -0.1f, 0);
-        }
+    public void OnLand(float verticalSpeed)
+    {
+        float amp = Mathf.Max(Mathf.Min(verticalSpeed, 0) / 10, -1);
+        tLandCamBobPos = new Vector3(0, amp, 0);
+    }
+
+    private void LandBob()
+    {
+        if((landCamBobPos - tLandCamBobPos).magnitude > 0.01)
+            landCamBobPos = Vector3.Lerp(landCamBobPos, tLandCamBobPos, Time.deltaTime * 5);
+
+        tLandCamBobPos = Vector3.Lerp(tLandCamBobPos, Vector3.zero, Time.deltaTime * 10);
     }
 
     //public void ItemLandBob(float verticalSpeed)
@@ -201,19 +248,4 @@ public class Sway : MonoBehaviour
     //    Debug.Log("Land: " + Mathf.Clamp01(Mathf.Abs(Mathf.Min(verticalSpeed, 0)) / 10));
     //    lastLanded = Time.time;
     //}
-
-   //private void ApplyUIRotation()
-   //{
-   //    foreach(Transform uiTransform in uiTransforms)
-   //    {
-   //        uiTransform.localRotation = Quaternion.Lerp(uiTransform.localRotation, Quaternion.Euler(rot * 2.5f), Time.unscaledDeltaTime * 5);
-   //    }
-   //}
-   //private void ApplyHUDRotation()
-   //{
-   //    foreach(Transform hudTransform in hudTransforms)
-   //    {
-   //        hudTransform.localRotation = Quaternion.Lerp(hudTransform.localRotation, Quaternion.Euler(rot * 1.5f), Time.deltaTime * 5);
-   //    }
-   //}
 }

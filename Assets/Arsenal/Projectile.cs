@@ -78,7 +78,12 @@ public class Projectile : MonoBehaviour
 
     private void RigidBodyProjectile()
     {
-        rb.AddForce(direction * gunConfig.projectileSpeed);
+        AddForce(direction);
+    }
+
+    public void AddForce(Vector3 dir)
+    {
+        rb.AddForce(dir * gunConfig.projectileSpeed, ForceMode.VelocityChange);
     }
 
 

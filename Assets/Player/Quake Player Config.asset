@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Quake Player Config
   m_EditorClassIdentifier: 
   MAX_SPEED: 10
-  speed: 10
+  speed: 9
   accel: 10
   airSpeed: 10
-  airMaxSpeed: 1.5
+  airMaxSpeed: 1.25
   airAccel: 10
   airControl: 0
   friction: 4

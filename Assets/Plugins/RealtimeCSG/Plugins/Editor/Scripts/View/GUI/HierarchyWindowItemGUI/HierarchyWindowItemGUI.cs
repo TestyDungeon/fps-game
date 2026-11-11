@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#pragma warning disable 0619
+using UnityEngine;
 using UnityEditor;
 using RealtimeCSG.Foundation;
 using RealtimeCSG.Components;
@@ -12,7 +13,7 @@ namespace RealtimeCSG
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
 				return;
 
-			var o = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+			var o = UnityObjectCompatibility.InstanceIDToObjectCompat(instanceID) as GameObject;
 
 			if (selectionRect.Contains(Event.current.mousePosition))
 			{
@@ -20,9 +21,9 @@ namespace RealtimeCSG
 				SceneDragToolManager.OnHandleDragAndDrop(sceneView: null, transformInInspector: t, selectionRect: selectionRect);
 			}
 
-			if (o == null)
+				if (o == null)
 				return;
-			
+
 			CSG_GUIStyleUtility.InitStyles();
 
 			var node = o.GetComponent<CSGNode>();
@@ -58,5 +59,14 @@ namespace RealtimeCSG
 			}
 		}
 
+#if UNITY_6000_0_OR_NEWER
+		internal static void OnHierarchyWindowItemByEntityIdOnGUI(UnityEngine.EntityId entityId, Rect selectionRect)
+		{
+			var target = Resources.EntityIdToObject(entityId);
+			OnHierarchyWindowItemOnGUI(target != null ? target.GetInstanceIDCompat() : 0, selectionRect);
+		}
+#endif
+
 	}
 }
+

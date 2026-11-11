@@ -19,6 +19,8 @@ MonoBehaviour:
   layerMask:
     serializedVersion: 2
     m_Bits: 32695
+  equipSFX: {fileID: 0}
+  equipVolume: 1
   shootSFX:
   - {fileID: 8300000, guid: a7ab22dbe2a16a346bd73125e47bf7cc, type: 3}
   volume: 0.6
@@ -44,12 +46,12 @@ MonoBehaviour:
   ricochet: 3
   projectilePrefab: {fileID: 5265528337465247437, guid: a82f1ef31edebd44883e45681aaf4373, type: 3}
   explosionPrefab: {fileID: 1062242034823215121, guid: a8d859e0cbe6b5041b6c42665b0d6142, type: 3}
-  projectileSpeed: 0.15
+  projectileSpeed: 20
   projectileRicoshet: 0
   gravityMult: 0.01
   explosionRadius: 2.5
   explosionForceRB: 5
   explosionDelay: 0.25
   ricoshetSpeedLoss: 0.1
-  mass: 0.0001
+  mass: 2
   altConfig: {fileID: 11400000, guid: fed73bf97b2525b4494a519342879878, type: 2}

@@ -38,7 +38,7 @@ public class Gun : Item, IAmmoHandler
     private GameObject newProjectile;
     private Projectile projectileComponent;
 
-    [SerializeField] protected bool IsReadyToShoot => alt ? readyToShootAlt : readyToShoot;
+    protected bool IsReadyToShoot => alt ? readyToShootAlt : readyToShoot;
 
     
 
@@ -299,7 +299,7 @@ public class Gun : Item, IAmmoHandler
             }
         }
         if(gunConfig.bulletTrail != null)
-            StartCoroutine(SpawnBulletTrail(start, target));
+            StartCoroutine(SpawnBulletTrail(bulletStart.position, target));
         
         if(ricochetCount > 0 && hitSurface)
         {
@@ -396,9 +396,13 @@ public class Gun : Item, IAmmoHandler
         if(gunConfig.bulletCasePrefab != null)
         {
             GameObject particles = Instantiate(gunConfig.bulletCasePrefab, bulletCaseStart.position, transform.rotation, transform.parent);
-            Destroy(particles, 2f);
-            yield return new WaitForSeconds(0.3f);
-            SoundManager.PlaySound(gunConfig.caseFallSFX, gunConfig.caseFallVolume);
+            SoundOnParticleCollision sopc = particles.GetComponentInChildren<SoundOnParticleCollision>();
+            sopc.sounds = gunConfig.caseFallSFX;
+            sopc.volume = gunConfig.caseFallVolume;
+
+            Destroy(particles, 20f);
+            //yield return new WaitForSeconds(0.3f);
+            
         }
     }
 

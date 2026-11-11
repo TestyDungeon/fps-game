@@ -29,7 +29,8 @@ public class EnemyConfig : ScriptableObject
     [Header("Weapon (for Ranged)")]
     public TrailRenderer bulletTrailPrefab;
     public GameObject muzzleFlashPrefab;
-    public GameObject deathParticle;
+    public GameObject deathParticles;
+    public GameObject goreParticles;
     public float force = 20;
     public float spread = 2;
     public int bulletsPerShot = 1;
@@ -62,6 +63,8 @@ public class EnemyConfig : ScriptableObject
                 return new BorovAttack();
             case AttackType.Piggy:
                 return new PiggyAttack();
+            case AttackType.Soldier:
+                return new SoldierAttack();
             default:
                 return new MeleeAttack();
         }      
@@ -76,6 +79,8 @@ public class EnemyConfig : ScriptableObject
                 return new MeleeTraversal();
             case TraversalType.Ranged:
                 return new RangedTraversal();
+            case TraversalType.Soldier:
+                return new RangedTraversal();
             default:
                 return new MeleeTraversal();
         }      
@@ -83,5 +88,5 @@ public class EnemyConfig : ScriptableObject
     }
 }
 
-public enum AttackType { Melee, Ranged, Borov, Piggy }
-public enum TraversalType { Melee, Ranged }
+public enum AttackType { Melee, Ranged, Borov, Piggy, Soldier }
+public enum TraversalType { Melee, Ranged, Soldier }

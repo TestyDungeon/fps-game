@@ -1,10 +1,66 @@
+﻿#pragma warning disable 0619
 using System;
+using System.Reflection;
+using RealtimeCSG;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using System.Collections.Generic;
 using RealtimeCSG.Components;
 using System.Linq;
 using UnityEngine.Serialization;
 using RealtimeCSG.Foundation;
+
+namespace RealtimeCSG
+{
+	internal static class UnityObjectCompatibility
+	{
+		static readonly MethodInfo GetInstanceIDMethod =
+			typeof(UnityEngine.Object).GetMethod("GetInstanceID", BindingFlags.Instance | BindingFlags.Public);
+		static readonly MethodInfo InstanceIDToObjectMethod =
+			typeof(Resources).GetMethod("InstanceIDToObject", BindingFlags.Static | BindingFlags.Public);
+#if UNITY_EDITOR
+		static readonly Dictionary<int, UnityEngine.Object> LoadedObjectsByInstanceID =
+			new Dictionary<int, UnityEngine.Object>();
+#endif
+
+		public static int GetInstanceIDCompat(this UnityEngine.Object target)
+		{
+			if (target == null)
+				return 0;
+			return (int)GetInstanceIDMethod.Invoke(target, null);
+		}
+
+		public static UnityEngine.Object InstanceIDToObjectCompat(int instanceID)
+		{
+#if UNITY_EDITOR
+			UnityEngine.Object target;
+			if (LoadedObjectsByInstanceID.TryGetValue(instanceID, out target) && target)
+				return target;
+
+			var loadedObjects = Resources.FindObjectsOfTypeAll<UnityEngine.Object>();
+			for (var i = 0; i < loadedObjects.Length; i++)
+			{
+				target = loadedObjects[i];
+				if (!target)
+					continue;
+
+				var targetInstanceID = (int)GetInstanceIDMethod.Invoke(target, null);
+				if (!LoadedObjectsByInstanceID.ContainsKey(targetInstanceID))
+					LoadedObjectsByInstanceID.Add(targetInstanceID, target);
+
+				if (targetInstanceID == instanceID)
+					return target;
+			}
+
+			return null;
+#else
+			return (UnityEngine.Object)InstanceIDToObjectMethod.Invoke(null, new object[] { instanceID });
+#endif
+		}
+	}
+}
 
 namespace InternalRealtimeCSG
 {
@@ -32,9 +88,9 @@ namespace InternalRealtimeCSG
 		public GeneratedMeshDescription MeshDescription;
         public GameObject   GameObject;
         public MeshFilter   MeshFilter;
-        public MeshRenderer MeshRenderer; 
+        public MeshRenderer MeshRenderer;
 
-		public MeshInstanceKey GenerateKey() 
+		public MeshInstanceKey GenerateKey()
 		{
 			return MeshInstanceKey.GenerateKey(MeshDescription);
 		}
@@ -46,7 +102,7 @@ namespace InternalRealtimeCSG
 				if (SharedMesh.vertexCount < 0)
 					return false;
 			} else
-			if (SharedMesh.GetInstanceID() != 0)
+			if (SharedMesh.GetInstanceIDCompat() != 0)
 				return false;
 			return true;
 		}
@@ -129,7 +185,7 @@ namespace InternalRealtimeCSG
             }
             return null;
         }
-         
+
         public void AddMeshInstance(GeneratedMeshInstance instance)
         {
             if (!instance)
@@ -300,7 +356,7 @@ namespace InternalRealtimeCSG
 			if (CSGSceneManagerRedirector.Interface != null)
 				CSGSceneManagerRedirector.Interface.OnCreated(this);
 		}
-        
+
 		void OnEnable()
 		{
             meshInstances = this.GetComponentsInChildren<GeneratedMeshInstance>();
@@ -325,7 +381,7 @@ namespace InternalRealtimeCSG
         void Awake()
 		{
 			//this.hideFlags = HideFlags.DontSaveInBuild;
-			this.gameObject.tag = "EditorOnly"; 
+			this.gameObject.tag = "EditorOnly";
 		}
 #endif
 	}

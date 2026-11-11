@@ -44,9 +44,12 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
 
             if (addedNewField)
             {
+                Vector3 newGravityVector = CalculateIntersectingVectors(prioritizedField ?? other);  
                 mc.setInGravityField(true);
-                mc.setGravityAlignSpeed(mc.GetGravityAlignSpeedOnFieldChange());
-                mc.setGravityVec(CalculateIntersectingVectors(prioritizedField ?? other));
+                if(Vector3.Angle(mc.GetGravityVec(), newGravityVector) >  5)
+                    mc.setGravityAlignSpeed(mc.GetGravityAlignSpeedOnFieldChange());
+                
+                mc.setGravityVec(newGravityVector);
             }
 
         }
@@ -66,44 +69,40 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
 
     public void OnCustomTriggerExit(Collider other)
     {
-        if (other.CompareTag("GravityField"))
+        if (!other.CompareTag("GravityField"))
+            return;
+    
+        if (!gravityFields.Remove(other))
+            return;
+    
+        if (other == prioritizedField)
         {
-            gravityFields.Remove(other);
-
-            if (other == prioritizedField)
+            prioritizedField = null;
+            foreach (Collider col in gravityFields)
             {
-                // Switch to another field if available
-                if (gravityFields.Count > 0)
+                if (col.GetComponent<GravityFieldSpherical>() == null && col.GetComponent<GravityFieldCylindrical>() == null)
                 {
-                    // Find the first non-spherical field
-                    prioritizedField = null;
-                    foreach (Collider col in gravityFields)
-                    {
-                        if (col.GetComponent<GravityFieldSpherical>() == null && col.GetComponent<GravityFieldCylindrical>() == null)
-                        {
-                            prioritizedField = col;
-                            break;
-                        }
-                    }
-
-                    // If no non-spherical field exists, pick the first one from the list (the spherical one)
-                    if (prioritizedField == null)
-                    {
-                        prioritizedField = gravityFields[0];
-                    }
-
-                    //Debug.Log("Switching priority to GravityField at " + prioritizedField.transform.position);
-                    mc.setGravityAlignSpeed(mc.GetGravityAlignSpeedOnFieldChange());
-                    mc.setGravityVec(prioritizedField.GetComponent<GravityField>().CalculateGravityVector(transform));
-                }
-                else
-                {
-                    prioritizedField = null;
-                    mc.setInGravityField(false);
-                    mc.setGravityAlignSpeed(mc.GetGravityAlignSpeedOnFieldChange());
-                    //Debug.Log("Exited all GravityFields");
+                    prioritizedField = col;
+                    break;
                 }
             }
+            if (prioritizedField == null && gravityFields.Count > 0)
+                prioritizedField = gravityFields[0];
+        }
+    
+        // Always fire — leaving any field changes the blend, not just the prioritized one.
+        Vector3 newGravityVector = CalculateIntersectingVectors(prioritizedField);  
+        if(Vector3.Angle(mc.GetGravityVec(), newGravityVector) >  5)
+            mc.setGravityAlignSpeed(mc.GetGravityAlignSpeedOnFieldChange());
+    
+        if (prioritizedField != null)
+        {
+            mc.setInGravityField(true);
+            mc.setGravityVec(newGravityVector);
+        }
+        else
+        {
+            mc.setInGravityField(false);
         }
     }
 
@@ -113,7 +112,10 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
         foreach(Collider col in gravityFields)
         {
             if(col.TryGetComponent<GravityField>(out GravityField gf) && gf.GetIsBlendable())
+            {
                 finalVector += gf.CalculateGravityVector(transform);
+                finalVector = finalVector.normalized;
+            }
         }
         finalVector = finalVector.normalized;
         return finalVector != Vector3.zero ? finalVector : other.GetComponent<GravityField>().CalculateGravityVector(transform);

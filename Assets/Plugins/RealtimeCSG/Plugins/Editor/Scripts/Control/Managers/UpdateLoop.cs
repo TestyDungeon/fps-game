@@ -46,9 +46,9 @@ namespace RealtimeCSG
 			CSGKeysPreferenceWindow.ReadKeys();
 
 			initialized = true;
-			
+
 			CSGSceneManagerRedirector.Interface = new CSGSceneManagerInstance();
-			
+
 			Selection.selectionChanged					-= OnSelectionChanged;
 			Selection.selectionChanged					+= OnSelectionChanged;
 
@@ -72,9 +72,14 @@ namespace RealtimeCSG
     #endif
 #endif
 
+#if UNITY_6000_0_OR_NEWER
+            EditorApplication.hierarchyWindowItemByEntityIdOnGUI -= HierarchyWindowItemGUI.OnHierarchyWindowItemByEntityIdOnGUI;
+			EditorApplication.hierarchyWindowItemByEntityIdOnGUI += HierarchyWindowItemGUI.OnHierarchyWindowItemByEntityIdOnGUI;
+#else
             EditorApplication.hierarchyWindowItemOnGUI	-= HierarchyWindowItemGUI.OnHierarchyWindowItemOnGUI;
 			EditorApplication.hierarchyWindowItemOnGUI	+= HierarchyWindowItemGUI.OnHierarchyWindowItemOnGUI;
-			
+#endif
+
 			UnityCompilerDefineManager.UpdateUnityDefines();
 		}
 
@@ -103,7 +108,11 @@ namespace RealtimeCSG
 #else
 			EditorApplication.hierarchyWindowChanged	-= OnHierarchyWindowChanged;
 #endif
+#if UNITY_6000_0_OR_NEWER
+			EditorApplication.hierarchyWindowItemByEntityIdOnGUI	-= HierarchyWindowItemGUI.OnHierarchyWindowItemByEntityIdOnGUI;
+#else
 			EditorApplication.hierarchyWindowItemOnGUI	-= HierarchyWindowItemGUI.OnHierarchyWindowItemOnGUI;
+#endif
 
 #if UNITY_2019_1_OR_NEWER
 			SceneView.duringSceneGui					-= SceneViewEventHandler.OnScene;
@@ -148,7 +157,7 @@ namespace RealtimeCSG
 
 			if (this.initialized)
 				this.Shutdown();
-			
+
 			MeshInstanceManager.Shutdown();
 			InternalCSGModelManager.Shutdown();
 
@@ -171,7 +180,7 @@ namespace RealtimeCSG
 
 			SceneDragToolManager.UpdateDragAndDrop();
 			InternalCSGModelManager.UpdateHierarchy();
-		}  
+		}
 
 		void UndoRedoPerformed()
 		{
@@ -184,25 +193,25 @@ namespace RealtimeCSG
 			had_first_update = true;
 			EditorApplication.update -= OnFirstUpdate;
 			RealtimeCSG.CSGSettings.Reload();
-			
+
 			// register unity methods in the c++ code so that some unity functions
 			// (such as debug.log) can be called from within the c++ code.
 			NativeMethodBindings.RegisterUnityMethods();
 
 			// register dll methods so we can use them
 			NativeMethodBindings.RegisterExternalMethods();
-			
+
 			RunOnce();
 			//CreateSceneChangeDetector();
 		}
-		
+
 		void RunOnce()
 		{
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
 			{
-				// when you start playing the game in the editor, it'll call 
+				// when you start playing the game in the editor, it'll call
 				// RunOnce before playing the game, but not after.
-				// so we need to wait until the game has stopped, after which we'll 
+				// so we need to wait until the game has stopped, after which we'll
 				// run first update again.
 				EditorApplication.update -= OnWaitUntillStoppedPlaying;
 				EditorApplication.update += OnWaitUntillStoppedPlaying;
@@ -218,12 +227,12 @@ namespace RealtimeCSG
 #endif
             Undo.undoRedoPerformed			-= UndoRedoPerformed;
 			Undo.undoRedoPerformed			+= UndoRedoPerformed;
-			
+
 //			InternalCSGModelManager.UpdateHierarchy();
-			
+
 			// but .. why?
 			/*
-			var scene = SceneManager.GetActiveScene();	
+			var scene = SceneManager.GetActiveScene();
 			var allGeneratedMeshes = SceneQueryUtility.GetAllComponentsInScene<GeneratedMeshes>(scene);
 			for (int i = 0; i < allGeneratedMeshes.Count; i++)
 			{
@@ -244,11 +253,11 @@ namespace RealtimeCSG
 			{
 				EditorApplication.update -= OnWaitUntillStoppedPlaying;
 
-				EditorApplication.update -= OnFirstUpdate;	
+				EditorApplication.update -= OnFirstUpdate;
 				EditorApplication.update += OnFirstUpdate;
 			}
 		}
-		
+
 		static void RunEditorUpdate()
 		{
 			//if (!RealtimeCSG.CSGSettings.EnableRealtimeCSG)
@@ -258,7 +267,7 @@ namespace RealtimeCSG
 				return;
 
 			UpdateLoop.UpdateOnSceneChange();
-		
+
 			try
 			{
 				if (!ColorSettings.isInitialized)
@@ -300,3 +309,4 @@ namespace RealtimeCSG
 		}
 	}
 }
+

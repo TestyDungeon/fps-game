@@ -25,7 +25,7 @@ public class Kick : Item, IAmmoHandler
  
     private MovementController mc;
     private int layerMask = 1 << 6;
-    private int swordLayerMask = (1 << 15);
+    private int swordLayerMask = (1 << 15 | 1 << 6);
     private bool blocking = false;
     private bool canParry = false;
     private bool parried = false;
@@ -152,7 +152,7 @@ public class Kick : Item, IAmmoHandler
         Player.Instance.CameraRecoil.ApplyRecoil(recoilAmountCamera, recoilSpeedCamera, returnSpeedCamera);
         SoundManager.PlaySound(SoundType.AIR_WHOOSH, 1);
         bool groundCheckPreDash;
-        
+        bool doKnockback = false;
         Collider[] cols;
         
 
@@ -173,23 +173,40 @@ public class Kick : Item, IAmmoHandler
             SoundManager.PlaySound(SoundType.KICK, 0.25f);
             foreach(Collider col in cols)
             {
+                if(col.TryGetComponent<Rigidbody>(out Rigidbody rb))
+                {
+                    if(col.tag == "Bullet")
+                    {
+                        if(col.TryGetComponent<Projectile>(out Projectile proj))
+                        {
+                            proj.AddForce(cameraPivot.forward);
+                        }
+                    }
+                    else
+                    {
+                        rb.AddForce(cameraPivot.forward * 15, ForceMode.Impulse);
+                    }
+                }
+
                 if(col.tag == "Enemy")
                 {
                     EnemyStateManager esm = col.GetComponentInParent<EnemyStateManager>();
                     EnemyHitResponder ehr = col.GetComponentInParent<EnemyHitResponder>();
                     
-                    
-                    Time.timeScale = 0.5f;
-                    StartCoroutine(TimeReset());
-                    ehr.TakeDamage(player.transform, damage, col.transform.position, col.transform.up);
-                    ehr.CheckStaggerKill();
-                    esm.Kicked(cameraPivot.forward);
+                    doKnockback = true;
+                    //Time.timeScale = 0.5f;
+                    //StartCoroutine(TimeReset());
                     if(esm.GetCurrentState() != esm.DeadState)
                     {
                         inventory.ConsumeAmmo(LootType.MeleeAmmo, 1);
                         Destroy(Instantiate(GameManager.Instance.ammoOrb, col.transform.position, Quaternion.identity), 8);
                     }
+                    ehr.TakeDamage(player.transform, damage, col.transform.position, col.transform.up);
+                    ehr.CheckStaggerKill();
+                    esm.Kicked(cameraPivot.forward);
+                    
                 }
+                /*
                 if(col.tag == "Bullet")
                 {
                     Debug.Log("Deflect");
@@ -204,10 +221,13 @@ public class Kick : Item, IAmmoHandler
                         pm.AddJump(1);
                     }
                     yield return new WaitForSeconds(0.15f * timeScale);
-                }
+                }*/
             }
-            mc.resetVerticalVelocity();
-            mc.addVelocity(!groundCheckPreDash ? -transform.forward * 10 : -Vector3.ProjectOnPlane(transform.forward, player.transform.up).normalized * 5);
+            if (doKnockback)
+            {
+                mc.resetVerticalVelocity();
+                mc.addVelocity(!groundCheckPreDash ? -transform.forward * 10 : -Vector3.ProjectOnPlane(transform.forward, player.transform.up).normalized * 5);
+            }
         }
         yield return new WaitForSeconds(0.1f);
     }

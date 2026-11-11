@@ -1,9 +1,5 @@
 ﻿<Solution>
-  <Project Path="TinyGoose.Tremble.Editor.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="RealtimeCSG.csproj" />
-  <Project Path="TinyGoose.Tremble.csproj" />
-  <Project Path="TinyGoose.Tremble.Sample.csproj" />
   <Project Path="Assembly-CSharp-firstpass.csproj" />
-  <Project Path="TinyGoose.Tremble.Sample.Editor.csproj" />
 </Solution>

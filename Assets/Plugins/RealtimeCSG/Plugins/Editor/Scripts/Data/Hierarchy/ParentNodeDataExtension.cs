@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿#pragma warning disable 0619
+using System.Collections.Generic;
 using UnityEngine;
 using InternalRealtimeCSG;
 using UnityEngine.SceneManagement;
@@ -7,7 +8,7 @@ using System;
 namespace RealtimeCSG
 {
 	internal static class ParentNodeDataExtensions
-	{ 
+	{
 		// returns true on success
 		internal static bool RemoveNode(HierarchyItem node, ParentNodeData top)
 		{
@@ -16,7 +17,7 @@ namespace RealtimeCSG
 				return false;
 			}
 
-			// on each level remove self from parent. 
+			// on each level remove self from parent.
 			// if it doesn't have any childNodes left, remove itself from it's parent
 			var iterator = node;
 			do
@@ -66,7 +67,7 @@ namespace RealtimeCSG
 				if (iterator.LastLoopCount != currentLoopCount)
 				{
 					var iteratorTransform			= iterator.Transform;
-					var iteratorParentTransformID	= iteratorTransform.parent == null ? 0 : iteratorTransform.parent.GetInstanceID();
+					var iteratorParentTransformID	= iteratorTransform.parent == null ? 0 : iteratorTransform.parent.GetInstanceIDCompat();
 					// Compare the unity parent transform to the stored parent transform
 					if (iteratorParent.TransformID != iteratorParentTransformID)
 					{
@@ -74,7 +75,7 @@ namespace RealtimeCSG
 						var defaultCSGModel = InternalCSGModelManager.GetDefaultCSGModelForObject(iteratorTransform);
 						if (defaultCSGModel != null &&
 							defaultCSGModel.transform != null)
-							defaultCSGInstanceID = defaultCSGModel.transform.GetInstanceID();
+							defaultCSGInstanceID = defaultCSGModel.transform.GetInstanceIDCompat();
 						if (defaultCSGInstanceID == 0 || defaultCSGInstanceID != iteratorParent.TransformID)
 						{
 							RemoveNode(node, top);
@@ -99,7 +100,7 @@ namespace RealtimeCSG
 						top.ChildrenModified = true;
 						return true;
 					}
-				
+
 					// See if the position of the child has changed ..
 					if (iteratorChildIndex != iterator.SiblingIndex)
 					{
@@ -150,7 +151,7 @@ namespace RealtimeCSG
 				iterator = iteratorParent;
 				iteratorParent = iterator.Parent;
 			}
-			 
+
 			return false;
 		}
 
@@ -181,7 +182,7 @@ namespace RealtimeCSG
 				ancestors.Add(iterator);
 				iterator = iterator.parent;
 			}
-			
+
 			var defaultModel = InternalCSGModelManager.GetDefaultCSGModelForObject(iterator);
 			if (!defaultModel)
 				return false;
@@ -216,22 +217,22 @@ namespace RealtimeCSG
 			{
 				var ancestor = ancestors[ancestorDepth];
 				int childIndex;
-				if (!lastParent.FindSiblingIndex(ancestor, ancestor.GetSiblingIndex(), ancestor.GetInstanceID(), out childIndex))
+				if (!lastParent.FindSiblingIndex(ancestor, ancestor.GetSiblingIndex(), ancestor.GetInstanceIDCompat(), out childIndex))
 					break;
-					
+
 				lastParent = lastParent.ChildNodes[childIndex];
 				ancestorDepth--;
 			}
 			while (ancestorDepth >= 0)
 			{
-				var newAncestor = new HierarchyItem(); 
+				var newAncestor = new HierarchyItem();
 				newAncestor.Transform	= ancestors[ancestorDepth];
-				newAncestor.TransformID	= newAncestor.Transform.GetInstanceID();
+				newAncestor.TransformID	= newAncestor.Transform.GetInstanceIDCompat();
 				newAncestor.Parent		= lastParent;
 
 				if (!lastParent.AddChildItem(newAncestor))
 					return false;
-				 
+
 				lastParent = newAncestor;
 				ancestorDepth--;
 			}
@@ -252,3 +253,4 @@ namespace RealtimeCSG
 		}
 	}
 }
+

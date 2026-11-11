@@ -22,6 +22,6 @@ MonoBehaviour:
   friction: 5
   stopSpeed: 0.1
   jumpsAmount: 1
-  jumpStrength: 10
-  dashAmount: 0
+  jumpStrength: 8.4
+  dashAmount: 1
   dashCooldown: 0.8

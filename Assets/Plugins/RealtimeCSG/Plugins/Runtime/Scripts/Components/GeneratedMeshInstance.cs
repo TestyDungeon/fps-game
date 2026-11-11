@@ -1,4 +1,6 @@
-﻿using System;
+﻿#pragma warning disable 0619
+using RealtimeCSG;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -10,7 +12,7 @@ using RealtimeCSG.Foundation;
 namespace InternalRealtimeCSG
 {
 #if UNITY_EDITOR
-	public struct MeshInstanceKey : IEqualityComparer<MeshInstanceKey>, IEquatable<MeshInstanceKey> 
+	public struct MeshInstanceKey : IEqualityComparer<MeshInstanceKey>, IEquatable<MeshInstanceKey>
 	{
 		public static MeshInstanceKey GenerateKey(GeneratedMeshDescription meshDescription)
 		{
@@ -145,7 +147,7 @@ namespace InternalRealtimeCSG
 		    RenderMaterial          = null;
 		    PhysicsMaterial         = null;
 		    RenderSurfaceType       = (RenderSurfaceType)999;
-        
+
 		    HasGeneratedNormals     = false;
 		    HasUV2				    = false;
             ResetUVTime			    = float.PositiveInfinity;
@@ -166,8 +168,8 @@ namespace InternalRealtimeCSG
 
 		public bool IsValid()
 		{
-			if ((!PhysicsMaterial || PhysicsMaterial.GetInstanceID() != 0) &&
-				(!RenderMaterial  || RenderMaterial .GetInstanceID() != 0))
+			if ((!PhysicsMaterial || PhysicsMaterial.GetInstanceIDCompat() != 0) &&
+				(!RenderMaterial  || RenderMaterial .GetInstanceIDCompat() != 0))
 			{
                 if (SharedMesh)
                 {
@@ -175,7 +177,7 @@ namespace InternalRealtimeCSG
                         return false;
                 } else
                 if (!ReferenceEquals(SharedMesh, null) &&
-                    SharedMesh.GetInstanceID() != 0)
+                    SharedMesh.GetInstanceIDCompat() != 0)
                     return false;
 				return true;
 			}
@@ -198,22 +200,22 @@ namespace InternalRealtimeCSG
 			CachedMeshRendererSO = null;
 
 			// InstanceIDs are not properly remembered across domain reloads,
-			//	this causes issues on, for instance, first startup of Unity. 
+			//	this causes issues on, for instance, first startup of Unity.
 			//	So we need to refresh the instanceIDs
             if (RenderSurfaceType == RenderSurfaceType.Collider ||
                 RenderSurfaceType == RenderSurfaceType.Trigger)
             {
-                if (!ReferenceEquals(PhysicsMaterial, null)) { if (PhysicsMaterial) MeshDescription.surfaceParameter = PhysicsMaterial.GetInstanceID(); }
+                if (!ReferenceEquals(PhysicsMaterial, null)) { if (PhysicsMaterial) MeshDescription.surfaceParameter = PhysicsMaterial.GetInstanceIDCompat(); }
             } else
-            { 
-			    if      (!ReferenceEquals(RenderMaterial,  null)) { if (RenderMaterial)  MeshDescription.surfaceParameter = RenderMaterial .GetInstanceID(); }
-			    else if (!ReferenceEquals(PhysicsMaterial, null)) { if (PhysicsMaterial) MeshDescription.surfaceParameter = PhysicsMaterial.GetInstanceID(); }
+            {
+			    if      (!ReferenceEquals(RenderMaterial,  null)) { if (RenderMaterial)  MeshDescription.surfaceParameter = RenderMaterial .GetInstanceIDCompat(); }
+			    else if (!ReferenceEquals(PhysicsMaterial, null)) { if (PhysicsMaterial) MeshDescription.surfaceParameter = PhysicsMaterial.GetInstanceIDCompat(); }
             }
 		}
 
 		internal void OnEnable()
 		{
-			// Workaround for when Unity gets confused with some prefab instance merging and moves 
+			// Workaround for when Unity gets confused with some prefab instance merging and moves
 			//	the GeneratedMeshInstances out of its GeneratedMeshes container
 			if (transform.parent &&
 				!transform.parent.GetComponent<GeneratedMeshes>())
@@ -254,7 +256,7 @@ namespace InternalRealtimeCSG
             } else
                 HasUV2 = false;
 		}
-        
+
         public void FindMissingSharedMesh()
         {
             MeshCollider meshCollider;
@@ -270,10 +272,11 @@ namespace InternalRealtimeCSG
             }
         }
 #else
-        void Awake() 
+        void Awake()
 		{
 			this.hideFlags = HideFlags.DontSaveInBuild;
 		}
 #endif
 	}
 }
+

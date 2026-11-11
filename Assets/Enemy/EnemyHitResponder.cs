@@ -56,7 +56,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         //    //StartCoroutine(state.AirJuggle(transform.up * 0.1f * damageAmount));
         //}
         GameObject particles = Instantiate(GameManager.Instance.bloodParticles, damagePoint, Quaternion.LookRotation(normal));
-        Destroy(particles, 2f);
+        Destroy(particles, 20f);
         //SoundManager.PlaySound(SoundType.HURTENEMY, transform.position, 0.5f);
         //int preHealth = enemyHealth.GetHealth();
         //if(state.GetCurrentState() is EnemyAirFalterState)
@@ -73,7 +73,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         if(enemyHealth.GetHealth() < -enemyHealth.GetMaxHealth() && !isCorpse)
         {
             isCorpse = true;
-            state.SpawnCorpse();
+            state.SpawnGore();
             SoundManager.PlaySound(SoundType.CORPSE_EXPLOSION, state.transform.position, 0.2f, 0.5f);
             Object.Destroy(state.gameObject);
         }

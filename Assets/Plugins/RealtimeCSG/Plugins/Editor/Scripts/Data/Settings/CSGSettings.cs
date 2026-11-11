@@ -1,4 +1,5 @@
-﻿using System;
+﻿#pragma warning disable 0619
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -70,7 +71,7 @@ namespace RealtimeCSG
                 return;
             sceneViewLookup[sceneView.camera] = sceneView;
         }
-        
+
         internal static bool Assume2DView(Camera camera)
         {
             return camera != null && camera.orthographic && IsWireframeShown(camera);
@@ -471,7 +472,7 @@ namespace RealtimeCSG
                 bool found_all = true;
                 for (int j = 0; j < sceneViews.Count; j++)
                 {
-                    if (!ArrayUtility.Contains(ids, sceneViews[j].GetInstanceID()))
+                    if (!ArrayUtility.Contains(ids, sceneViews[j].GetInstanceIDCompat()))
                     {
                         found_all = false;
                         break;
@@ -498,14 +499,14 @@ namespace RealtimeCSG
                             ArrayUtility.RemoveAt(ref wireframeInstanceIDs, j);
                             continue;
                         }
-                        wireframeInstanceIDs[j] = sceneViews[j].GetInstanceID();
+                        wireframeInstanceIDs[j] = sceneViews[j].GetInstanceIDCompat();
                     }
                 }
             }
 
             for (int i = 0; i < sceneViews.Count; i++)
             {
-                if (ArrayUtility.Contains(wireframeInstanceIDs, sceneViews[i].GetInstanceID()))
+                if (ArrayUtility.Contains(wireframeInstanceIDs, sceneViews[i].GetInstanceIDCompat()))
                 {
                     wireframeSceneviews.Add(sceneViews[i].name);
                 }
@@ -761,9 +762,10 @@ namespace RealtimeCSG
                     builder.Append(sceneView.name);
                 }
             }
-            EditorPrefs.SetString("Wireframe", builder.ToString()); 
+            EditorPrefs.SetString("Wireframe", builder.ToString());
         }
         #endregion
 
     }
 }
+

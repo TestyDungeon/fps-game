@@ -16,8 +16,8 @@ public class EnemyDeadState : EnemyBaseState
         GameObject orb = Object.Instantiate(GameManager.Instance.healthOrb, enemy.transform.position, Quaternion.identity);
         orb.GetComponent<Rigidbody>().AddForce(Vector3.up * 1, ForceMode.Force);
         Object.Destroy(orb, 8);
-        //GameObject x = Object.Instantiate(enemy.enemyConfig.deathParticle, enemy.transform.position, Quaternion.LookRotation(enemy.transform.forward, enemy.transform.up));
-        //Object.Destroy(x, 100);
+        GameObject x = Object.Instantiate(enemy.enemyConfig.deathParticles, enemy.transform.position, Quaternion.LookRotation(enemy.transform.forward, enemy.transform.up));
+        Object.Destroy(x, 100);
         //enemy.movementController.addVelocity(enemy.lastDamageVector * 0.3f);
         enemy.movementController.SetEnemyLayerMaskToDead();
         //if(enemy.rigidbodies.Length > 0)

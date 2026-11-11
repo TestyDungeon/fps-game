@@ -36,26 +36,29 @@ public class MeleeAttack : IAttackBehavior
 
         events.Add(0.25f, () =>
         {
-            enemy.GoToTarget(8, false);
+            enemy.UpdateTargetPosition();
+            enemy.GoToTarget(9, false);
         });
 
         events.Add(0.35f, () =>
         {
+            enemy.UpdateTargetPosition();
             Hit(enemy);
-
             enemy.lookDir = enemy.GetVectorToTarget();
-            enemy.GoToTarget(8, false);
+            enemy.GoToTarget(9, false);
         });
 
         events.Add(0.5f, () =>
         {
-            enemy.GoToTarget(8, false);
+            enemy.UpdateTargetPosition();
+            enemy.GoToTarget(9, false);
         });
 
         events.Add(0.65f, () =>
         {
+            enemy.UpdateTargetPosition();
             Hit(enemy);
-            enemy.GoToTarget(8, false);
+            enemy.GoToTarget(9, false);
         });
 
         events.Add(0.8f, () =>
@@ -177,6 +180,90 @@ public class RangedAttack : IAttackBehavior
         for(int i = 0; i < enemy.enemyConfig.bulletsPerShot; i++)
         {
             //SpawnMuzzleFlash(enemy);
+            Shoot(enemy);
+            yield return new WaitForSeconds(enemy.enemyConfig.timeBetweenShots);
+            
+        }
+    }
+
+    private void SpawnMuzzleFlash(EnemyStateManager enemy)
+    {
+        GameObject particles = Object.Instantiate(enemy.enemyConfig.muzzleFlashPrefab, enemy.bulletStart[0].position, enemy.bulletStart[0].rotation);
+        Object.Destroy(particles, 0.5f);
+    }
+
+    
+}
+
+public class SoldierAttack : IAttackBehavior
+{
+    float lastAttackTime = -Time.time;
+    private int bulletStartInd;
+    private int attackCount = 0;
+
+    public void ExecuteAttack(EnemyStateManager enemy)
+    {
+        enemy.canAttack = false;
+         // Set immediately to prevent duplicate calls from FixedUpdate
+        SoundManager.PlaySound(enemy.enemyConfig.preAttackSFX, enemy.transform.position, 1, 0.96f);
+        attackCount++;
+        
+        enemy.animator.Play("Attack", 0, 0f);
+
+        var events = enemy.animEvents.GetEvents("Attack");
+
+        events.Clear();
+
+        events.Add(0.5f, () =>
+        {
+            //SpawnMuzzleFlash(enemy);
+            SoundManager.PlaySound(enemy.enemyConfig.attackSFX, enemy.transform.position, 1, 0.96f);
+            bulletStartInd = 0;
+            enemy.StartCoroutine(TimedShooting(enemy));
+        });
+
+        // Reset when animation ends
+        events.Add(0.8f, () => 
+        {
+            
+            enemy.StartCoroutine(enemy.ResetAttack(enemy.ChaseState));
+            enemy.animator.Play("Attack");
+
+        });
+
+
+    }
+
+
+    public bool IsInAttackRange(EnemyStateManager enemy)
+    {
+        return Vector3.Distance(enemy.transform.position, enemy.targetTransform.position) <= enemy.enemyConfig.attackRange;
+    }
+
+
+    public void Shoot(EnemyStateManager enemy)
+    {
+        float x = Random.Range(-enemy.enemyConfig.spread, enemy.enemyConfig.spread);
+        float y = Random.Range(-enemy.enemyConfig.spread, enemy.enemyConfig.spread);
+
+        Vector3 direction = enemy.targetTransform.position - enemy.bulletStart[bulletStartInd].position + new Vector3(x, y, 0);
+        
+        EnemyProjectile projectile = Object.Instantiate(enemy.enemyConfig.projectile, enemy.bulletStart[bulletStartInd].position, Quaternion.LookRotation(direction)).GetComponent<EnemyProjectile>();
+        if(attackCount >= 3)
+        {
+            //projectile.ChangeParryable(true);
+            attackCount = 0;    
+        }
+        projectile.SetTarget(enemy.targetTransform);
+        projectile.SetParent(enemy.transform);
+    }
+
+    IEnumerator TimedShooting(EnemyStateManager enemy)
+    {
+        for(int i = 0; i < enemy.enemyConfig.bulletsPerShot; i++)
+        {
+            //SpawnMuzzleFlash(enemy);
+            Debug.Log("Bull " + enemy.enemyConfig.bulletsPerShot);
             Shoot(enemy);
             yield return new WaitForSeconds(enemy.enemyConfig.timeBetweenShots);
             
@@ -416,12 +503,13 @@ public class MeleeTraversal : ITraversalBehavior
 
 public class RangedTraversal : ITraversalBehavior
 {
-    private float chaseDuration = Random.Range(0.2f, 0.4f);
+    private float chaseDuration;
     private float chaseStartTime = float.NaN;
     
     private bool chaseTimerStarted = false;
     public void Chase(EnemyStateManager enemy)
     {
+        chaseDuration = enemy.enemyConfig.attackCooldown;
         if(!chaseTimerStarted)
         {
             
@@ -429,17 +517,22 @@ public class RangedTraversal : ITraversalBehavior
             chaseTimerStarted = true;
         }
 
+        if(enemy.IsTargetInSight(0.2f) && (Time.time - chaseStartTime) > chaseDuration)
+        {
+            chaseTimerStarted = false;
+            enemy.SwitchState(enemy.AttackState);
+            
+        }
+
         if(enemy.GetVectorToTarget().sqrMagnitude > enemy.enemyConfig.startAttackRange * enemy.enemyConfig.startAttackRange 
         || !enemy.IsTargetInSight(0.5f)
         || (Time.time - chaseStartTime) < chaseDuration)
         {
+            enemy.UpdateTargetPosition();
             enemy.GoToTarget(enemy.enemyConfig.chaseSpeed);
         }
-        else
-        {
-            chaseTimerStarted = false;
-            enemy.SwitchState(enemy.AttackState);
-        }
+
+        
         
     }
 

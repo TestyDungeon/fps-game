@@ -35,11 +35,10 @@ namespace RealtimeCSG
 		
 		public static void HandleWindowGUI(Rect windowRect)
 		{
-			GUILayout.Window(SceneViewBrushEditorOverlayHash,
+			GUI.Window(SceneViewBrushEditorOverlayHash,
 						windowRect,
 						windowFunction,
-						string.Empty, sceneViewOverlayTransparentBackground,
-						CSG_GUIStyleUtility.ContentEmpty);
+						string.Empty, sceneViewOverlayTransparentBackground);
 		}
 
 		static void HandleSceneGUI(int id)
@@ -118,64 +117,60 @@ namespace RealtimeCSG
 
 			var oldSkin = GUI.skin;
 			CSG_GUIStyleUtility.SetDefaultGUISkin();
-			GUILayout.BeginHorizontal(CSG_GUIStyleUtility.ContentEmpty);
-			{
-				GUIStyle windowStyle = GUI.skin.window;
+			GUIStyle windowStyle = GUI.skin.window;
 
-				float topBarSize = 20;
+			float topBarSize = 20;
 #if UNITY_2018_3_OR_NEWER
-                if (CSGPrefabUtility.AreInPrefabMode())
-					topBarSize += 25;
+			if (CSGPrefabUtility.AreInPrefabMode())
+				topBarSize += 25;
 #endif
 
 
-				var bounds = new Rect(10, 10 + topBarSize, 500, 40);
+			var bounds = new Rect(10, 10 + topBarSize, 500, 40);
 
-				GUILayout.BeginArea(bounds, ContentTitleLabel, windowStyle);
-				{
-					//GUILayout.Space(bounds.height);
-					Rect editModeBounds;
-			
-					CSG_GUIStyleUtility.InitStyles();
-					EditorGUI.BeginChangeCheck();
-					var newEditMode = (ToolEditMode)CSG_EditorGUIUtility.ToolbarWrapped((int)EditModeManager.EditMode, ref editModeRects, out editModeBounds, CSG_GUIStyleUtility.brushEditModeContent, CSG_GUIStyleUtility.brushEditModeTooltips, yOffset:20, areaWidth: bounds.width);
-					//var newEditMode = (ToolEditMode)GUILayout.Toolbar((int)CSGBrushEditorManager.EditMode, GUIStyleUtility.brushEditModeContent, GUIStyleUtility.brushEditModeTooltips);
-					if (EditorGUI.EndChangeCheck())
-					{
-						EditModeManager.EditMode = newEditMode;
-						CSG_EditorGUIUtility.RepaintAll();
-					}
-				
-					var buttonArea = bounds;
-					buttonArea.x = bounds.width - 17;
-					buttonArea.y = 2;
-					buttonArea.height = 13;
-					buttonArea.width = 13;
-					if (GUI.Button(buttonArea, GUIContent.none, "WinBtnClose"))
-						EditModeToolWindowSceneGUI.GetWindow();
-					TooltipUtility.SetToolTip(CSG_GUIStyleUtility.PopOutTooltip, buttonArea); 
+			GUI.BeginGroup(bounds, ContentTitleLabel, windowStyle);
+			{
+				//GUILayout.Space(bounds.height);
+				Rect editModeBounds;
 
-					var versionWidth = CSG_GUIStyleUtility.versionLabelStyle.CalcSize(VersionLabel);
-					var versionArea = bounds;
-					versionArea.x = bounds.width - (17 + versionWidth.x);
-					versionArea.y = 1;
-					versionArea.height = 15;
-					versionArea.width = versionWidth.x;
-					GUI.Label(versionArea, VersionLabel, CSG_GUIStyleUtility.versionLabelStyle);
-				}
-				GUILayout.EndArea();
-					 
-				int controlID = GUIUtility.GetControlID(SceneViewBrushEditorOverlayHash, FocusType.Keyboard, bounds);
-				switch (Event.current.GetTypeForControl(controlID))
+				CSG_GUIStyleUtility.InitStyles();
+				EditorGUI.BeginChangeCheck();
+				var newEditMode = (ToolEditMode)CSG_EditorGUIUtility.ToolbarWrapped((int)EditModeManager.EditMode, ref editModeRects, out editModeBounds, CSG_GUIStyleUtility.brushEditModeContent, CSG_GUIStyleUtility.brushEditModeTooltips, yOffset:20, areaWidth: bounds.width);
+				//var newEditMode = (ToolEditMode)GUILayout.Toolbar((int)CSGBrushEditorManager.EditMode, GUIStyleUtility.brushEditModeContent, GUIStyleUtility.brushEditModeTooltips);
+				if (EditorGUI.EndChangeCheck())
 				{
-					case EventType.MouseDown:	{ if (bounds.Contains(Event.current.mousePosition)) { GUIUtility.hotControl = controlID; GUIUtility.keyboardControl = controlID; EditorGUIUtility.editingTextField = false; Event.current.Use(); } break; }
-					case EventType.MouseMove:	{ if (bounds.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
-					case EventType.MouseUp:		{ if (GUIUtility.hotControl == controlID) { GUIUtility.hotControl = 0; GUIUtility.keyboardControl = 0; Event.current.Use(); } break; }
-					case EventType.MouseDrag:	{ if (GUIUtility.hotControl == controlID) { Event.current.Use(); } break; }
-					case EventType.ScrollWheel: { if (bounds.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
+					EditModeManager.EditMode = newEditMode;
+					CSG_EditorGUIUtility.RepaintAll();
 				}
+
+				var buttonArea = bounds;
+				buttonArea.x = bounds.width - 17;
+				buttonArea.y = 2;
+				buttonArea.height = 13;
+				buttonArea.width = 13;
+				if (GUI.Button(buttonArea, GUIContent.none, "WinBtnClose"))
+					EditModeToolWindowSceneGUI.GetWindow();
+				TooltipUtility.SetToolTip(CSG_GUIStyleUtility.PopOutTooltip, buttonArea);
+
+				var versionWidth = CSG_GUIStyleUtility.versionLabelStyle.CalcSize(VersionLabel);
+				var versionArea = bounds;
+				versionArea.x = bounds.width - (17 + versionWidth.x);
+				versionArea.y = 1;
+				versionArea.height = 15;
+				versionArea.width = versionWidth.x;
+				GUI.Label(versionArea, VersionLabel, CSG_GUIStyleUtility.versionLabelStyle);
 			}
-			GUILayout.EndHorizontal();
+			GUI.EndGroup();
+
+			int controlID = GUIUtility.GetControlID(SceneViewBrushEditorOverlayHash, FocusType.Keyboard, bounds);
+			switch (Event.current.GetTypeForControl(controlID))
+			{
+				case EventType.MouseDown:	{ if (bounds.Contains(Event.current.mousePosition)) { GUIUtility.hotControl = controlID; GUIUtility.keyboardControl = controlID; EditorGUIUtility.editingTextField = false; Event.current.Use(); } break; }
+				case EventType.MouseMove:	{ if (bounds.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
+				case EventType.MouseUp:		{ if (GUIUtility.hotControl == controlID) { GUIUtility.hotControl = 0; GUIUtility.keyboardControl = 0; Event.current.Use(); } break; }
+				case EventType.MouseDrag:	{ if (GUIUtility.hotControl == controlID) { Event.current.Use(); } break; }
+				case EventType.ScrollWheel: { if (bounds.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
+			}
 			GUI.skin = oldSkin;
 		}
 

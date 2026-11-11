@@ -4,14 +4,12 @@ using UnityEngine;
 
 public class GravityField : MonoBehaviour
 {
-    protected float rbGravity = 20f;
+    protected float rbGravity = 9.81f;
     [SerializeField] private bool blendable = false;
     public static int gravityLayerMask = 1 << 9;
 
-    void Start()
-    {
-
-    }
+    private static readonly HashSet<Rigidbody> appliedThisStep = new HashSet<Rigidbody>();
+    private static float lastStepTime = -1f;
 
     void FixedUpdate()
     {
@@ -40,6 +38,7 @@ public class GravityField : MonoBehaviour
     {
         Collider[] hits = Physics.OverlapSphere(worldPos, 0.01f, gravityLayerMask);
         GravityField sphericalField = null;
+        Vector3 finalVector = Vector3.zero;
 
         foreach (var hit in hits)
         {
@@ -50,7 +49,15 @@ public class GravityField : MonoBehaviour
                 {
                     if (field is GravityFieldCuboidal)
                     {
-                        return field.CalculateGravityVector(worldPos);
+                        if(field.GetIsBlendable() == true)
+                        {
+                            finalVector += field.CalculateGravityVector();
+                            finalVector = finalVector.normalized;
+                        }
+                        else
+                        {
+                            return field.CalculateGravityVector(worldPos);
+                        }
                     }
                     if (field is GravityFieldSpherical)
                     {
@@ -64,12 +71,15 @@ public class GravityField : MonoBehaviour
             }
         }
 
-        if (sphericalField != null)
+        if (sphericalField != null && finalVector == Vector3.zero)
         {
             return sphericalField.CalculateGravityVector(worldPos);
         }
 
-        return Vector3.down;
+        finalVector = finalVector.normalized;
+        
+
+        return finalVector;
     }
 
     public virtual Vector3 CalculateGravityVector(Vector3 position)
@@ -87,8 +97,16 @@ public class GravityField : MonoBehaviour
 
     protected virtual void ApplyRigidbodyGravity(Rigidbody rb)
     {
-        // Now unified priority!
+        if (Time.fixedTime != lastStepTime)
+        {
+            appliedThisStep.Clear();
+            lastStepTime = Time.fixedTime;
+        }
+
+        if (!appliedThisStep.Add(rb))
+            return;
+
         Vector3 gravityDir = GetGravityAtPosition(rb.worldCenterOfMass);
-        rb.AddForce(gravityDir * rbGravity * rb.mass);
+        rb.AddForce(gravityDir * rbGravity * rb.mass, ForceMode.Acceleration);
     }
 }

@@ -40,6 +40,7 @@ public class EnemyStateManager : MonoBehaviour
     [HideInInspector] public Animator animator;
     [HideInInspector] public Vector3 enemyVelocity = Vector3.zero;
     [HideInInspector] public int layerMask = 1 << 0 | 1 << 3 | 1 << 14;
+    int sightLayerMask = 1 << 0 | 1 << 3 | 1 << 14 | 1 << 8;
 
     [HideInInspector] public int playerLayer = 1 << 3 | 1 << 8;
     private int enemyLayer = 1 << 8;
@@ -211,16 +212,17 @@ public class EnemyStateManager : MonoBehaviour
     private float weaveSign;
     private float weaveTimer;
 
-    [Header("Target Path Sampling")]
-    [SerializeField] private float targetSampleRadius = 3f; // must be >= max jump apex height + margin
+    private float targetSampleRadius = 4f; // must be >= max jump apex height + margin
 
     // Projects the target's (possibly airborne) position onto the NavMesh so path
     // queries don't fail just because the target jumped above the walkable surface.
     private bool TryGetTargetNavPoint(out Vector3 point)
     {
-        if (NavMesh.SamplePosition(targetTransform.position - targetTransform.up * 1, out NavMeshHit hit, targetSampleRadius, NavMesh.AllAreas))
+        if (NavMesh.SamplePosition(targetTransform.position - targetTransform.up * 1f, out NavMeshHit hit, targetSampleRadius, NavMesh.AllAreas)
+        || NavMesh.SamplePosition(targetTransform.position - targetTransform.up * 0.5f, out hit, targetSampleRadius, NavMesh.AllAreas))
         {
             point = hit.position;
+            Debug.DrawLine(point, transform.position, Color.magenta);
             return true;
         }
         point = targetTransform.position;
@@ -246,12 +248,12 @@ public class EnemyStateManager : MonoBehaviour
             if(anim)
                 animator.Play("Walk");
 
-            if(IsTargetInSight())
+            //if(IsTargetInSight())
                 GoInDirection(Vector3.ProjectOnPlane(GetVectorToTarget(), transform.up).normalized * speed);
-            else
-            {
-                SwitchState(WanderState);
-            }
+            //else
+            //{
+            //    SwitchState(WanderState);
+            //}
         }
     }
 
@@ -339,7 +341,7 @@ public class EnemyStateManager : MonoBehaviour
 
     public bool IsTargetInSight()
     {
-        if (Physics.Raycast(transform.position, targetTransform.position - transform.position, out RaycastHit hit, 100, layerMask))
+        if (Physics.Raycast(transform.position, targetTransform.position - transform.position, out RaycastHit hit, 100, sightLayerMask))
         {
             if(hit.transform != targetTransform)
                 return false;
@@ -354,7 +356,7 @@ public class EnemyStateManager : MonoBehaviour
 
     public bool IsTargetInSight(float radius)
     {
-        if (Physics.BoxCast(transform.position, Vector3.one * radius, targetTransform.position - transform.position, out RaycastHit hit, transform.rotation, 100, layerMask, QueryTriggerInteraction.Ignore))
+        if (Physics.BoxCast(transform.position, Vector3.one * radius, targetTransform.position - transform.position, out RaycastHit hit, transform.rotation, 100, sightLayerMask, QueryTriggerInteraction.Ignore))
         {
             if(hit.transform != targetTransform)
                 return false;
@@ -393,7 +395,7 @@ public class EnemyStateManager : MonoBehaviour
         }
     }
 
-    public bool IsOnUsableNavMesh(float sampleRadius = 0.6f, float maxFootHeightDelta = 1.25f)
+    public bool IsOnUsableNavMesh(float sampleRadius = 0.9f, float maxFootHeightDelta = 1.25f)
     {
         if (!agent.enabled || !agent.isOnNavMesh)
             return false;
@@ -467,7 +469,7 @@ public class EnemyStateManager : MonoBehaviour
         if (!TryGetTargetNavPoint(out Vector3 targetPoint)) return false;
 
         NavMeshPath path = new NavMeshPath();
-        if (agent.isActiveAndEnabled && IsOnUsableNavMesh())
+        if (agent.isActiveAndEnabled && (IsOnUsableNavMesh(0.9f) || IsOnUsableNavMesh(4f)))
         {
             if (agent.CalculatePath(targetPoint, path))
             {
@@ -511,7 +513,7 @@ public class EnemyStateManager : MonoBehaviour
             movementController.resetVelocity();
             movementController.StopDash(); 
             float mult = Mathf.Clamp01(knockback.magnitude / 100);
-            movementController.Dash(knockback.normalized, 2 * (0.5f + mult), 12.5f * (0.5f + mult), 5 * (0.5f + mult));
+            movementController.Dash(knockback.normalized, 2 * (0.1f + mult), 12.5f * (0.1f + mult), 5 * (0.1f + mult));
         //}
         //else
         //{
@@ -620,9 +622,9 @@ public class EnemyStateManager : MonoBehaviour
         targetTransform = target; 
     }
 
-    public void SpawnCorpse()
+    public void SpawnGore()
     {
-        GameObject x = Object.Instantiate(enemyConfig.deathParticle, transform.position - transform.up * (capsuleCollider.height / 2.1f), Quaternion.LookRotation(transform.forward, transform.up));
+        GameObject x = Object.Instantiate(enemyConfig.goreParticles, transform.position - transform.up * (capsuleCollider.height / 2.1f), Quaternion.LookRotation(transform.forward, transform.up));
         Object.Destroy(x, 30);
     }
 }

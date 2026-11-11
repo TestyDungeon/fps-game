@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿#pragma warning disable 0619
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -8,6 +9,30 @@ using RealtimeCSG.Components;
 
 namespace RealtimeCSG
 {
+	internal static class UnitySelectionCompatibility
+	{
+		public static bool Contains(int instanceID)
+		{
+			return Selection.objects.Any(target => target != null && target.GetInstanceIDCompat() == instanceID);
+		}
+
+		public static int[] GetInstanceIDs()
+		{
+			return Selection.objects
+				.Where(target => target != null)
+				.Select(target => target.GetInstanceIDCompat())
+				.ToArray();
+		}
+
+		public static void SetInstanceIDs(int[] instanceIDs)
+		{
+			Selection.objects = instanceIDs
+				.Select(UnityObjectCompatibility.InstanceIDToObjectCompat)
+				.Where(target => target != null)
+				.ToArray();
+		}
+	}
+
 	internal enum SelectionType
 	{
 		Replace,
@@ -74,11 +99,11 @@ namespace RealtimeCSG
 
 		public static Transform FindParentToAssignTo(LegacyBrushIntersection intersection)
 		{
-			if (intersection.brush == null || 
+			if (intersection.brush == null ||
 				CSGPrefabUtility.IsPrefabAsset(intersection.brush.gameObject))
 			{
 				var lastModel = SelectionUtility.LastUsedModel;
-				if (lastModel == null || 
+				if (lastModel == null ||
 					CSGPrefabUtility.IsPrefabAsset(lastModel.gameObject))
 					return null;
 
@@ -125,7 +150,7 @@ namespace RealtimeCSG
 					var absY = Mathf.Abs(normal.y);
 					var absZ = Mathf.Abs(normal.z);
 
-					// if our surface is a floor / ceiling then assume up is the axis 
+					// if our surface is a floor / ceiling then assume up is the axis
 					// aligned vector that is most aligned with the camera's up vector
 					if (absX <= absY && absX <= absZ && absY > absZ)
 					{
@@ -146,7 +171,7 @@ namespace RealtimeCSG
 					var absY = Mathf.Abs(normal.y);
 					var absZ = Mathf.Abs(normal.z);
 
-					// if our surface is a floor / ceiling then assume up is the axis 
+					// if our surface is a floor / ceiling then assume up is the axis
 					// aligned vector that is most aligned with the camera's up vector
 					if (absX <= absY && absX <= absZ && absY > absZ)
 					{
@@ -165,7 +190,7 @@ namespace RealtimeCSG
 		static bool				shiftPressed		= false;
 		static bool				actionKeyPressed	= false;
 		static EventModifiers	currentModifiers	= EventModifiers.None;
-		public static EventModifiers CurrentModifiers { get { return currentModifiers; } internal set { currentModifiers = value; } } 
+		public static EventModifiers CurrentModifiers { get { return currentModifiers; } internal set { currentModifiers = value; } }
 
 		public static void HandleEvents()
 		{
@@ -191,10 +216,10 @@ namespace RealtimeCSG
 
 		public static void HideObjectsRemoteOnly(List<GameObject> gameObjects)
 		{
-			if (gameObjects == null || 
+			if (gameObjects == null ||
 				gameObjects.Count == 0)
 				return;
-			
+
 			for (var i = gameObjects.Count - 1; i >= 0; i--)
 			{
 				if (gameObjects[i])
@@ -208,7 +233,7 @@ namespace RealtimeCSG
 
 		public static void ShowObjectsAndUpdate(List<GameObject> gameObjects)
 		{
-			if (gameObjects == null || 
+			if (gameObjects == null ||
 				gameObjects.Count == 0)
 				return;
 
@@ -227,7 +252,7 @@ namespace RealtimeCSG
 
 		public static bool IsSnappingToggled
 		{
-			get 
+			get
 			{
 				return actionKeyPressed;
 			}
@@ -343,7 +368,7 @@ namespace RealtimeCSG
 
 			for (int i = 0; i < selected.Count; i++) // we keep adding parents, and their parents until we hit the root-objects
 			{
-				selectedIDs.Add(selected[i].GetInstanceID());
+				selectedIDs.Add(selected[i].GetInstanceIDCompat());
 				var transform = selected[i].transform;
 				var parent    = transform.parent;
 				if (parent == null)
@@ -365,7 +390,7 @@ namespace RealtimeCSG
 						if (!gameObject.activeInHierarchy || (gameObject.hideFlags != HideFlags.None))
 							continue;
 
-						if (selectedIDs.Contains(gameObject.GetInstanceID()))
+						if (selectedIDs.Contains(gameObject.GetInstanceIDCompat()))
 							continue;
 
 						Undo.RecordObject(gameObject, "Hiding Object");
@@ -384,16 +409,16 @@ namespace RealtimeCSG
             var camera = sceneView.camera;
 			GameObject gameobject;
 			SceneQueryUtility.FindClickWorldIntersection(camera, Event.current.mousePosition, out gameobject, ignoreInvisibleSurfaces);
-            
+
 			gameobject = SceneQueryUtility.FindSelectionBase(gameobject);
 
-            var selectedObjectsOnClick = new List<int>(Selection.instanceIDs);
+            var selectedObjectsOnClick = new List<int>(UnitySelectionCompatibility.GetInstanceIDs());
 			bool addedSelection = false;
 			if (EditorGUI.actionKey)
 			{
 				if (gameobject != null)
 				{
-					var instanceID = gameobject.GetInstanceID();
+					var instanceID = gameobject.GetInstanceIDCompat();
 					if (selectedObjectsOnClick.Contains(instanceID))
 					{
 						selectedObjectsOnClick.Remove(instanceID);
@@ -407,7 +432,7 @@ namespace RealtimeCSG
 					if (selectedObjectsOnClick.Count == 0)
 						Selection.activeTransform = null;
 					else
-						Selection.instanceIDs = selectedObjectsOnClick.ToArray();
+						UnitySelectionCompatibility.SetInstanceIDs(selectedObjectsOnClick.ToArray());
 				}
 			}
 			else
@@ -415,9 +440,9 @@ namespace RealtimeCSG
 			{
 				if (gameobject != null)
 				{
-					var instanceID = gameobject.GetInstanceID();
+					var instanceID = gameobject.GetInstanceIDCompat();
 					selectedObjectsOnClick.Add(instanceID);
-					Selection.instanceIDs = selectedObjectsOnClick.ToArray();
+					UnitySelectionCompatibility.SetInstanceIDs(selectedObjectsOnClick.ToArray());
 					addedSelection = true;
 				}
 			}
@@ -426,9 +451,9 @@ namespace RealtimeCSG
 			{
 				if (gameobject != null)
 				{
-					var instanceID = gameobject.GetInstanceID();
+					var instanceID = gameobject.GetInstanceIDCompat();
 					selectedObjectsOnClick.Remove(instanceID);
-					Selection.instanceIDs = selectedObjectsOnClick.ToArray();
+					UnitySelectionCompatibility.SetInstanceIDs(selectedObjectsOnClick.ToArray());
 					return;
 				}
 			}
@@ -484,3 +509,4 @@ namespace RealtimeCSG
 
 	}
 }
+

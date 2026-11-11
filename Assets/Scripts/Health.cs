@@ -18,7 +18,7 @@ public class Health : MonoBehaviour
         SetHealth(maxHealth);
         
         SetMaxArmor(maxHealth);
-        SetArmor(maxArmor);
+        SetArmor(maxArmor / 4);
     }
 
     public virtual void TakeDamage(int damageAmount, Vector3 damagePoint = default, Vector3 normal = default)

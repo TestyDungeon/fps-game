@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyName: Ranged Enemy
   maxHealth: 180
-  chaseSpeed: 7
-  wanderSpeed: 4
+  chaseSpeed: 6
+  wanderSpeed: 5
   wanderDuration: 0.3
   rotationSpeed: 8
   maxJumpDistance: 30
   gravity: 20
-  falterDuration: 0.6
+  falterDuration: 0.2
   falterParticlesPrefab: {fileID: 3748305140232863697, guid: fb47b6956cd48f2489080cd07eba50b5, type: 3}
   wanderRadius: 10
   damage: 5
@@ -28,19 +28,20 @@ MonoBehaviour:
   startAttackRange: 40
   endAttackRange: 45
   meleeAttackRange: 3
-  attackCooldown: 0
+  attackCooldown: 0.4
   layerMask:
     serializedVersion: 2
     m_Bits: 8
   projectile: {fileID: 8304178073877007807, guid: 00c58adbb48abb444b0c196db879fba0, type: 3}
   bulletTrailPrefab: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
   muzzleFlashPrefab: {fileID: 1815339312513602042, guid: 6eb69f3faf2c4fd43b7907d196fdba20, type: 3}
-  deathParticle: {fileID: 1257824197082757075, guid: 9da7d6d6616b57e409c5840fbfa18c06, type: 3}
+  deathParticles: {fileID: 1257824197082757075, guid: b91937c9fe829214dbcaef4bbddedc33, type: 3}
+  goreParticles: {fileID: 1257824197082757075, guid: 9da7d6d6616b57e409c5840fbfa18c06, type: 3}
   force: 20
   spread: 0
   bulletsPerShot: 1
   timeBetweenShots: 0
-  attackType: 1
+  attackType: 4
   traversalType: 1
   preAttackSFX:
   - {fileID: 8300000, guid: 9a4291407cdf88a458f0710e848acbcd, type: 3}

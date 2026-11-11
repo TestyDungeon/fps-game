@@ -13,6 +13,10 @@
   "overrideReferences": false,
   "precompiledReferences": [],
   "autoReferenced": true,
+  "additionalCompilerArguments": [
+    "-nowarn:0618",
+    "-nowarn:0619"
+  ],
   "defineConstraints": [
     "UNITY_EDITOR"
   ],

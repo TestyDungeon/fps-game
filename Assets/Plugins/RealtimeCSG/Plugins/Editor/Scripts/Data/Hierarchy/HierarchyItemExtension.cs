@@ -1,4 +1,5 @@
-﻿using System;
+﻿#pragma warning disable 0619
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using RealtimeCSG.Components;
@@ -154,7 +155,7 @@ namespace RealtimeCSG
 				if (parentData != null)
 					parentData.ChildrenModified = true;
 			}
-			
+
 			Debug.Assert(self.ChildNodes[index] == item);
 			return true;
 		}
@@ -192,8 +193,9 @@ namespace RealtimeCSG
 		public static void Init(this HierarchyItem self, CSGNode node, Int32 nodeID)
 		{
 			self.Transform		= node.transform;
-			self.TransformID	= node.transform.GetInstanceID();
+			self.TransformID	= node.transform.GetInstanceIDCompat();
 			self.NodeID			= nodeID;
 		}
 	}
 }
+

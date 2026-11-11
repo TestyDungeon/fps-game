@@ -42,7 +42,7 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
         //    }
         //}
 
-        Player.Instance.CameraRecoil.ApplyRecoil(5, 9, 9);
+        Player.Instance.CameraRecoil.ApplyRecoil(10, 12, 12, false);
         SoundManager.PlaySound(SoundType.HURT, 0.3f);
         float armorAmount = health.GetArmor();
         float armorDamage = 0; 

@@ -55,10 +55,10 @@ public class GravityFieldSpherical : GravityField
         return Vector3.zero;
     }
 
-    protected override void ApplyRigidbodyGravity(Rigidbody rb)
-    {
-        base.ApplyRigidbodyGravity(rb);
-    }
+    //protected override void ApplyRigidbodyGravity(Rigidbody rb)
+    //{
+    //    base.ApplyRigidbodyGravity(rb);
+    //}
 
     public float get_outer_radius()
     {

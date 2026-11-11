@@ -1,26 +1,28 @@
 ﻿// ===============================================================================================
+#pragma warning disable 0619
+using RealtimeCSG;
 //	The MIT License (MIT) for UnityFBXExporter
 //
-//  UnityFBXExporter was created for Building Crafter (http://u3d.as/ovC) a tool to rapidly 
+//  UnityFBXExporter was created for Building Crafter (http://u3d.as/ovC) a tool to rapidly
 //	create high quality buildings right in Unity with no need to use 3D modeling programs.
 //
 //  Copyright (c) 2016 | 8Bit Goose Games, Inc.
-//		
-//	Permission is hereby granted, free of charge, to any person obtaining a copy 
-//	of this software and associated documentation files (the "Software"), to deal 
-//	in the Software without restriction, including without limitation the rights 
-//	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-//	of the Software, and to permit persons to whom the Software is furnished to do so, 
+//
+//	Permission is hereby granted, free of charge, to any person obtaining a copy
+//	of this software and associated documentation files (the "Software"), to deal
+//	in the Software without restriction, including without limitation the rights
+//	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+//	of the Software, and to permit persons to whom the Software is furnished to do so,
 //	subject to the following conditions:
-//		
-//	The above copyright notice and this permission notice shall be included in all 
+//
+//	The above copyright notice and this permission notice shall be included in all
 //	copies or substantial portions of the Software.
-//		
-//	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-//	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-//	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-//	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+//
+//	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+//	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+//	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 //	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ===============================================================================================
@@ -65,7 +67,7 @@ namespace UnityFBXExporter
 				for(int n = 0; n < meshRenders[i].sharedMaterials.Length; n++)
 				{
 					Material mat = meshRenders[i].sharedMaterials[n];
-					
+
 					if (uniqueMaterials.Contains(mat) == false && mat != null)
 					{
 						uniqueMaterials.Add(mat);
@@ -99,7 +101,7 @@ namespace UnityFBXExporter
 				if(copyMaterials)
 					materialName = gameObj.name + "_" + mat.name;
 
-				int referenceId = Mathf.Abs(mat.GetInstanceID());
+				int referenceId = Mathf.Abs(mat.GetInstanceIDCompat());
 
                 var color = Color.white;
                 if (mat.HasProperty("_Color"))
@@ -222,7 +224,7 @@ namespace UnityFBXExporter
 			StringBuilder objectsSb = new StringBuilder();
 			StringBuilder connectionsSb = new StringBuilder();
 
-			int materialId = Mathf.Abs(material.GetInstanceID());
+			int materialId = Mathf.Abs(material.GetInstanceIDCompat());
 
 			Texture mainTexture = material.GetTexture("_MainTex");
 
@@ -247,15 +249,15 @@ namespace UnityFBXExporter
 			objects = objectsSb.ToString();
 		}
 
-		private static bool SerializeOneTexture(GameObject gameObj, 
-		                                        string newPath, 
-		                                        Material material, 
+		private static bool SerializeOneTexture(GameObject gameObj,
+		                                        string newPath,
+		                                        Material material,
 		                                        string materialName,
 		                                        int materialId,
-		                                        bool copyTextures, 
-		                                        string unityExtension, 
-		                                        string textureType, 
-		                                        out string objects, 
+		                                        bool copyTextures,
+		                                        string unityExtension,
+		                                        string textureType,
+		                                        out string objects,
 		                                        out string connections)
 		{
 			StringBuilder objectsSb = new StringBuilder();
@@ -297,7 +299,7 @@ namespace UnityFBXExporter
 			{
 				int indexOfAssetsFolder = fullDataFolderPath.LastIndexOf("/Assets");
 				fullDataFolderPath = fullDataFolderPath.Remove(indexOfAssetsFolder, fullDataFolderPath.Length - indexOfAssetsFolder);
-				
+
 				string newPathFolder = newPath.Remove(newPath.LastIndexOf('/') + 1, newPath.Length - newPath.LastIndexOf('/') - 1);
 				textureName = gameObj.name + "_" + material.name + unityExtension;
 
@@ -323,7 +325,7 @@ namespace UnityFBXExporter
 			objectsSb.Append("\t\tFileName: \"");
 			objectsSb.Append(textureFilePathFullName);
 			objectsSb.AppendLine("\"");
-			
+
 			// Sets the relative path for the copied texture
 			// TODO: If we don't copy the textures to a relative path, we must find a relative path to write down here
 			if(copyTextures)
@@ -334,10 +336,10 @@ namespace UnityFBXExporter
 			objectsSb.AppendLine("\t\tTexture_Alpha_Source: \"None\""); // TODO: Add alpha source here if the file is a cutout.
 			objectsSb.AppendLine("\t\tCropping: 0,0,0,0");
 			objectsSb.AppendLine("\t}");
-			
+
 			connectionsSb.AppendLine("\t;Texture::" + textureName + ", Material::" + materialName + "\"");
-			connectionsSb.AppendLine("\tC: \"OP\"," + textureReference + "," + materialId + ", \"" + textureType + "\""); 
-			
+			connectionsSb.AppendLine("\tC: \"OP\"," + textureReference + "," + materialId + ", \"" + textureType + "\"");
+
 			connectionsSb.AppendLine();
 
 			objects = objectsSb.ToString();
@@ -347,3 +349,4 @@ namespace UnityFBXExporter
 		}
 	}
 }
+

@@ -1,3 +1,4 @@
+﻿#pragma warning disable 0619
 //#define SHOW_GENERATED_MESHES
 using System.Linq;
 using System.Collections.Generic;
@@ -20,8 +21,8 @@ namespace InternalRealtimeCSG
 		public const HideFlags ComponentHideFlags = HideFlags.DontSaveInBuild;
 #else
 		public const HideFlags ComponentHideFlags = HideFlags.None
-													//| HideFlags.NotEditable       // when this is put into a prefab (when making a prefab containing a model for instance) this will make it impossible to delete 
-													//| HideFlags.HideInInspector   // apparently, when set, can cause issues with selection in sceneview 
+													//| HideFlags.NotEditable       // when this is put into a prefab (when making a prefab containing a model for instance) this will make it impossible to delete
+													//| HideFlags.HideInInspector   // apparently, when set, can cause issues with selection in sceneview
 													| HideFlags.HideInHierarchy
 													| HideFlags.DontSaveInBuild
 			;
@@ -74,7 +75,7 @@ namespace InternalRealtimeCSG
 			if (container)
 				container.gameObject.SetActive(false);
 		}
-		
+
 		public static void OnCreated(GeneratedMeshInstance meshInstance)
 		{
 			var parent = meshInstance.transform.parent;
@@ -183,7 +184,7 @@ namespace InternalRealtimeCSG
 				validateGeneratedMeshes.Clear();
 			}
 
-			
+
 			MeshInstanceManager.UpdateTransforms();
 		}
 
@@ -213,7 +214,7 @@ namespace InternalRealtimeCSG
 		{
 			if (!generatedMeshes)
 				return;
-			
+
 			if (generatedMeshes.enabled == false)
 				generatedMeshes.enabled = true;
 			var generatedMeshesGameObject = generatedMeshes.gameObject;
@@ -247,7 +248,7 @@ namespace InternalRealtimeCSG
 				var prevGeneratedMeshes = model.generatedMeshes;
 				GeneratedMeshes newGeneratedMeshes = null;
 
-				// Check if we have more than one GeneratedMeshes component, this can happen, for instance, 
+				// Check if we have more than one GeneratedMeshes component, this can happen, for instance,
 				//	due to prefab merging issues or if the user duplicates the gameObject
 
 				for (var i = foundGeneratedMeshes.Length - 1; i >= 0; i--)
@@ -287,7 +288,7 @@ namespace InternalRealtimeCSG
 						{
                             // Fall back to disabling the component instead
                             GameObjectExtensions.Destroy(newGeneratedMeshesGameObject);
-						} 
+						}
 						prevGeneratedMeshes = null;
 						newGeneratedMeshes = generatedMeshesComponent;
 					}
@@ -343,8 +344,8 @@ namespace InternalRealtimeCSG
 			if (RealtimeCSG.CSGModelManager.IsInPlayMode)
 				return true;
 
-			if (!checkChildren && 
-				model.generatedMeshes && 
+			if (!checkChildren &&
+				model.generatedMeshes &&
 				model.generatedMeshes.owner == model)
 				return true;
 
@@ -366,7 +367,7 @@ namespace InternalRealtimeCSG
 				case RenderSurfaceType.Culled:			return CSGSettings.ShowCulledSurfaces;
 				case RenderSurfaceType.Collider:		return CSGSettings.ShowColliderSurfaces;
 				case RenderSurfaceType.Trigger:			return CSGSettings.ShowTriggerSurfaces;
-				case RenderSurfaceType.ShadowOnly:		
+				case RenderSurfaceType.ShadowOnly:
 				case RenderSurfaceType.CastShadows:		return CSGSettings.ShowCastShadowsSurfaces;
 				case RenderSurfaceType.ReceiveShadows:	return CSGSettings.ShowReceiveShadowsSurfaces;
 			}
@@ -376,7 +377,7 @@ namespace InternalRealtimeCSG
 		/*
 		private static RenderSurfaceType EnsureValidHelperMaterials(CSGModel model, GeneratedMeshInstance meshInstance)
 		{
-			var surfaceType = !meshInstance.RenderMaterial ? meshInstance.RenderSurfaceType : 
+			var surfaceType = !meshInstance.RenderMaterial ? meshInstance.RenderSurfaceType :
 								GetRenderSurfaceType(model, meshInstance);
 			if (surfaceType != RenderSurfaceType.Normal)
 				meshInstance.RenderMaterial = MaterialUtility.GetSurfaceMaterial(surfaceType);
@@ -417,12 +418,12 @@ namespace InternalRealtimeCSG
 
                 if( !model.generatedMeshes )
                     continue;
-                
+
 				var container = model.generatedMeshes;
                 if (container.owner != model ||
 					!container.gameObject)
                     continue;
-                
+
                 if (!container.HasHelperSurfaces)
                 {
                     if (!container.HasMeshInstances)
@@ -572,7 +573,7 @@ namespace InternalRealtimeCSG
 						case LayerUsageFlags.Renderable:										return RenderSurfaceType.Normal;
 						case LayerUsageFlags.ReceiveShadows:									return RenderSurfaceType.Hidden;
 						case (LayerUsageFlags.CastShadows | LayerUsageFlags.ReceiveShadows):
-						case LayerUsageFlags.CastShadows:										return RenderSurfaceType.ShadowOnly; 
+						case LayerUsageFlags.CastShadows:										return RenderSurfaceType.ShadowOnly;
 						default:
 						return RenderSurfaceType.Culled;
 					}
@@ -703,7 +704,7 @@ namespace InternalRealtimeCSG
 			PhysicsMaterial physicsMaterial = null;
 			if (meshDescription.surfaceParameter != 0)
 			{
-				var obj = EditorUtility.InstanceIDToObject(meshDescription.surfaceParameter);
+				var obj = UnityObjectCompatibility.InstanceIDToObjectCompat(meshDescription.surfaceParameter);
 				if (obj)
 				{
 					switch (meshDescription.meshQuery.LayerParameterIndex)
@@ -737,7 +738,7 @@ namespace InternalRealtimeCSG
 			if (!helperSurfaceDescription.GameObject ||
 				!helperSurfaceDescription.MeshFilter ||
 				!helperSurfaceDescription.MeshRenderer)
-			{ 
+			{
 				if (helperSurfaceDescription.GameObject) GameObjectExtensions.Destroy(helperSurfaceDescription.GameObject);
 
 				helperSurfaceDescription.GameObject = new GameObject(HelperMeshInstanceName);
@@ -788,9 +789,9 @@ namespace InternalRealtimeCSG
 				sharedMesh.Clear(keepVertexLayout: true);
 				return;
 			}
-			
+
 			sharedMesh = new Mesh();
-			sharedMesh.name = $"<{baseName} generated {sharedMesh.GetInstanceID()}>";
+			sharedMesh.name = $"<{baseName} generated {sharedMesh.GetInstanceIDCompat()}>";
 			sharedMesh.MarkDynamic();
             if (editorOnly)
                 sharedMesh.hideFlags = HideFlags.DontSaveInBuild;
@@ -806,7 +807,7 @@ namespace InternalRealtimeCSG
                 return false;
 #else
             if ((staticFlags & StaticEditorFlags.LightmapStatic) != StaticEditorFlags.LightmapStatic)
-                return false;            
+                return false;
 #endif
             return true;
         }
@@ -893,7 +894,7 @@ namespace InternalRealtimeCSG
 
 			meshRendererComponent.realtimeLightmapIndex = -1;
 			meshRendererComponent.lightmapIndex = -1;
-			
+
 			var oldVertices		= instance.SharedMesh.vertices;
 			if (oldVertices.Length == 0)
 				return;
@@ -912,7 +913,7 @@ namespace InternalRealtimeCSG
             MeshUtility.Optimize(instance.SharedMesh);
             Unwrapping.GenerateSecondaryUVSet(instance.SharedMesh, param);
 			lightmapGenerationTime = EditorApplication.timeSinceStartup - lightmapGenerationTime;
-			
+
 			Debug.Log(//"\tMesh optimizing in " + (optimizeTime * 1000) + " ms\n"+
 					  "\tUV generation in " + (lightmapGenerationTime* 1000) + " ms\n", model);
 
@@ -920,7 +921,7 @@ namespace InternalRealtimeCSG
 			instance.LightingHashValue = instance.MeshDescription.geometryHashValue;
 			instance.HasUV2 = true;
         }
-		
+
 		private static bool NeedToGenerateLightmapUVsForInstance(GeneratedMeshInstance instance)
 		{
 			return !instance.HasUV2 && instance.RenderSurfaceType == RenderSurfaceType.Normal;
@@ -964,19 +965,19 @@ namespace InternalRealtimeCSG
 				meshStaticFlags = meshStaticFlags & ~(StaticEditorFlags.ContributeGI | StaticEditorFlags.ReflectionProbeStatic);
 #else
             if (renderSurfaceType == RenderSurfaceType.ShadowOnly)
-                meshStaticFlags = meshStaticFlags & ~(StaticEditorFlags.LightmapStatic | StaticEditorFlags.ReflectionProbeStatic);            
+                meshStaticFlags = meshStaticFlags & ~(StaticEditorFlags.LightmapStatic | StaticEditorFlags.ReflectionProbeStatic);
 #endif
 
             return meshStaticFlags & modelStaticFlags;
 		}
 
-		static string MaterialToString(Material mat)	
+		static string MaterialToString(Material mat)
 		{
 			if (ReferenceEquals(mat, null))
 				return "null";
 			if (!mat)
 				return "invalid";
-			return mat.name + " " + mat.GetInstanceID().ToString();
+			return mat.name + " " + mat.GetInstanceIDCompat().ToString();
 		}
 
 		public static void ClearUVs(CSGModel model)
@@ -1071,14 +1072,14 @@ namespace InternalRealtimeCSG
 			if (gameObject.hideFlags			!= gameObjectFlags)		{ gameObject.hideFlags				= gameObjectFlags; }
 			if (instance.hideFlags				!= meshInstanceFlags)	{ instance.hideFlags				= meshInstanceFlags; }
 
-			
+
 			var showVisibleSurfaces	=	instance.RenderSurfaceType != RenderSurfaceType.Normal ||
 										(RealtimeCSG.CSGSettings.VisibleHelperSurfaces & HelperSurfaceFlags.ShowVisibleSurfaces) != 0;
 
             CSGVisibilityUtility.SetGameObjectVisibility(gameObject, showVisibleSurfaces);
 			if (!instance.enabled) instance.enabled = true;
-			
-			
+
+
 			// Update navigation on mesh
 			var oldStaticFlags = GameObjectUtility.GetStaticEditorFlags(gameObject);
 			var newStaticFlags = FilterStaticEditorFlags(GameObjectUtility.GetStaticEditorFlags(owner.gameObject), instance.RenderSurfaceType);
@@ -1089,8 +1090,8 @@ namespace InternalRealtimeCSG
 
 			var meshFilterComponent		= instance.CachedMeshFilter;
 			var meshRendererComponent	= instance.CachedMeshRenderer;
-			
-			
+
+
 
 			var needMeshRenderer		= NeedMeshRenderer(instance.RenderSurfaceType);
 			if (needMeshRenderer)
@@ -1120,7 +1121,7 @@ namespace InternalRealtimeCSG
 					shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
 				}
 
-				
+
 				switch (instance.MeshDescription.meshQuery.LayerQuery)
 				{
 					case LayerUsageFlags.RenderReceiveCastShadows:
@@ -1131,7 +1132,7 @@ namespace InternalRealtimeCSG
 					{
 						shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 						break;
-					} 
+					}
 					case LayerUsageFlags.RenderCastShadows:
 					{
 						ownerReceiveShadows = false;
@@ -1167,7 +1168,7 @@ namespace InternalRealtimeCSG
 					meshRendererComponent.gameObject.name = RenderMeshInstanceName;
 					instance.CachedMeshRendererSO = null;
 					instance.Dirty = true;
-                    // we don't actually want the unity style of rendering a wireframe 
+                    // we don't actually want the unity style of rendering a wireframe
                     // for our meshes, so we turn it off
                     //*
                     EditorUtility.SetSelectedRenderState(meshRendererComponent, EditorSelectedRenderState.Hidden);
@@ -1178,15 +1179,15 @@ namespace InternalRealtimeCSG
                 {
                     meshFilterComponent.hideFlags |= HideFlags.HideInHierarchy;
                 }
-                
+
                 if ((meshRendererComponent.hideFlags & HideFlags.HideInHierarchy) == 0)
                 {
                     meshRendererComponent.hideFlags |= HideFlags.HideInHierarchy;
                 }
 
                 if (instance.RenderSurfaceType != RenderSurfaceType.ShadowOnly)
-				{ 
-					if (instance.HasUV2 && 
+				{
+					if (instance.HasUV2 &&
 						(instance.LightingHashValue != instance.MeshDescription.geometryHashValue) && meshRendererComponent)
                     {
                         instance.ResetUVTime = Time.realtimeSinceStartup;
@@ -1217,7 +1218,7 @@ namespace InternalRealtimeCSG
 					instance.Dirty = true;
 				}
 
-				if (meshRendererComponent && 
+				if (meshRendererComponent &&
 					meshRendererComponent.receiveShadows != ownerReceiveShadows)
                 {
                     meshRendererComponent.receiveShadows = ownerReceiveShadows;
@@ -1240,12 +1241,12 @@ namespace InternalRealtimeCSG
 					if (!meshRendererComponent)
 					{
 						instance.CachedMeshRendererSO =
-						meshRendererComponentSO = null; 
+						meshRendererComponentSO = null;
 					}
 					if (meshRendererComponentSO != null)
 					{
 						bool SOModified = false;
-                        meshRendererComponentSO.Update(); 
+                        meshRendererComponentSO.Update();
 						var scaleInLightmapProperty = meshRendererComponentSO.FindProperty("m_ScaleInLightmap");
 						var scaleInLightmap			= owner.scaleInLightmap;
 						if (scaleInLightmapProperty != null &&
@@ -1281,7 +1282,7 @@ namespace InternalRealtimeCSG
                             ignoreNormalsProperty.boolValue = ignoreNormals;
 							SOModified = true;
 						}
-					
+
 						var minimumChartSizeProperty		= meshRendererComponentSO.FindProperty("m_MinimumChartSize");
 						var minimumChartSize				= owner.minimumChartSize;
 						if (minimumChartSizeProperty != null &&
@@ -1349,13 +1350,13 @@ namespace InternalRealtimeCSG
 				meshRendererComponent = null;
 				instance.CachedMeshRendererSO = null;
 			}
-						
+
 			instance.CachedMeshFilter   = meshFilterComponent;
 			instance.CachedMeshRenderer = meshRendererComponent;
 
 			// TODO:	navmesh specific mesh
 			// TODO:	occludee/reflection probe static
-			
+
 			var meshColliderComponent	= instance.CachedMeshCollider;
 			var needMeshCollider		= !AreBoundsEmpty(instance) && NeedCollider(instance.RenderSurfaceType);
 
@@ -1438,7 +1439,7 @@ namespace InternalRealtimeCSG
 				meshColliderComponent = null;
 			}
 			instance.CachedMeshCollider = meshColliderComponent;
-			
+
 			if (!postProcessScene)
 			{
 #if SHOW_GENERATED_MESHES
@@ -1471,7 +1472,7 @@ namespace InternalRealtimeCSG
 			var builder = new System.Text.StringBuilder();
 			builder.Append(instance.RenderSurfaceType);
 			builder.Append(' ');
-			builder.Append(instance.GetInstanceID());
+			builder.Append(instance.GetInstanceIDCompat());
 
 			if (instance.PhysicsMaterial)
 			{
@@ -1481,7 +1482,7 @@ namespace InternalRealtimeCSG
 			}
 			if (renderMaterial)
 			{
-				builder.AppendFormat(" Material [{0} {1}]", renderMaterial.name, renderMaterial.GetInstanceID());
+				builder.AppendFormat(" Material [{0} {1}]", renderMaterial.name, renderMaterial.GetInstanceIDCompat());
 			}
 
 			//builder.AppendFormat(" Key {0}", instance.GenerateKey().GetHashCode());
@@ -1495,12 +1496,12 @@ namespace InternalRealtimeCSG
 #endif
 
 		static int RefreshModelCounter = 0;
-		
+
 		public static void UpdateHelperSurfaceVisibility(bool force = false)
 		{
 			if (RealtimeCSG.CSGModelManager.IsInPlayMode)
 				return;
-            
+
             //			updateMeshColliderMeshTime = 0.0;
             var models = InternalCSGModelManager.Models;
 			var currentRefreshModelCount = 0;
@@ -1568,8 +1569,8 @@ namespace InternalRealtimeCSG
 
 
 
-            var containerGameObject = container.gameObject; 
-			
+            var containerGameObject = container.gameObject;
+
 			HideFlags gameObjectFlags;
 			HideFlags transformFlags;
 #if SHOW_GENERATED_MESHES
@@ -1628,7 +1629,7 @@ namespace InternalRealtimeCSG
 					useGravity = true;
 					constraints = RigidbodyConstraints.None;
 				}
-				
+
 				if (rigidBody.isKinematic != isKinematic)	rigidBody.isKinematic = isKinematic;
 				if (rigidBody.useGravity  != useGravity)	rigidBody.useGravity = useGravity;
 				if (rigidBody.constraints != constraints)	rigidBody.constraints = constraints;
@@ -1713,7 +1714,7 @@ namespace InternalRealtimeCSG
 				if (meshInstance.RenderSurfaceType == RenderSurfaceType.Normal && !meshInstance.RenderMaterial)
 				{
 					GameObjectExtensions.Destroy(meshInstanceTransform.gameObject);
-					continue; 
+					continue;
 				}
 				*/
                 if (!ValidMeshInstance(meshInstance))
@@ -1746,7 +1747,7 @@ namespace InternalRealtimeCSG
 
 			if (generatedMeshes.owner)
 				UpdateGeneratedMeshesVisibility(generatedMeshes, generatedMeshes.owner.ShowGeneratedMeshes);
-			
+
 			if (generatedMeshes.owner)
 			{
 				var modelTransform = generatedMeshes.owner.transform;
@@ -1755,7 +1756,7 @@ namespace InternalRealtimeCSG
 			}
             return false;
 		}
-		
+
 		public static GeneratedMeshInstance[] GetAllModelMeshInstances(GeneratedMeshes container)
 		{
 			if (!container.HasMeshInstances)
@@ -1763,7 +1764,7 @@ namespace InternalRealtimeCSG
 
 			return container.MeshInstances;
 		}
-		
+
 		public static GeneratedMeshInstance GetMeshInstance(GeneratedMeshes container, GeneratedMeshDescription meshDescription, ModelSettingsFlags modelSettings, RenderSurfaceType renderSurfaceType)
 		{
 			var key	= MeshInstanceKey.GenerateKey(meshDescription);
@@ -1786,9 +1787,9 @@ namespace InternalRealtimeCSG
 			return CreateHelperSurfaceDescription(container, modelSettings, meshDescription, renderSurfaceType);
 		}
 
-		public static bool IsObjectGenerated(UnityEngine.Object obj) 
+		public static bool IsObjectGenerated(UnityEngine.Object obj)
 		{
-			if (!obj) 
+			if (!obj)
 				return false;
 
 			var gameObject = obj as GameObject;
@@ -1814,7 +1815,7 @@ namespace InternalRealtimeCSG
 				var model = models[i];
                 if (!ModelTraits.IsModelEditable(model))
 					continue;
-			
+
 				UpdateTransform(model.generatedMeshes);
 			}
 		}
@@ -1830,7 +1831,7 @@ namespace InternalRealtimeCSG
 				return;
 
 			// TODO: make sure outlines are updated when models move
-			
+
 			var containerTransform = container.transform;
 			if (containerTransform.localPosition	!= MathConstants.zeroVector3 ||
 				containerTransform.localRotation	!= MathConstants.identityQuaternion ||
@@ -1846,7 +1847,7 @@ namespace InternalRealtimeCSG
 
 #region UpdateContainerComponents
 		static readonly List<GameObject> __notfoundGameObjects		= new List<GameObject>();
-		public static List<GameObject> FindUnusedMeshInstances(GeneratedMeshes                    container, 
+		public static List<GameObject> FindUnusedMeshInstances(GeneratedMeshes                    container,
 													           HashSet<GeneratedMeshInstance>     foundInstances)
 		{
 			if (RealtimeCSG.CSGModelManager.IsInPlayMode)
@@ -1871,8 +1872,8 @@ namespace InternalRealtimeCSG
                         if (!foundInstances.Contains(instance))
                         {
                             __notfoundGameObjects.Add(instance.gameObject);
-                            continue; 
-                        } 
+                            continue;
+                        }
                     }
                 }
             }
@@ -1886,7 +1887,7 @@ namespace InternalRealtimeCSG
                 if (childGameObject.activeSelf)
                     continue;
 
-                __notfoundGameObjects.Add(childGameObject);                
+                __notfoundGameObjects.Add(childGameObject);
             }
             return __notfoundGameObjects;
         }
@@ -1894,7 +1895,7 @@ namespace InternalRealtimeCSG
 		static readonly List<GeneratedMeshInstance> __notfoundInstances		= new List<GeneratedMeshInstance>();
 		static MeshInstanceKey[]					__removeMeshInstances	= new MeshInstanceKey[0];
 
-		public static void UpdateContainerComponents(GeneratedMeshes container, 
+		public static void UpdateContainerComponents(GeneratedMeshes container,
 													 HashSet<GeneratedMeshInstance> foundInstances,
 													 HashSet<HelperSurfaceDescription> foundHelperSurfaces)
 		{
@@ -1957,14 +1958,14 @@ namespace InternalRealtimeCSG
 					container.AddMeshInstance(instance);
 				}
 			}
-			
+
 			for (int i = 0; i < __notfoundInstances.Count; i++)
 			{
 				var meshInstance = __notfoundInstances[i];
 				if (meshInstance && meshInstance.gameObject)
                 {
                     //var key = meshInstance.GenerateKey();
-                    //var keyObj = EditorUtility.InstanceIDToObject(key.SurfaceParameter);
+                    //var keyObj = UnityObjectCompatibility.InstanceIDToObjectCompat(key.SurfaceParameter);
                     GameObjectExtensions.Destroy(meshInstance.gameObject);
 				}
 
@@ -1988,14 +1989,14 @@ namespace InternalRealtimeCSG
                     container.RemoveMeshInstances(__removeMeshInstances, removeMeshInstancesCount);
 				}
 			}
-			 
+
 			if (!container.owner)
 				return;
 
 			UpdateTransform(container);
 		}
 #endregion
-		
+
 #region UpdateContainerFlags
 		private static void UpdateContainerFlags(GeneratedMeshes generatedMeshes)
 		{
@@ -2026,9 +2027,9 @@ namespace InternalRealtimeCSG
 			var ownerGameObject     = generatedMeshes.owner.gameObject;
             var ownerStaticFlags	= GameObjectUtility.GetStaticEditorFlags(ownerGameObject);
 			var previousStaticFlags	= GameObjectUtility.GetStaticEditorFlags(generatedMeshes.gameObject);
-            
+
 			var containerLayer		= ownerGameObject.layer;
-			
+
 			var showVisibleSurfaces	= (RealtimeCSG.CSGSettings.VisibleHelperSurfaces & HelperSurfaceFlags.ShowVisibleSurfaces) != 0;
 
 
@@ -2067,3 +2068,4 @@ namespace InternalRealtimeCSG
 #endregion
 	}
 }
+

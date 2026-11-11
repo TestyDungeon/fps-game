@@ -33,12 +33,12 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 47c80e55fd8200f429382d6a042d2ed8, type: 3}
   - {fileID: 8300000, guid: 1cfff36de2433084a94c22bd70ba8910, type: 3}
   - {fileID: 8300000, guid: 391e8df9b4f9826478a42ea748c42c7f, type: 3}
-  caseFallVolume: 0.1
-  recoilAmountCamera: 3
+  caseFallVolume: 0.05
+  recoilAmountCamera: 7
   recoilSpeedCamera: 20
   returnSpeedCamera: 5
   allowButtonHold: 1
-  damage: 20
+  damage: 25
   ammoType: 1
   range: 30
   force: 20

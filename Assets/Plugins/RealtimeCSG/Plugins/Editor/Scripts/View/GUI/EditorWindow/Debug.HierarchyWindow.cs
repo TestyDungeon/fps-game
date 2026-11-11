@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿#pragma warning disable 0619
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -181,7 +182,7 @@ namespace RealtimeCSG
 		{
 			var userID = coreNode.UserID;
 			var nodeID = coreNode.NodeID;
-			var obj = (userID != 0) ? EditorUtility.InstanceIDToObject(userID) : null;
+			var obj = (userID != 0) ? UnityObjectCompatibility.InstanceIDToObjectCompat(userID) : null;
 			if (obj == null)
 				return string.Format("<unknown> [{0}:{1}]", (nodeID-1), userID);
 			return obj.name + string.Format(" [{0}:{1}]", (nodeID-1), userID);
@@ -216,8 +217,8 @@ namespace RealtimeCSG
 				{
 					var name		= NameForCoreNode(children[i]);
 					var selected = selectedInstanceIDs.Contains(userID);
-					var style		= (childCount > 0) ? 
-										(selected ? styles.foldOutSelected : styles.foldOut) : 
+					var style		= (childCount > 0) ?
+										(selected ? styles.foldOutSelected : styles.foldOut) :
 										(selected ? styles.emptySelected : styles.emptyItem);
 
 					EditorGUI.BeginChangeCheck();
@@ -229,14 +230,14 @@ namespace RealtimeCSG
 					openNodes[nodeID] = EditorGUI.Foldout(itemRect, isOpen, name, true, style);
 					if (EditorGUI.EndChangeCheck())
 					{
-						var obj = EditorUtility.InstanceIDToObject(userID);
+						var obj = UnityObjectCompatibility.InstanceIDToObjectCompat(userID);
 						if (!(obj is GameObject))
 						{
 							var mono = (obj as MonoBehaviour);
 							if (mono)
-								userID = mono.gameObject.GetInstanceID();
+								userID = mono.gameObject.GetInstanceIDCompat();
 						}
-						Selection.instanceIDs = new[] { userID };
+						UnitySelectionCompatibility.SetInstanceIDs(new[] { userID });
 					}
 				}
 				itemRect.y += kItemHeight;
@@ -261,15 +262,15 @@ namespace RealtimeCSG
 				UpdateStyles();
 
 			var selectedInstanceIDs = new HashSet<int>();
-			foreach(var instanceID in Selection.instanceIDs)
+			foreach(var instanceID in UnitySelectionCompatibility.GetInstanceIDs())
 			{
-				var obj = EditorUtility.InstanceIDToObject(instanceID);
+				var obj = UnityObjectCompatibility.InstanceIDToObjectCompat(instanceID);
 				var go = obj as GameObject;
 				if (go != null)
 				{
 					foreach(var no in go.GetComponents<CSGNode>())
 					{
-						var instanceID_ = no.GetInstanceID();
+						var instanceID_ = no.GetInstanceIDCompat();
 						selectedInstanceIDs.Add(instanceID_);
 					}
 				}
@@ -277,15 +278,15 @@ namespace RealtimeCSG
 
 
 			float kItemHeight = EditorGUIUtility.singleLineHeight;
-			
+
 			var allNodes = CSGManager.AllTreeNodes;
 			var allRootNodeList = new List<CSGTreeNode>();
 			for (int i = 0; i < allNodes.Length;i++)
 			{
-				if (allNodes[i].Type != CSGNodeType.Tree && 
+				if (allNodes[i].Type != CSGNodeType.Tree &&
 					(allNodes[i].Tree .Valid || allNodes[i].Parent.Valid))
 					continue;
-				
+
 				allRootNodeList.Add(allNodes[i]);
 			}
 
@@ -314,15 +315,15 @@ namespace RealtimeCSG
 				Rect visibleArea = itemArea;
 				visibleArea.x += m_ScrollPos.x;
 				visibleArea.y += m_ScrollPos.y;
-				
+
 				AddFoldOuts(ref itemRect, ref visibleArea, allRootNodes, selectedInstanceIDs, ref openNodes);
 			}
 			GUI.EndScrollView();
 			if (selectedInstanceIDs.Count == 1)
 			{
-				var obj = EditorUtility.InstanceIDToObject(selectedInstanceIDs.First()) as CSGNode;
+				var obj = UnityObjectCompatibility.InstanceIDToObjectCompat(selectedInstanceIDs.First()) as CSGNode;
 				if (obj)
-				{ 
+				{
 					var brush		= obj as CSGBrush;
 					var operation	= obj as CSGOperation;
 					var model		= obj as CSGModel;
@@ -345,7 +346,7 @@ namespace RealtimeCSG
 						GUI.Label(labelArea, "ChildCount: " + node.Count); labelArea.y += kItemHeight;
 						var nodeType = node.Type;
 						if (nodeType != CSGNodeType.Tree)
-						{ 
+						{
 							GUI.Label(labelArea, "Parent: " + node.Parent.NodeID + " valid " + node.Parent.Valid); labelArea.y += kItemHeight;
 							GUI.Label(labelArea, "Model: " + node.Tree.NodeID + " valid " + node.Tree.Valid); labelArea.y += kItemHeight;
 
@@ -353,7 +354,7 @@ namespace RealtimeCSG
 							{
 								CSGOperationType op = ((CSGTreeBrush)node).Operation;
 								GUI.Label(labelArea, "Operation: " + op.ToString()); labelArea.y += kItemHeight;
-							} else 
+							} else
 							if (nodeType == CSGNodeType.Branch)
 							{
 								CSGOperationType op = ((CSGTreeBranch)node).Operation;

@@ -71,7 +71,7 @@ MonoBehaviour:
   amount: 1
   item: {fileID: 0}
   rotationSpeed: 20
-  amplitude: 1
+  amplitude: 0.5
   frequency: 1
   playSound: 1
   soundType: 7
@@ -166,6 +166,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 3b1a3e3bd39715044a3d1d7570086320, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 3b1a3e3bd39715044a3d1d7570086320, type: 3}
+      propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 3b1a3e3bd39715044a3d1d7570086320, type: 3}

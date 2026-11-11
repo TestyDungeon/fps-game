@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
 
 public class PosterizeFeature : ScriptableRendererFeature
@@ -77,8 +79,6 @@ public class PosterizeFeature : ScriptableRendererFeature
         Material m_Material;
         int m_StepCount;
         bool m_DebugLogging;
-        RTHandle m_Source;
-        RTHandle m_TempRT;
         static readonly int StepCountId = Shader.PropertyToID("_StepCount");
 
         public void Setup(Material mat, int stepCount, bool debugLogging)
@@ -86,45 +86,36 @@ public class PosterizeFeature : ScriptableRendererFeature
             m_Material = mat;
             m_StepCount = stepCount;
             m_DebugLogging = debugLogging;
+            requiresIntermediateTexture = true;
         }
 
-        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
-        {
-            ConfigureInput(ScriptableRenderPassInput.Color);
-
-            // Grab the target here (per-frame), NOT in AddRenderPasses.
-            // On Auto intermediate-texture mode, the handle captured earlier
-            // can be stale and the pass silently writes nowhere.
-            m_Source = renderingData.cameraData.renderer.cameraColorTargetHandle;
-
-            var desc = renderingData.cameraData.cameraTargetDescriptor;
-            desc.depthBufferBits = 0;
-            RenderingUtils.ReAllocateIfNeeded(ref m_TempRT, desc, name: "_PosterizeTempRT");
-        }
-
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
             if (m_Material == null)
                 return;
 
-            if (m_Source == null || m_TempRT == null)
+            UniversalResourceData resources = frameData.Get<UniversalResourceData>();
+            TextureHandle source = resources.cameraColor;
+            if (!source.IsValid())
                 return;
 
+            var descriptor = renderGraph.GetTextureDesc(source);
+            descriptor.name = "_Posterize";
+            descriptor.clearBuffer = false;
+            TextureHandle destination = renderGraph.CreateTexture(descriptor);
+
+            var properties = new MaterialPropertyBlock();
+            properties.SetFloat(StepCountId, m_StepCount);
+            renderGraph.AddBlitPass(
+                new RenderGraphUtils.BlitMaterialParameters(source, destination, m_Material, 0)
+                {
+                    propertyBlock = properties
+                },
+                "Posterize");
+            resources.cameraColor = destination;
+
             if (m_DebugLogging && Time.frameCount % 60 == 0)
-                Debug.Log($"[PosterizeFeature] Execute camera={renderingData.cameraData.camera.name} steps={m_StepCount}");
-
-            CommandBuffer cmd = CommandBufferPool.Get("Posterize");
-            m_Material.SetFloat(StepCountId, m_StepCount);
-
-            Blit(cmd, m_Source, m_TempRT, m_Material);
-            Blit(cmd, m_TempRT, m_Source);
-
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
-        }
-
-        public override void OnCameraCleanup(CommandBuffer cmd)
-        {
+                Debug.Log($"[PosterizeFeature] RenderGraph pass steps={m_StepCount}");
         }
     }
 }

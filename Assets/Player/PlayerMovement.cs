@@ -39,7 +39,7 @@ public class PlayerMovement : MonoBehaviour
     private int dashInvokes = 2;
 
     private AudioSource fallingWindLoopAudioSource;
-    private float windStartDelay = 0.5f;
+    private float windStartDelay = 0.4f;
     private float windStartMult = 0;
 
     private float lastVerticalSpeed = 0;
@@ -70,12 +70,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
-        if(!wasGrounded && movementController.isGrounded)
+        if(!wasGrounded && movementController.isGrounded && movementController.lastAirTime > 0.2)
         {
             Player.Instance.Sway.CameraLandBob(lastVerticalSpeed);
-            Player.Instance.Sway.OnLand();
+            Player.Instance.Sway.OnLand(lastVerticalSpeed);
             //Debug.Log("Percent " + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14));
-            //SoundManager.PlaySound(SoundType.LANDING, 0.4f + Mathf.Clamp01(Mathf.Max(playerVelocity.magnitude - 12, 0) / 14) * 0.6f);
+            //SoundManager.PlaySound(SoundType.LANDING, 0.4f + Mathf.Clamp01(Mathf.Max(Vector3.Project(playerVelocity, transform.up).magnitude - 12, 0) / 14) * 0.6f);
         }
         MoveInput();
         FOV();
@@ -100,8 +100,8 @@ public class PlayerMovement : MonoBehaviour
         
         playerVelocity = movementController.Move(playerVelocity);
 
-        //if (movementController.isGrounded && playerVelocity.sqrMagnitude > 25 && !isPlayingFootsteps)
-        //    StartCoroutine(PlayFootStepsSound());
+        if (movementController.isGrounded && playerVelocity.sqrMagnitude > 25 && !isPlayingFootsteps)
+            StartCoroutine(PlayFootStepsSound());
 
         WindSound();
     }
@@ -175,7 +175,6 @@ public class PlayerMovement : MonoBehaviour
             playerVelocity[i] += wishDir[i] * accelSpeed;
     }
 
-/*
     private void AirAccelerate(Vector3 wishDir, float wishSpeed)
     {
         float wishSpd = wishSpeed;
@@ -202,7 +201,7 @@ public class PlayerMovement : MonoBehaviour
             playerVelocity = Vector3.Lerp(playerVelocity, wishDir * targetSpeed + (playerVelocity - currentHorizontalVel), playerMovementConfig.airAccel * airControlMultiplier * Time.fixedDeltaTime);
         }
     }
-*/
+/*
     private void AirAccelerate(Vector3 wishDir, float wishSpeed)
     {
         float wishSpd = wishSpeed;
@@ -224,6 +223,7 @@ public class PlayerMovement : MonoBehaviour
         for (int i = 0; i < 3; i++)
             playerVelocity[i] += wishDir[i] * accelSpeed;
     }
+*/
 
 /*
     private void AirControl(Vector3 wishDir, float wishSpeed)
@@ -389,7 +389,7 @@ public class PlayerMovement : MonoBehaviour
             dir = Vector3.ProjectOnPlane(playerCamera.transform.forward, transform.up).normalized;
         }
         movementController.resetVelocity();
-        movementController.Dash(dir, 4f, 40, 10);
+        movementController.Dash(dir, 2f, 20, 10);
         
         //movementController.addVelocity(dir * 10);
 

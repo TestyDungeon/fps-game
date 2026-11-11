@@ -34,8 +34,8 @@ Transform:
   m_GameObject: {fileID: 1634380424796154236}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 29, y: 66.796715, z: 53}
-  m_LocalScale: {x: 0.7, y: 0.7, z: 0.7}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6256219984505220539}
@@ -64,8 +64,8 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.86
-  m_Height: 3.33
+  m_Radius: 0.602
+  m_Height: 2.331
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &8374288087902780556
@@ -92,6 +92,7 @@ MonoBehaviour:
   audioSource: {fileID: 0}
   animator: {fileID: 0}
   enemyVelocity: {x: 0, y: 0, z: 0}
+  layerMask: 16393
   playerLayer: 8
   rigidbodies: []
   ehr: {fileID: 0}
@@ -116,9 +117,9 @@ MonoBehaviour:
   GravityEnabled: 1
   GlobalGravityEnabled: 1
   gravity: 10
-  targetGravityAlignSpeed: 0.5
-  gravityAlignSpeedOnFieldChange: 0.02
-  gravityAlignStep: 0.01
+  targetGravityAlignSpeed: 0.2
+  gravityAlignSpeedOnFieldChange: 0.1
+  gravityAlignStep: 0.2
   maxClimbAngle: 55
   stepHeight: 0.6
   stepClearance: 0.02
@@ -201,7 +202,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 1634380424796154236}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.9
+  m_Radius: 0.63
   m_Speed: 3.5
   m_Acceleration: 8
   avoidancePriority: 70
@@ -210,8 +211,8 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 2.95
-  m_BaseOffset: 1.74
+  m_Height: 2.39
+  m_BaseOffset: 1.218
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
 --- !u!1 &2324632975926496506
@@ -239,8 +240,8 @@ Transform:
   m_GameObject: {fileID: 2324632975926496506}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.683, z: 0}
-  m_LocalScale: {x: 2.05, y: 2.05, z: 2.05}
+  m_LocalPosition: {x: 0, y: -1.229, z: 0}
+  m_LocalScale: {x: 1.435, y: 1.435, z: 1.435}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 916580872165137122}
@@ -288,10 +289,10 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 912e9bc7557979749ae1767b4bd834c8, type: 3}
+  m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 912e9bc7557979749ae1767b4bd834c8, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.521
+  m_Volume: 0.6
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -299,7 +300,7 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 0
-  MinDistance: 1.43
+  MinDistance: 2.2210836
   MaxDistance: 16.49
   Pan2D: 0
   rolloffMode: 0
@@ -426,8 +427,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.25, y: 2.7917993, z: 2.34}
-  m_Center: {x: 0, y: 0.49589932, z: 0}
+  m_Size: {x: 2.975, y: 1.9542593, z: 1.638}
+  m_Center: {x: 0, y: 0.34712952, z: 0}
 --- !u!1 &5006666296817728629
 GameObject:
   m_ObjectHideFlags: 0
@@ -481,8 +482,8 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.86
-  m_Height: 3.33
+  m_Radius: 0.602
+  m_Height: 2.331
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &131170737894106364
@@ -516,8 +517,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 0
   serializedVersion: 3
-  m_Size: {x: 1.47, y: 0.58, z: 2.89}
-  m_Center: {x: 0, y: -1.33, z: 0}
+  m_Size: {x: 1.029, y: 0.406, z: 2.023}
+  m_Center: {x: 0, y: -0.931, z: 0}
 --- !u!1001 &806953638616333577
 PrefabInstance:
   m_ObjectHideFlags: 0

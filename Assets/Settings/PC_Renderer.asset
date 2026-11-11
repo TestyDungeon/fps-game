@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &-908104464601240091
 MonoBehaviour:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97bc4be7be21f344fb5cdf5f472667e3, type: 3}
   m_Name: PosterizeFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
     posterizeMaterial: {fileID: 2100000, guid: 7ea3dfe5a7555864c934aeab4bd5b7ba, type: 2}
     stepCount: 64
@@ -47,11 +47,16 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
   - {fileID: -908104464601240091}
-  m_RendererFeatureMap: ad6b866f10d7b46ce52d7f00cdc365f3
-  m_UseNativeRenderPass: 0
+  - {fileID: 8577601265362057087}
+  - {fileID: 7073346969720579438}
+  - {fileID: 4232557314778909191}
+  m_RendererFeatureMap: ad6b866f10d7b46ce52d7f00cdc365f37fb7d89ee7c209776ee547bf9793296207cae0e67310bd3al
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
-  m_AssetVersion: 2
+  m_AssetVersion: 3
+  m_PrepassLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   m_OpaqueLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -73,6 +78,7 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+  m_TileOnlyMode: 0
 --- !u!114 &230126137656917338
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -99,9 +105,35 @@ MonoBehaviour:
   m_Name: PosterizeRendererFeature
   m_EditorClassIdentifier: 
   m_Active: 1
+--- !u!114 &4232557314778909191
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d840204a2452b054985a13e96422e31b, type: 3}
+  m_Name: DitheringRenderFeature
+  m_EditorClassIdentifier: Assembly-CSharp::PSX.DitheringRenderFeature
+  m_Active: 1
+--- !u!114 &7073346969720579438
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87148f99bdcf6aa4090d90c7929d01a8, type: 3}
+  m_Name: FogRenderFeature
+  m_EditorClassIdentifier: Assembly-CSharp::PSX.FogRenderFeature
+  m_Active: 1
 --- !u!114 &7833122117494664109
 MonoBehaviour:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -125,12 +157,16 @@ MonoBehaviour:
     BlurQuality: 0
     Falloff: 100
     SampleCount: -1
-  m_BlueNoise256Textures:
-  - {fileID: 2800000, guid: 36f118343fc974119bee3d09e2111500, type: 3}
-  - {fileID: 2800000, guid: 4b7b083e6b6734e8bb2838b0b50a0bc8, type: 3}
-  - {fileID: 2800000, guid: c06cc21c692f94f5fb5206247191eeee, type: 3}
-  - {fileID: 2800000, guid: cb76dd40fa7654f9587f6a344f125c9a, type: 3}
-  - {fileID: 2800000, guid: e32226222ff144b24bf3a5a451de54bc, type: 3}
-  - {fileID: 2800000, guid: 3302065f671a8450b82c9ddf07426f3a, type: 3}
-  - {fileID: 2800000, guid: 56a77a3e8d64f47b6afe9e3c95cb57d5, type: 3}
-  m_Shader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
+--- !u!114 &8577601265362057087
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d9eaad196ce60e4ebc819addcb08305, type: 3}
+  m_Name: PixelationRenderFeature
+  m_EditorClassIdentifier: Assembly-CSharp::PSX.PixelationRenderFeature
+  m_Active: 1

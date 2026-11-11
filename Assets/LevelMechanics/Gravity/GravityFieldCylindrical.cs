@@ -39,7 +39,7 @@ public class GravityFieldCylindrical : GravityField
         point1 = capsuleCenter + capsuleDirection * halfHeight;
         point2 = capsuleCenter - capsuleDirection * halfHeight;
         
-        Collider[] hits = Physics.OverlapCapsule(point1, point2, capsuleCollider.radius);
+        Collider[] hits = Physics.OverlapCapsule(point1, point2, capsuleCollider.radius * capsuleCollider.transform.lossyScale.x);
         
         foreach (Collider x in hits)
         {
@@ -84,10 +84,10 @@ public class GravityFieldCylindrical : GravityField
         return Vector3.zero;
     }
 
-    protected override void ApplyRigidbodyGravity(Rigidbody rb)
-    {
-        base.ApplyRigidbodyGravity(rb);
-    }
+    //protected override void ApplyRigidbodyGravity(Rigidbody rb)
+    //{
+    //    base.ApplyRigidbodyGravity(rb);
+    //}
 
     public float get_outer_radius()
     {

@@ -1,26 +1,28 @@
 ﻿// ===============================================================================================
+#pragma warning disable 0619
+using RealtimeCSG;
 //	The MIT License (MIT) for UnityFBXExporter
 //
-//  UnityFBXExporter was created for Building Crafter (http://u3d.as/ovC) a tool to rapidly 
+//  UnityFBXExporter was created for Building Crafter (http://u3d.as/ovC) a tool to rapidly
 //	create high quality buildings right in Unity with no need to use 3D modeling programs.
 //
 //  Copyright (c) 2016 | 8Bit Goose Games, Inc.
-//		
-//	Permission is hereby granted, free of charge, to any person obtaining a copy 
-//	of this software and associated documentation files (the "Software"), to deal 
-//	in the Software without restriction, including without limitation the rights 
-//	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-//	of the Software, and to permit persons to whom the Software is furnished to do so, 
+//
+//	Permission is hereby granted, free of charge, to any person obtaining a copy
+//	of this software and associated documentation files (the "Software"), to deal
+//	in the Software without restriction, including without limitation the rights
+//	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+//	of the Software, and to permit persons to whom the Software is furnished to do so,
 //	subject to the following conditions:
-//		
-//	The above copyright notice and this permission notice shall be included in all 
+//
+//	The above copyright notice and this permission notice shall be included in all
 //	copies or substantial portions of the Software.
-//		
-//	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-//	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-//	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-//	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+//
+//	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//	INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+//	PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//	HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+//	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
 //	OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 // ===============================================================================================
@@ -46,14 +48,14 @@ namespace UnityFBXExporter
 		/// <param name="connections">The StringBuidler to create connections for the FBX file.</param>
 		/// <param name="parentObject">Parent object, if left null this is the top parent.</param>
 		/// <param name="parentModelId">Parent model id, 0 if top parent.</param>
-		public static long GetMeshToString(GameObject gameObj, 
+		public static long GetMeshToString(GameObject gameObj,
 										   Material colliderMaterial,
 										   bool exportColliders,
-		                                   ref StringBuilder objects, 
+		                                   ref StringBuilder objects,
 		                                   ref StringBuilder connections,
 										   out bool hasNormals,
 										   out bool hasTangents,
-										   GameObject parentObject = null, 
+										   GameObject parentObject = null,
 		                                   long parentModelId = 0)
 		{
 			hasNormals = false;
@@ -79,12 +81,12 @@ namespace UnityFBXExporter
 						var meshCollider = gameObj.GetComponent<MeshCollider>();
 						if (meshCollider)
 							mesh = meshCollider.sharedMesh;
-					} 
+					}
 				} else
 					mesh = skinnedMeshRenderer.sharedMesh;
 			} else
 				mesh = filter.sharedMesh;
-			
+
 			string meshName = gameObj.name;
 
 			bool needObject = gameObj.transform.childCount > 0 || mesh;
@@ -150,7 +152,7 @@ namespace UnityFBXExporter
 				// Generate the geometry information for the mesh created
 
 				tempObjectSb.AppendLine("\tGeometry: " + geometryId + ", \"Geometry::\", \"Mesh\" {");
-				
+
 				// ===== WRITE THE VERTICIES =====
 				Vector3[] vertices = mesh.vertices;
 				int vertCount = mesh.vertexCount * 3; // <= because the list of points is just a list of comma separated values, we need to multiply by three
@@ -168,7 +170,7 @@ namespace UnityFBXExporter
 
 				tempObjectSb.AppendLine();
 				tempObjectSb.AppendLine("\t\t} ");
-				
+
 				// ======= WRITE THE TRIANGLES ========
 				int triangleCount = mesh.triangles.Length;
 				int[] triangles = mesh.triangles;
@@ -183,9 +185,9 @@ namespace UnityFBXExporter
 						tempObjectSb.Append(",");
 
 					// To get the correct normals, must rewind the triangles since we flipped the x direction
-					tempObjectSb.AppendFormat(CultureInfo.InvariantCulture,"{0},{1},{2}", 
+					tempObjectSb.AppendFormat(CultureInfo.InvariantCulture,"{0},{1},{2}",
 					                          triangles[i],
-					                          triangles[i + 2], 
+					                          triangles[i + 2],
 					                          (triangles[i + 1] * -1) - 1); // <= Tells the poly is ended
 
 				}
@@ -200,7 +202,7 @@ namespace UnityFBXExporter
 				tempObjectSb.AppendLine("\t\t\tName: \"\"");
 				tempObjectSb.AppendLine("\t\t\tMappingInformationType: \"ByPolygonVertex\"");
 				tempObjectSb.AppendLine("\t\t\tReferenceInformationType: \"Direct\"");
-				
+
 				// ===== WRITE THE NORMALS ==========
 				Vector3[] normals = mesh.normals;
 				if (normals != null && normals.Length != 0)
@@ -242,8 +244,8 @@ namespace UnityFBXExporter
 					tempObjectSb.AppendLine("\t\t\t}");
 				}
 				tempObjectSb.AppendLine("\t\t}");
-				
-				
+
+
 				Vector4[] tangents = mesh.tangents;
 				if (tangents != null && tangents.Length == normals.Length && normals.Length != 0)
 				{
@@ -291,8 +293,8 @@ namespace UnityFBXExporter
 					tempObjectSb.AppendLine();
 					tempObjectSb.AppendLine("\t\t\t}");
 					tempObjectSb.AppendLine("\t\t}");
-					
-				
+
+
 					tempObjectSb.AppendLine();
 					tempObjectSb.AppendLine("\t\tLayerElementBinormal: 0 {");
 					tempObjectSb.AppendLine("\t\t\tVersion: 101");
@@ -323,7 +325,7 @@ namespace UnityFBXExporter
 						packed_tangent	= tangents[triangles[i + 2]];
 						normal			= normals[triangles[i + 2]];
 						newBinormal		= Vector3.Cross(normal, (Vector3)packed_tangent) * packed_tangent.w;
-					
+
 						tempObjectSb.AppendFormat(CultureInfo.InvariantCulture,"{0},{1},{2},",
 												  newBinormal.x * -1, // Switch binormal as is tradition
 												  newBinormal.y,
@@ -430,7 +432,7 @@ namespace UnityFBXExporter
 				else
 				{
 					List<int[]> allSubmeshes = new List<int[]>();
-					
+
 					// Load all submeshes into a space
 					for(int i = 0; i < numberOfSubmeshes; i++)
 						allSubmeshes.Add(mesh.GetIndices(i));
@@ -441,7 +443,7 @@ namespace UnityFBXExporter
 						for(int subMeshIndex = 0; subMeshIndex < allSubmeshes.Count; subMeshIndex++)
 						{
 							bool breaker = false;
-							
+
 							for(int n = 0; n < allSubmeshes[subMeshIndex].Length; n += 3)
 							{
 								if(triangles[i] == allSubmeshes[subMeshIndex][n]
@@ -453,7 +455,7 @@ namespace UnityFBXExporter
 									totalFaceCount++;
 									break;
 								}
-								
+
 								if(breaker)
 									break;
 							}
@@ -515,21 +517,21 @@ namespace UnityFBXExporter
 
 					for(int i = 0; i < allMaterialsInThisMesh.Length; i++)
 					{
-						Material mat = allMaterialsInThisMesh[i];		
+						Material mat = allMaterialsInThisMesh[i];
 						if (mat == null)
 						{
 							Debug.LogError("ERROR: the game object " + gameObj.name + " has an empty material on it. This will export problematic files. Please fix and reexport");
 							continue;
 						}
-						
-						int referenceId = Mathf.Abs(mat.GetInstanceID());
+
+						int referenceId = Mathf.Abs(mat.GetInstanceIDCompat());
 						tempConnectionsSb.AppendLine("\t;Material::" + mat.name + ", Model::" + mesh.name);
 						tempConnectionsSb.AppendLine("\tC: \"OO\"," + referenceId + "," + modelId);
 						tempConnectionsSb.AppendLine();
 					}
 				} else
 				{
-					int referenceId = Mathf.Abs(colliderMaterial.GetInstanceID());
+					int referenceId = Mathf.Abs(colliderMaterial.GetInstanceIDCompat());
 					tempConnectionsSb.AppendLine("\t;Material::" + colliderMaterial.name + ", Model::" + mesh.name);
 					tempConnectionsSb.AppendLine("\tC: \"OO\"," + referenceId + "," + modelId);
 					tempConnectionsSb.AppendLine();
@@ -554,3 +556,4 @@ namespace UnityFBXExporter
 		}
 	}
 }
+

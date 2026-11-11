@@ -7,7 +7,7 @@ public class Button : MonoBehaviour, IInteractable
 
     public void Interact()  
     {
-        SoundManager.PlaySound(SoundType.SHIELD_BLOCK, 0.2f);
+        
         foreach(Door door in doors)
         {
             door.Open(true);

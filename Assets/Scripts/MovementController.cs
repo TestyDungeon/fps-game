@@ -29,6 +29,8 @@ public class MovementController : MonoBehaviour
     
     public bool isGrounded { get; private set; }
     public RaycastHit GroundHit { get; private set; }
+    public float lastTimeGrounded { get; private set; }
+    public float lastAirTime { get; private set; }
 
     private Vector3 dashDir;
     private float dashSpeed;
@@ -77,7 +79,7 @@ public class MovementController : MonoBehaviour
     public Vector3 Move(Vector3 velocity)
     {
         //Debug.DrawRay(transform.position, gravityVec * 5, Color.cyan);
-        bool wasGrounded = isGrounded;
+        //bool wasGrounded = isGrounded;
 
         velocity += externalVelocity;
         
@@ -129,6 +131,18 @@ public class MovementController : MonoBehaviour
         
         externalVelocity = Vector3.zero;
         
+
+        //if (isGrounded)
+        //{
+        //    
+        //    Vector3 onSlope = mathlib.ProjectOnPlaneOblique(velocity, GroundHit.normal, -transform.up);
+        //    if (onSlope.sqrMagnitude > 0.0001f)
+        //    {
+        //        Debug.Log("slope");
+        //        velocity = onSlope.normalized * velocity.magnitude;
+        //    }
+        //}
+
         Vector3 displacement = velocity * Time.fixedDeltaTime;
 
         Vector3 up = transform.up;
@@ -136,21 +150,66 @@ public class MovementController : MonoBehaviour
         Vector3 lateralDisp = displacement - verticalDisp;
 
         
+        
+        
 
         recursionDepth = 0;
         hitWall = false;
         Vector3 resolvedLateral = CollideAndSlide(transform.position, lateralDisp, false);
 
         Vector3 stepUp = Vector3.zero;
-        if (hitWall)
-            Debug.Log($"[{tag}] hitWall={hitWall} wasGrounded={wasGrounded} — attempting TryStep");
-        if (hitWall && wasGrounded && TryStep(lateralDisp, wallHit, out float lift))
+
+        //if (hitWall && isGrounded && TryStep(lateralDisp, wallHit, out float lift))
+        //{
+        //    stepUp = transform.up * lift;
+        //    recursionDepth = 0;
+        //    resolvedLateral = CollideAndSlide(transform.position + stepUp, lateralDisp, false);
+        //    pendingStepSmooth += lift;   // for the camera, below
+        //    //Player.Instance.CameraRecoil.StepSmooth(lift);
+        //}
+
+
+
+        if (resolvedLateral.sqrMagnitude < lateralDisp.sqrMagnitude)
         {
-            stepUp = transform.up * lift;
-            recursionDepth = 0;
-            resolvedLateral = CollideAndSlide(transform.position + stepUp, lateralDisp, false);
-            pendingStepSmooth += lift;   // for the camera, below
-            //Player.Instance.CameraRecoil.StepSmooth(lift);
+            bool stepped = false;
+
+            // 1) steep face in the way -> stair
+            if (hitWall && isGrounded && TryStep(lateralDisp, wallHit, out float lift))
+            {
+                recursionDepth = 0;
+                resolvedLateral = CollideAndSlide(transform.position + up * (lift + stepClearance), lateralDisp, false);
+                stepUp = up * lift;
+                pendingStepSmooth += lift;
+                stepped = true;
+            }
+
+            // 2) anything else -> your original sweep (slopes)
+            if (!stepped)
+            {
+                recursionDepth = 0;
+                Vector3 sUp = CollideAndSlide(transform.position, up * stepHeight, true);
+                recursionDepth = 0;
+                Vector3 sForward = CollideAndSlide(transform.position + sUp, lateralDisp, true);
+
+                if (sForward.sqrMagnitude > resolvedLateral.sqrMagnitude)
+                {
+                    recursionDepth = 0;
+                    Vector3 sDown = CollideAndSlide(transform.position + sUp + sForward, -up * stepHeight, true);
+
+                    Vector3 onStepVector = sUp + sForward + sDown;
+                    Vector3 flat = Vector3.ProjectOnPlane(onStepVector, up);
+
+                    if (flat.sqrMagnitude > resolvedLateral.sqrMagnitude
+                        && Vector3.Angle(lateralDisp, flat) < 10f)
+                    {
+                        resolvedLateral = flat;
+                        stepUp = Vector3.Project(onStepVector, up);
+                        // no pendingStepSmooth here: a slope rises smoothly on its own,
+                        // feeding the camera every frame would make it lag behind you
+                    }
+                }
+            }
         }
         
 
@@ -181,7 +240,7 @@ public class MovementController : MonoBehaviour
         //StepDownSnap(wasGrounded, velocity, stepUp);
         
         RefreshIsGrounded();
-
+        Debug.DrawRay(transform.position, vel, Color.green);
         return vel;
     }
 
@@ -270,14 +329,14 @@ public class MovementController : MonoBehaviour
 
                 if (Vector3.Angle(up, tread.normal) > maxClimbAngle)
                 {
-                    Debug.Log($"[{tag}] TryStep: tread too steep ({Vector3.Angle(up, tread.normal):F1})");
+                    //Debug.Log($"[{tag}] TryStep: tread too steep ({Vector3.Angle(up, tread.normal):F1})");
                     return false;                                   // too steep to stand on
                 }
 
                 lift = Vector3.Dot(tread.point - foot, up);
                 if (lift <= offset || lift > stepHeight)
                 {
-                    Debug.Log($"[{tag}] TryStep: lift {lift:F3} out of range (stepHeight={stepHeight})");
+                    //Debug.Log($"[{tag}] TryStep: lift {lift:F3} out of range (stepHeight={stepHeight})");
                     return false;
                 }
 
@@ -286,8 +345,8 @@ public class MovementController : MonoBehaviour
                 CapsulePoints(transform.position + up * lift, out Vector3 a, out Vector3 b);
                 bool blocked = Physics.CheckCapsule(a, b, capsuleColliderRadius - 0.02f,
                                              layerMaskStep, QueryTriggerInteraction.Ignore);
-                if (blocked)
-                    Debug.Log($"[{tag}] TryStep: capsule blocked after lift {lift:F3}");
+                //if (blocked)
+                //    Debug.Log($"[{tag}] TryStep: capsule blocked after lift {lift:F3}");
                 return !blocked;
             }
             return false;
@@ -398,8 +457,17 @@ public class MovementController : MonoBehaviour
 
     private void RefreshIsGrounded()
     {
-        // the corrected check: short reach below the feet, normal angle <= maxClimbAngle
+        bool wasGrounded = isGrounded;
+        
         isGrounded = GroundCheck(out RaycastHit hit);
+        
+        if(isGrounded && !wasGrounded)
+            lastAirTime = Time.time - lastTimeGrounded;
+        
+        if(isGrounded)
+            lastTimeGrounded = Time.time;
+
+
         GroundHit = hit;
     }
 

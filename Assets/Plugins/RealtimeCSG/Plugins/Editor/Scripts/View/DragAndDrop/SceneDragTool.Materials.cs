@@ -1,3 +1,4 @@
+﻿#pragma warning disable 0619
 using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
@@ -13,15 +14,15 @@ namespace RealtimeCSG
 		bool                    hoverOnSelectedSurfaces = false;
 
 		List<Material>	dragMaterials		= null;
-	
+
 		bool			selectAllSurfaces	= false;
 		GameObject		hoverOverObject;
 		MeshRenderer	hoverOverMeshRenderer;
 		int				hoverMaterialIndex;
 		GameObject		prevHoverOverObject;
-		
+
 		int dragGroup = -1;
-		
+
 		#region ValidateDrop
 		public bool ValidateDrop(SceneView sceneView)
 		{
@@ -29,7 +30,7 @@ namespace RealtimeCSG
 			if (DragAndDrop.objectReferences == null ||
 				DragAndDrop.objectReferences.Length == 0)
 			{
-				dragMaterials = null; 
+				dragMaterials = null;
 				return false;
 			}
 
@@ -51,7 +52,7 @@ namespace RealtimeCSG
 		}
 		#endregion
 
-		
+
 		#region ValidateDropPoint
 		public bool ValidateDropPoint(SceneView sceneView)
 		{
@@ -63,10 +64,10 @@ namespace RealtimeCSG
 			GameObject foundObject;
 			if (!SceneQueryUtility.FindClickWorldIntersection(camera, Event.current.mousePosition, out foundObject, out hoverOverMeshRenderer, out hoverMaterialIndex, ignoreDeepClick: true))
 				return false;
-			
+
 			if (foundObject.GetComponent<CSGBrush>())
 				return true;
-			
+
 			hoverOverObject = foundObject;
 			return true;
 		}
@@ -137,7 +138,7 @@ namespace RealtimeCSG
 			else
 				ApplyMeshMaterial();
 		}
-			
+
 		public void DragExited(SceneView sceneView)
         {
 			if (hoverOverMeshRenderer == null) BrushDragExited(sceneView);
@@ -224,9 +225,9 @@ namespace RealtimeCSG
 		{
             var camera = sceneView.camera;
 			LegacyBrushIntersection intersection;
-			
+
 			int		 highlight_surface;
-			CSGBrush highlight_brush;	
+			CSGBrush highlight_brush;
 			if (!SceneQueryUtility.FindWorldIntersection(camera, Event.current.mousePosition, out intersection))
 			{
 				highlight_brush		= null;
@@ -285,7 +286,7 @@ namespace RealtimeCSG
 					}
 				}
 			}
-			
+
 			if (needUpdate)
 			{
 				InternalCSGModelManager.UpdateMeshes();
@@ -464,7 +465,7 @@ namespace RealtimeCSG
 				return "null";
 			if (!mat)
 				return "invalid";
-			return mat.name + " " + mat.GetInstanceID().ToString();
+			return mat.name + " " + mat.GetInstanceIDCompat().ToString();
 		}
 
 		bool UndoRevert()
@@ -515,7 +516,7 @@ namespace RealtimeCSG
 			UpdateBrushMeshes(updateBrushes, updateModels);
 		}
 		#endregion
-		
+
 		Material GetMaterial()
         {
 			if (dragMaterials.Count > 1)
@@ -555,7 +556,7 @@ namespace RealtimeCSG
 						{
 							// assign material to all surfaces of selected brushes
 							if (!updateBrushes.Contains(brush)) // but don't duplicate any work if multiple surfaces of same brush are selected
-							{ 
+							{
 								for (int m = 0; m < texGens.Length; m++)
 								{
 									var material = GetMaterial();
@@ -618,7 +619,7 @@ namespace RealtimeCSG
 				return;
 
 			if (!hoverOnSelectedSurfaces)
-			{ 
+			{
 				var activetool = EditModeManager.ActiveTool as EditModeSurface;
 				if (activetool != null)
 				{
@@ -629,7 +630,7 @@ namespace RealtimeCSG
 
 						var highlight_surface		= selectedBrushSurfaces[i].surfaceIndex;
 						var brush_transformation	= brush.compareTransformation.localToWorldMatrix;
-						
+
 						CSGRenderer.DrawSurfaceOutlines(brush.brushNodeID, brush.Shape,
 													   brush_transformation, highlight_surface,
 													   ColorSettings.SurfaceInnerStateColor[2],
@@ -640,13 +641,13 @@ namespace RealtimeCSG
 			}
 
 			if (hoverBrushSurfaces != null)
-			{ 			
+			{
 				for (int i = 0; i < hoverBrushSurfaces.Length; i++)
 				{
 					var brush = hoverBrushSurfaces[i].brush;
-					
+
 					var brush_transformation = brush.compareTransformation.localToWorldMatrix;
-				
+
 					var highlight_surface	= hoverBrushSurfaces[i].surfaceIndex;
 					if (highlight_surface == -1 || selectAllSurfaces)
 					{
@@ -661,3 +662,4 @@ namespace RealtimeCSG
 		#endregion
 	}
 }
+

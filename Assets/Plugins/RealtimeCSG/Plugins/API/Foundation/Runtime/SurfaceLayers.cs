@@ -6,7 +6,7 @@ namespace RealtimeCSG.Foundation
 	/// <summary>Define which layers of <see cref="RealtimeCSG.Foundation.BrushMesh.Polygon"/>s of <seealso cref="RealtimeCSG.Foundation.BrushMesh"/>es that should be combined to create meshes.</summary>
 	/// <remarks>
 	/// <note>
-	/// The CSG process has no concept of, for instance, <see cref="RealtimeCSG.Foundation.LayerUsageFlags.Renderable"/> or <see cref="RealtimeCSG.Foundation.LayerUsageFlags.Collidable"/> 
+	/// The CSG process has no concept of, for instance, <see cref="RealtimeCSG.Foundation.LayerUsageFlags.Renderable"/> or <see cref="RealtimeCSG.Foundation.LayerUsageFlags.Collidable"/>
 	/// flags and just compares the bits set on the <see cref="RealtimeCSG.Foundation.SurfaceLayers.layerUsage"/> of the <see cref="RealtimeCSG.Foundation.BrushMesh.Polygon"/>s with the bits set in the <see cref="RealtimeCSG.Foundation.MeshQuery"/>.
 	/// </note>
 	/// <note>
@@ -22,7 +22,7 @@ namespace RealtimeCSG.Foundation
 		/// <summary>No layers, can be used to find <see cref="RealtimeCSG.Foundation.BrushMesh.Polygon"/>s that are not assigned to any layers.</summary>
 		/// <remarks>Can be used to find all the polygons that have been set to be 'hidden'.</remarks>
 		None						= 0,
-		
+
 		/// <summary>Find the polygons that: are visible</summary>
 		Renderable					= (int)((uint)1 <<  0),
 
@@ -52,7 +52,7 @@ namespace RealtimeCSG.Foundation
 
 	/// <summary>Index into one of the parameters of a SurfaceLayers</summary>
 	/// <remarks>Used to generate a mesh, by querying for a specific surface layer parameter index.
-	/// For example, the first layer parameter could be an index to a specific Material to render, 
+	/// For example, the first layer parameter could be an index to a specific Material to render,
 	/// which could be used by all surface types that are renderable.
 	/// <note>This enum is mirrored on the native side and cannot be modified. The number of LayerParameters is the same as in <see cref="RealtimeCSG.Foundation.SurfaceLayers"/>.</note>
 	/// </remarks>
@@ -111,24 +111,24 @@ namespace RealtimeCSG.Foundation
 		public LayerUsageFlags	layerUsage;
 
 		/// <value>First layer-parameter.</value>
-		/// <remarks>Could be, for instance, an instanceID to a [Material](https://docs.unity3d.com/ScriptReference/Material.html), which can then be found using [EditorUtility.InstanceIDToObject](https://docs.unity3d.com/ScriptReference/EditorUtility.InstanceIDToObject.html)
+		/// <remarks>Could be, for instance, an instanceID to a [Material](https://docs.unity3d.com/ScriptReference/Material.html), which can then be found using [Resources.InstanceIDToObject](https://docs.unity3d.com/ScriptReference/Resources.InstanceIDToObject.html)
 		/// A value of 0 means that it's not set.
 		/// <code>
-		///	mySurfaceLayer.<paramref name="layerParameter1"/> = myMaterial.GetInstanceID();
+		///	mySurfaceLayer.<paramref name="layerParameter1"/> = myMaterial.GetInstanceIDCompat();
 		///	... generate your mesh ...
-		///	Material myMaterial = EditorUtility.InstanceIDToObject(myGeneratedMeshContents.surfaceParameter);
+		///	Material myMaterial = UnityObjectCompatibility.InstanceIDToObjectCompat(myGeneratedMeshContents.surfaceParameter);
 		/// </code>
 		/// </remarks>
 		/// <seealso cref="RealtimeCSG.Foundation.LayerParameterIndex.LayerParameter1"/>.
 		public Int32			layerParameter1;
 
 		/// <value>Second layer-parameter.</value>
-		/// <remarks>Could be, for instance, an instanceID to a [PhysicMaterial](https://docs.unity3d.com/ScriptReference/PhysicMaterial.html), which can then be found using [EditorUtility.InstanceIDToObject](https://docs.unity3d.com/ScriptReference/EditorUtility.InstanceIDToObject.html)
+		/// <remarks>Could be, for instance, an instanceID to a [PhysicMaterial](https://docs.unity3d.com/ScriptReference/PhysicMaterial.html), which can then be found using [Resources.InstanceIDToObject](https://docs.unity3d.com/ScriptReference/Resources.InstanceIDToObject.html)
 		/// A value of 0 means that it's not set.
 		/// <code>
-		///	mySurfaceLayer.<paramref name="layerParameter2"/> = myPhysicMaterial.GetInstanceID();
+		///	mySurfaceLayer.<paramref name="layerParameter2"/> = myPhysicMaterial.GetInstanceIDCompat();
 		///	... generate your mesh ...
-		///	PhysicMaterial myMaterial = EditorUtility.InstanceIDToObject(myGeneratedMeshContents.surfaceParameter);
+		///	PhysicMaterial myMaterial = UnityObjectCompatibility.InstanceIDToObjectCompat(myGeneratedMeshContents.surfaceParameter);
 		/// </code>
 		/// </remarks>
 		/// <seealso cref="RealtimeCSG.Foundation.LayerParameterIndex.LayerParameter2"/>.
@@ -141,3 +141,4 @@ namespace RealtimeCSG.Foundation
 		// .. this could be extended in the future, when necessary
 	}
 }
+

@@ -33,10 +33,10 @@ public class GravityFieldCuboidal : GravityField
         return collided;
     }
 
-    protected override void ApplyRigidbodyGravity(Rigidbody rb)
-    {
-        base.ApplyRigidbodyGravity(rb);
-    }
+    //protected override void ApplyRigidbodyGravity(Rigidbody rb)
+    //{
+    //    base.ApplyRigidbodyGravity(rb);
+    //}
 
     public override Vector3 CalculateGravityVector(Vector3 position)
     {
