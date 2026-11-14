@@ -23,7 +23,7 @@ namespace PSX
 
             if (fog == null || !fog.IsActive())
             {
-                Debug.Log("No fog. Deactivated.");
+                //Debug.Log("No fog. Deactivated.");
                 return;
             }
             renderer.EnqueuePass(fogPass);

@@ -8,7 +8,7 @@ public class GunConfig : ScriptableObject
     public GameObject bulletCasePrefab = null;
     public float bulletCaseDelay = 0.3f;
     public TrailRenderer bulletTrail;
-    [HideInInspector] public LayerMask layerMask = (1 << 1 | 1 << 15);
+    
     
     [Header("SFX")]
     public AudioClip equipSFX;

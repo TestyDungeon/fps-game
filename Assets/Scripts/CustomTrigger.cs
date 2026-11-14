@@ -10,6 +10,8 @@ public class CustomTrigger : MonoBehaviour
     private CapsuleCollider capsuleCollider;
     private float capsuleHalfHeight;
 
+    private readonly Collider[] overlapBuffer = new Collider[16];
+
     void Awake() 
     {
         capsuleCollider = GetComponent<CapsuleCollider>();
@@ -40,14 +42,14 @@ public class CustomTrigger : MonoBehaviour
     private void CustomTriggerCheck()
     {
         _currentTriggers.RemoveWhere(c => c == null);
-
-        Collider[] hits = Physics.OverlapCapsule(
+        int hitCount = Physics.OverlapCapsuleNonAlloc(
             transform.position + transform.up * capsuleHalfHeight, 
             transform.position - transform.up * capsuleHalfHeight, 
-            capsuleCollider.radius, layermsk);
+            capsuleCollider.radius, overlapBuffer, layermsk);
 
-        foreach (var hit in hits)
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider hit = overlapBuffer[i];
             if (!hit.isTrigger)
                 continue;
 
@@ -73,7 +75,7 @@ public class CustomTrigger : MonoBehaviour
 
         _currentTriggers.RemoveWhere(c =>
         {
-            if (!System.Array.Exists(hits, h => h == c))
+            if (System.Array.IndexOf(overlapBuffer, c, 0, hitCount) < 0)
             {
                 foreach(ICustomTriggerReceiver receiver in receivers_)
                 {

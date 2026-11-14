@@ -18,9 +18,12 @@ public class Interactor : MonoBehaviour
         {
             if(Physics.Raycast(origin.position, origin.forward, out RaycastHit hit, range, layerMask, QueryTriggerInteraction.Collide))
             {
-                //Debug.Log("Name: " + hit.transform.name);
-                SoundManager.PlaySound(SoundType.SHIELD_BLOCK, 0.4f);
-                hit.transform.GetComponent<IInteractable>().Interact();
+                IInteractable interactable = hit.transform.GetComponentInParent<IInteractable>();
+                if (interactable != null)
+                {
+                    SoundManager.PlaySound(SoundType.SHIELD_BLOCK, 0.4f);
+                    interactable.Interact();
+                }
             }
         }
     }

@@ -11,7 +11,7 @@ public class Gun : Item, IAmmoHandler
     private Light[] lights;
     
     public GunConfig gunConfig;
-    
+    private LayerMask layerMask = (1 << 0 | 1 << 15 | 1 << 14 | 1 << 17);
     private float damageMultiplier = 1;
 
     protected bool readyToShoot;
@@ -28,6 +28,7 @@ public class Gun : Item, IAmmoHandler
     protected float lastTime;
     Vector3 direction;
 
+    private int decalIndex = 1;
     
     //protected AnimancerComponent animancer = null;
 
@@ -277,7 +278,7 @@ public class Gun : Item, IAmmoHandler
 
         RaycastHit hit;
 
-        if (Physics.Raycast(start, dir, out hit, gunConfig.range, (1 << 0 | 1 << 15 | 1 << 14), QueryTriggerInteraction.Collide))
+        if (Physics.Raycast(start, dir, out hit, gunConfig.range, layerMask, QueryTriggerInteraction.Collide))
         {
             Debug.Log("HIT: " + hit.transform.name);
             target = hit.point;
@@ -287,13 +288,15 @@ public class Gun : Item, IAmmoHandler
                 hit.rigidbody.AddForceAtPosition(transform.forward * gunConfig.force, hit.point, ForceMode.Impulse);
             }
 
-            if (hit.transform.gameObject.TryGetComponent<IDamageable>(out IDamageable victim))
+            if (hit.transform.TryGetComponent<IDamageable>(out IDamageable victim))
             {
                 victim.TakeDamage(player.transform, Mathf.RoundToInt(gunConfig.damage * damageMultiplier), hit.point, hit.normal);
             }
             else if(hit.transform.gameObject.layer == LayerMask.NameToLayer("Default") || hit.transform.gameObject.layer == LayerMask.NameToLayer("Interactable"))
             {
                 Destroy(Instantiate(GameManager.Instance.decalParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
+                Quaternion qua = Quaternion.LookRotation(-hit.normal, Vector3.up);
+                DecalManager.Instance.PositionDecal(decalIndex, hit.point + hit.normal * 0.01f, qua, Vector3.one * UnityEngine.Random.Range(0.15f, 0.2f));
                 hitSurface = true;
 
             }

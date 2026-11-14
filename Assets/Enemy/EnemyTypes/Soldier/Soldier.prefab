@@ -82,7 +82,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 092198c2706626047be82ffe933c8610, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enemyConfig: {fileID: 11400000, guid: c5639826183d2254490c3700a1420179, type: 2}
+  enemyConfig: {fileID: 11400000, guid: 986de28e5af2d544f93eaa80986988c9, type: 2}
   bulletStart:
   - {fileID: 2295748254199042285}
   meleeAttackCollider: {fileID: 0}

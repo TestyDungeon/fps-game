@@ -126,7 +126,7 @@ public class GravityController : MonoBehaviour, ICustomTriggerReceiver
         if (mc == null)
             return;
 
-        Collider[] hits = Physics.OverlapSphere(transform.position, 0.01f, GravityField.gravityLayerMask);
+        Collider[] hits = Physics.OverlapSphere(transform.position, 0.01f, GravityField.gravityFieldLM);
         gravityFields.Clear();
         prioritizedField = null;
 

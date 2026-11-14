@@ -10,7 +10,8 @@ public class Button : MonoBehaviour, IInteractable
         
         foreach(Door door in doors)
         {
-            door.Open(true);
+            door.Unlock();
+            door.Open();
         }
     }
 }

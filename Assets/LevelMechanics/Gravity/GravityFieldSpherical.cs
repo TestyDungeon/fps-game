@@ -7,6 +7,7 @@ public class GravityFieldSpherical : GravityField
     private float inner_radius;
     private float gravity_radius;
     SphereCollider sphereCollider;
+    private readonly Collider[] overlapBuffer = new Collider[16];
     void Start()
     {
         sphereCollider = GetComponent<SphereCollider>();
@@ -19,16 +20,20 @@ public class GravityFieldSpherical : GravityField
     {
         bool collided = false;
         rbs = new List<Rigidbody>();
-        Collider[] hits = Physics.OverlapSphere(transform.position, sphereCollider.radius * Mathf.Max(sphereCollider.transform.lossyScale.x, sphereCollider.transform.lossyScale.y, sphereCollider.transform.lossyScale.z));
-        foreach (Collider x in hits)
+        int hitCount = Physics.OverlapSphereNonAlloc(
+            transform.position,
+            sphereCollider.radius * Mathf.Max(sphereCollider.transform.lossyScale.x, sphereCollider.transform.lossyScale.y, sphereCollider.transform.lossyScale.z),
+            overlapBuffer,
+            gravityAffectedLM);
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider x = overlapBuffer[i];
             if (x.attachedRigidbody != null)
             {
                 rbs.Add(x.attachedRigidbody);
                 collided = true;
             }
-            Projectile proj = x.GetComponent<Projectile>();
-            if(proj != null)
+            if(x.TryGetComponent<Projectile>(out Projectile proj))
             {
                 proj.gravityVec = CalculateGravityVector(x.transform);
             }

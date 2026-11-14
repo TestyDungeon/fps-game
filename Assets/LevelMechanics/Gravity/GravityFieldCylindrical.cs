@@ -10,6 +10,7 @@ public class GravityFieldCylindrical : GravityField
     Vector3 capsuleDirection;
     Vector3 point1;
     Vector3 point2;
+    private readonly Collider[] overlapBuffer = new Collider[16];
 
     void Start()
     {
@@ -39,17 +40,22 @@ public class GravityFieldCylindrical : GravityField
         point1 = capsuleCenter + capsuleDirection * halfHeight;
         point2 = capsuleCenter - capsuleDirection * halfHeight;
         
-        Collider[] hits = Physics.OverlapCapsule(point1, point2, capsuleCollider.radius * capsuleCollider.transform.lossyScale.x);
-        
-        foreach (Collider x in hits)
+        int hitCount = Physics.OverlapCapsuleNonAlloc(
+            point1,
+            point2,
+            capsuleCollider.radius * capsuleCollider.transform.lossyScale.x,
+            overlapBuffer,
+            gravityAffectedLM);
+
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider x = overlapBuffer[i];
             if (x.attachedRigidbody != null)
             {
                 rbs.Add(x.attachedRigidbody);
                 collided = true;
             }
-            Projectile proj = x.GetComponent<Projectile>();
-            if(proj != null)
+            if(x.TryGetComponent<Projectile>(out Projectile proj))
             {
                 proj.gravityVec = CalculateGravityVector(x.transform);
             }

@@ -78,7 +78,7 @@ public class LevelTrigger : MonoBehaviour
         foreach(Door door in doorsToCloseOnStart)
         {
             door.locked = true;
-            door.Open(false);
+            door.Close();
         }
         while(encInd < encounters.Length)
         {

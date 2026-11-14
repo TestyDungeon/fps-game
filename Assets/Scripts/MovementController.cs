@@ -55,7 +55,7 @@ public class MovementController : MonoBehaviour
     [HideInInspector] public int layerMask;
     [HideInInspector] public int layerMaskStep;
 
-
+    private readonly Collider[] overlapBuffer = new Collider[16];
     Coroutine dashCoroutine;
 
     void Awake()
@@ -317,7 +317,7 @@ public class MovementController : MonoBehaviour
 
         if (treads.Length <= 0)
         {
-            Debug.Log($"[{tag}] TryStep: no tread found from {rayStart}");
+            //Debug.Log($"[{tag}] TryStep: no tread found from {rayStart}");
             return false;                                   // ledge, nothing to stand on
         }
         else
@@ -414,35 +414,28 @@ public class MovementController : MonoBehaviour
         transform.position = lowestPoint + rotatedOffset;
     }
 
-    private void ResolvePenetration(int recursion_ = 0)
+    private void ResolvePenetration()
     {
-        int recursion = recursion_;
-        if(recursion >= 10)
-            return;
-
-        Collider[] overlap = Physics.OverlapCapsule(
-            transform.position + transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
-            transform.position - transform.up * (capsuleColliderHeight / 2 - capsuleColliderRadius),
-            capsuleColliderRadius,
-            layerMask, QueryTriggerInteraction.Ignore);
-            
-        if (overlap.Length > 0)
+        for (int i = 0; i < 10; i++)
         {
-            foreach (Collider x in overlap)
+            CapsulePoints(transform.position, out Vector3 p1, out Vector3 p2);
+            int count = Physics.OverlapCapsuleNonAlloc(p1, p2, capsuleColliderRadius,
+                overlapBuffer, layerMask, QueryTriggerInteraction.Ignore);
+    
+            bool pushed = false;
+            for (int c = 0; c < count; c++)
             {
-                if (x == capsuleCollider)
-                    continue;
-                //Debug.Log(x.name + x);
-                if (Physics.ComputePenetration(
-                    capsuleCollider, transform.position, transform.rotation,
-                    x, x.transform.position, x.transform.rotation,
-                    out Vector3 dir, out float dis))
+                Collider x = overlapBuffer[c];
+                if (x == capsuleCollider) continue;
+    
+                if (Physics.ComputePenetration(capsuleCollider, transform.position, transform.rotation,
+                        x, x.transform.position, x.transform.rotation, out Vector3 dir, out float dis))
                 {
                     transform.position += dir * (dis + 0.1f);
-                    //Debug.DrawRay(transform.position, dir * (dis + 0.1f), Color.cyan, 1);
+                    pushed = true;
                 }
             }
-            ResolvePenetration(recursion + 1);
+            if (!pushed) return;
         }
     }
 

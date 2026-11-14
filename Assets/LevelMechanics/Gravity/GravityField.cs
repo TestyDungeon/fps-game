@@ -6,8 +6,8 @@ public class GravityField : MonoBehaviour
 {
     protected float rbGravity = 9.81f;
     [SerializeField] private bool blendable = false;
-    public static int gravityLayerMask = 1 << 9;
-
+    [HideInInspector] public static int gravityAffectedLM = 1 << 6 | 1 << 17;
+    [HideInInspector] public static LayerMask gravityFieldLM = 1 << 9;
     private static readonly HashSet<Rigidbody> appliedThisStep = new HashSet<Rigidbody>();
     private static float lastStepTime = -1f;
 
@@ -36,7 +36,7 @@ public class GravityField : MonoBehaviour
 
     public static Vector3 GetGravityAtPosition(Vector3 worldPos)
     {
-        Collider[] hits = Physics.OverlapSphere(worldPos, 0.01f, gravityLayerMask);
+        Collider[] hits = Physics.OverlapSphere(worldPos, 0.01f, gravityFieldLM);
         GravityField sphericalField = null;
         Vector3 finalVector = Vector3.zero;
 
@@ -44,8 +44,7 @@ public class GravityField : MonoBehaviour
         {
             if (hit.CompareTag("GravityField"))
             {
-                GravityField field = hit.GetComponent<GravityField>();
-                if (field != null)
+                if (hit.TryGetComponent<GravityField>(out GravityField field))
                 {
                     if (field is GravityFieldCuboidal)
                     {

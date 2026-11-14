@@ -9,7 +9,7 @@ public class Projectile : MonoBehaviour
     [HideInInspector] public Transform projectileStart;
     private Vector3 origin; 
     private Vector3 pre_pos;
-
+    private LayerMask layerMask = (1 << 0 | 1 << 15 | 1 << 14 | 1 << 17);
     private SphereCollider sphereCollider;
 
     private Vector3 direction;
@@ -60,7 +60,7 @@ public class Projectile : MonoBehaviour
         if(!collided || (gunConfig.ricochet > 0 && ricochetCount > 0))
             transform.Translate(direction * Time.deltaTime, Space.World);
         RaycastHit hit;
-        bool didHit = Physics.SphereCast(pre_pos, sphereCollider.radius * transform.lossyScale.x, transform.position - pre_pos,  out hit, Vector3.Distance(pre_pos, transform.position), gunConfig.layerMask, QueryTriggerInteraction.Ignore);
+        bool didHit = Physics.SphereCast(pre_pos, sphereCollider.radius * transform.lossyScale.x, transform.position - pre_pos,  out hit, Vector3.Distance(pre_pos, transform.position), layerMask, QueryTriggerInteraction.Ignore);
 
         vertical += gunConfig.gravityMult * Time.deltaTime;
         if(Vector3.Distance(pre_pos, origin) >= gunConfig.range || didHit)

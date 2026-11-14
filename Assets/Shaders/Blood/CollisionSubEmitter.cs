@@ -5,7 +5,7 @@ using UnityEditor;
 
 public class ParticleDetectCollision : MonoBehaviour
 {
-    public GameObject DecalPrefab;
+    //public GameObject DecalPrefab;
     [HideInInspector] public ParticleSystem part;
     public List<ParticleCollisionEvent> collisionEvents;
     public int decalIndex = 0;

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class GravityFieldCuboidal : GravityField
 {
     private BoxCollider boxCollider;
+    private readonly Collider[] overlapBuffer = new Collider[16];
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -16,16 +17,21 @@ public class GravityFieldCuboidal : GravityField
         bool collided = false;
         rbs = new List<Rigidbody>();
 
-        Collider[] hits = Physics.OverlapBox(boxCollider.transform.TransformPoint(boxCollider.center), Vector3.Scale(boxCollider.size * 0.5f, boxCollider.transform.lossyScale), boxCollider.transform.rotation);
-        foreach (Collider x in hits)
+        int hitCount = Physics.OverlapBoxNonAlloc(
+            boxCollider.transform.TransformPoint(boxCollider.center),
+            Vector3.Scale(boxCollider.size * 0.5f, boxCollider.transform.lossyScale),
+            overlapBuffer,
+            boxCollider.transform.rotation,
+            gravityAffectedLM);
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider x = overlapBuffer[i];
             if (x.attachedRigidbody != null)
             {
                 rbs.Add(x.attachedRigidbody);
                 collided = true;
             }
-            Projectile proj = x.GetComponent<Projectile>();
-            if(proj != null)
+            if(x.TryGetComponent<Projectile>(out Projectile proj))
             {
                 proj.gravityVec = CalculateGravityVector();
             }

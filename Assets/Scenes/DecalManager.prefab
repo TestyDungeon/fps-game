@@ -47,3 +47,5 @@ MonoBehaviour:
   decalPools:
   - decalPrefab: {fileID: 2204318513479173227, guid: 375779d9a5962b74c80bdbd60ba6bf46, type: 3}
     maxAmount: 100
+  - decalPrefab: {fileID: 2204318513479173227, guid: 8455c8b42bf230a40be3ebe7a9fc2756, type: 3}
+    maxAmount: 100
