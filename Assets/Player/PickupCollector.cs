@@ -8,12 +8,10 @@ public class PickupCollector : MonoBehaviour, ICustomTriggerReceiver
     //private float capsuleHalfHeight;
     private Health playerHealth;
     private Inventory inventory;
-    private GameManager gameManager;
     
 
     void Start()
     {
-        gameManager = FindAnyObjectByType<GameManager>();
         playerHealth = GetComponent<Health>();
         inventory = GetComponent<Inventory>();
         //capsuleCollider = GetComponent<CapsuleCollider>();
@@ -144,22 +142,22 @@ public class PickupCollector : MonoBehaviour, ICustomTriggerReceiver
                 }
                 
 
-            case LootType.Grapple:
-                gameManager.EnableGrapple();
-                return true;
-            
-            case LootType.Guns:
-                gameManager.EnableUI();
-                gameManager.EnableItems();
-                return true;  
+            //case LootType.Grapple:
+            //    gameManager.EnableGrapple();
+            //    return true;
+            //
+            //case LootType.Guns:
+            //    //gameManager.EnableUI();
+            //    gameManager.EnableItems();
+            //    return true;  
         }
         return false;  
     }
 
     public bool ApplyCollected(GameObject item)
     {
-        gameManager.EnableUI();
-        gameManager.EnableItem(item.name);
+        //gameManager.EnableUI();
+        //gameManager.EnableItem(item.name);
         return true;
     }
 

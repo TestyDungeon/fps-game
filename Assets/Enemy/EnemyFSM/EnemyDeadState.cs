@@ -13,7 +13,7 @@ public class EnemyDeadState : EnemyBaseState
         enemy.gameObject.layer = LayerMask.NameToLayer("Corpse");
         enemy.audioSource.enabled = false;
         enemy.SetNavmeshAgent(false);
-        GameObject orb = Object.Instantiate(GameManager.Instance.healthOrb, enemy.transform.position, Quaternion.identity);
+        GameObject orb = Object.Instantiate(GameAssets.Instance.healthOrb, enemy.transform.position, Quaternion.identity);
         orb.GetComponent<Rigidbody>().AddForce(Vector3.up * 1, ForceMode.Force);
         Object.Destroy(orb, 8);
         GameObject x = Object.Instantiate(enemy.enemyConfig.deathParticles, enemy.transform.position, Quaternion.LookRotation(enemy.transform.forward, enemy.transform.up));

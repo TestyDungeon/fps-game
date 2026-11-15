@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23429ed6bc4fb2341875dc48625d075b, type: 3}
+  m_Name: E1M4 Level Definition
+  m_EditorClassIdentifier: Assembly-CSharp::LevelDefinition
+  displayName: 'E1M4: The Manor'
+  thumbnail: {fileID: 21300000, guid: a44bf4433c320bb439608b0eaec1c054, type: 3}
+  sceneName: E1M4
+  startText: The Manor
+  sceneAsset: {fileID: 102900000, guid: baa39e1cab5e9bc4ba5ab056ff220165, type: 3}

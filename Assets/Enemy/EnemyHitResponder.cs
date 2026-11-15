@@ -55,7 +55,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         //    //state.movementController.addVelocity(transform.up * 0.15f * damageAmount);
         //    //StartCoroutine(state.AirJuggle(transform.up * 0.1f * damageAmount));
         //}
-        GameObject particles = Instantiate(GameManager.Instance.bloodParticles, damagePoint, Quaternion.LookRotation(normal));
+        GameObject particles = Instantiate(GameAssets.Instance.bloodParticles, damagePoint, Quaternion.LookRotation(normal));
         Destroy(particles, 20f);
         //SoundManager.PlaySound(SoundType.HURTENEMY, transform.position, 0.5f);
         //int preHealth = enemyHealth.GetHealth();
@@ -126,7 +126,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
     {
         if(state.GetCurrentState() is EnemyStaggerState)
         {
-            GameObject orb = Instantiate(GameManager.Instance.healthOrb, transform.position, Quaternion.identity);
+            GameObject orb = Instantiate(GameAssets.Instance.healthOrb, transform.position, Quaternion.identity);
             orb.GetComponent<Rigidbody>().AddForce(Vector3.up * 0.5f, ForceMode.Force);
             Destroy(orb, 8);
             enemyHealth.TakeDamage(enemyHealth.GetMaxHealth());

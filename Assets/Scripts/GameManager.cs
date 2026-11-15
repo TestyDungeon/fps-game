@@ -40,14 +40,6 @@ public class GameManager : MonoBehaviour
         UI.Instance.textUI.SetText(mapStartText);
     }
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            SetMainMenuOpen(!inMenu);
-        }
-    }
-
    public void SetMainMenuOpen(bool open)
     {
         inMenu = open;
@@ -66,24 +58,6 @@ public class GameManager : MonoBehaviour
         UI.Instance.gameOverUI.SetActive(false);
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
-    }
-
-    public void GameOver()
-    {
-        isGameOver = true;
-        Time.timeScale = 0;
-        UI.Instance.gameOverUI.SetActive(true);
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-    }
-
-    public void LevelEnd()
-    {
-        isGameOver = true;
-        Time.timeScale = 0;
-        UI.Instance.levelEndUI.SetActive(true);
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
     }
 
     public void LoadScene(string name)
@@ -110,13 +84,6 @@ public class GameManager : MonoBehaviour
         PlayerMovement.Instance.GetComponent<Inventory>().EnableItem(name);
     }
 
-    public void EnableUI()
-    {
-        foreach(GameObject item in UI.Instance.UIs)
-        {
-            item.SetActive(true);  
-        }
-    }
 
     public void PlayUIButtonSound(float volume)
     {

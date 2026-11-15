@@ -199,7 +199,7 @@ public class Kick : Item, IAmmoHandler
                     if(esm.GetCurrentState() != esm.DeadState)
                     {
                         inventory.ConsumeAmmo(LootType.MeleeAmmo, 1);
-                        Destroy(Instantiate(GameManager.Instance.ammoOrb, col.transform.position, Quaternion.identity), 8);
+                        Destroy(Instantiate(GameAssets.Instance.ammoOrb, col.transform.position, Quaternion.identity), 8);
                     }
                     ehr.TakeDamage(player.transform, damage, col.transform.position, col.transform.up);
                     ehr.CheckStaggerKill();

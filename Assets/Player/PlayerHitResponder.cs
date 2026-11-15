@@ -5,7 +5,6 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
 {
     //[SerializeField] private Transform playerPivot;
     private Health health;
-    private GameManager gameManager;
     private Kick melee;
 
     public static PlayerHitResponder Instance { get; private set; }
@@ -22,7 +21,6 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
     void Start()
     {
         health = Player.Instance.Health;
-        gameManager = FindAnyObjectByType<GameManager>();
         melee = FindAnyObjectByType<Kick>();
     }
 
@@ -66,7 +64,7 @@ public class PlayerHitResponder : MonoBehaviour, IDamageable
     {
         health.isAlive = false;
         Debug.Log("Player " + name + " died.");
-        gameManager.GameOver();
+        GameFlow.Instance.GameOver();
     }
 
     public Health GetPlayerHealth()

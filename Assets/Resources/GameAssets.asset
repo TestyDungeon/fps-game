@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75abfbe4c99e2a24e8d6f057bd866ff4, type: 3}
+  m_Name: GameAssets
+  m_EditorClassIdentifier: Assembly-CSharp::GameAssets
+  decalParticles: {fileID: 7853611592334637332, guid: 7f3531d146f3dd346aed4e2e9ec920ff, type: 3}
+  enemySpawnParticles: {fileID: 4455388225042208415, guid: 67e480219ceeca4419fbe282d916f7e3, type: 3}
+  bloodParticles: {fileID: 1257824197082757075, guid: 7791c853dcbbc0b4691e3eaeaae37e47, type: 3}
+  whiteMaterial: {fileID: 0}
+  healthOrb: {fileID: 7767593974562298775, guid: 20505471413c58c458e99127037c9606, type: 3}
+  ammoOrb: {fileID: 7767593974562298775, guid: 05e4bb90e62494d48970700356abf33f, type: 3}

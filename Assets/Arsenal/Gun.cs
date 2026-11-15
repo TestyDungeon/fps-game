@@ -83,8 +83,13 @@ public class Gun : Item, IAmmoHandler
 
     void Update()
     {
-        if(GameManager.Instance.GetInMenu() || GameManager.Instance.GetIsGameOver())
+        if (!GameFlow.IsPlaying)
+        {
+            if (alt) OnAltEnd();       // drop aim if we left Playing while holding it
+            shooting = false;
+            bufferShooting = false;
             return;
+        }
             
         GunInput();
         if(altStart)
@@ -294,7 +299,7 @@ public class Gun : Item, IAmmoHandler
             }
             else if(hit.transform.gameObject.layer == LayerMask.NameToLayer("Default") || hit.transform.gameObject.layer == LayerMask.NameToLayer("Interactable"))
             {
-                Destroy(Instantiate(GameManager.Instance.decalParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
+                Destroy(Instantiate(GameAssets.Instance.decalParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
                 Quaternion qua = Quaternion.LookRotation(-hit.normal, Vector3.up);
                 DecalManager.Instance.PositionDecal(decalIndex, hit.point + hit.normal * 0.01f, qua, Vector3.one * UnityEngine.Random.Range(0.15f, 0.2f));
                 hitSurface = true;

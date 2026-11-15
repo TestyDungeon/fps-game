@@ -84,7 +84,7 @@ public class LevelTrigger : MonoBehaviour
         {
             foreach(GameObject enemy in encounters[encInd].enemies)
             {
-                Instantiate(GameManager.Instance.enemySpawnParticles, enemy.transform);
+                Instantiate(GameAssets.Instance.enemySpawnParticles, enemy.transform);
                 enemy.SetActive(true);
                 EnemyStateManager state = enemy.GetComponent<EnemyStateManager>();
                 yield return null;

@@ -55,8 +55,16 @@ public class SoundManager : MonoBehaviour
 
     public static void PlaySound(SoundType sound, float volume = 1)
     {
+        if (instance == null || instance.soundList == null || instance.audioSource == null)
+            return;
+
         AudioClip[] clips = instance.soundList[(int)sound].Sounds;
-                AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+        if (clips == null || clips.Length == 0)
+            return;
+
+        AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+        if (randomClip == null)
+            return;
 
         instance.audioSource.PlayOneShot(randomClip, volume);
     }
@@ -95,6 +103,8 @@ public class SoundManager : MonoBehaviour
     {
         if (instance == null)
             instance = FindAnyObjectByType<SoundManager>();
+        if (instance == null || sound == null)
+            return;
 
         GameObject tempAudio = new GameObject("TempAudio");
         tempAudio.transform.position = instance.transform.position;
@@ -111,18 +121,28 @@ public class SoundManager : MonoBehaviour
 
     public static void PlaySound(AudioClip[] sounds, float volume = 1)
     {
-        if(sounds.Length <= 0)
+        if (instance == null || instance.audioSource == null || sounds == null || sounds.Length == 0)
             return;
-        AudioClip[] clips = sounds;
-        AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+
+        AudioClip randomClip = sounds[UnityEngine.Random.Range(0, sounds.Length)];
+        if (randomClip == null)
+            return;
 
         instance.audioSource.PlayOneShot(randomClip, volume);
     }
 
     public static void PlaySound(SoundType sound, Vector3 position, float volume = 1, float spatialBlend = 1f)
     {
+        if (instance == null || instance.soundList == null)
+            return;
+
         AudioClip[] clips = instance.soundList[(int)sound].Sounds;
-                AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+        if (clips == null || clips.Length == 0)
+            return;
+
+        AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+        if (randomClip == null)
+            return;
 
         //AudioSource.PlayClipAtPoint(randomClip, position, volume);
 
@@ -143,7 +163,10 @@ public class SoundManager : MonoBehaviour
 
     public static void PlaySound(AudioClip sound, Vector3 position, float volume = 1, float spatialBlend = 1f)
     {
-                GameObject tempAudio = new GameObject("TempAudio");
+        if (sound == null)
+            return;
+
+        GameObject tempAudio = new GameObject("TempAudio");
         tempAudio.transform.position = position;
         AudioSource source = tempAudio.AddComponent<AudioSource>();
 
@@ -160,10 +183,12 @@ public class SoundManager : MonoBehaviour
 
     public static void PlaySound(AudioClip[] sounds, Vector3 position, float volume = 1, float spatialBlend = 1f)
     {
-        if(sounds.Length <= 0)
+        if (sounds == null || sounds.Length == 0)
             return;
-        AudioClip[] clips = sounds;
-        AudioClip randomClip = clips[UnityEngine.Random.Range(0, clips.Length)];
+
+        AudioClip randomClip = sounds[UnityEngine.Random.Range(0, sounds.Length)];
+        if (randomClip == null)
+            return;
 
         //AudioSource.PlayClipAtPoint(randomClip, position, volume);
 
