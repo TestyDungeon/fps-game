@@ -16,9 +16,6 @@ MonoBehaviour:
   bulletCasePrefab: {fileID: 1147123391096741731, guid: 9e62d7d16ef71b348ba8b992a9da68e3, type: 3}
   bulletCaseDelay: 0.3
   bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 32695
   equipSFX: {fileID: 0}
   equipVolume: 1
   shootSFX:

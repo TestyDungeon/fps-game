@@ -1,17 +1,22 @@
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
-public class Button : MonoBehaviour, IInteractable
+public class InteractableEvent : MonoBehaviour, IInteractable
 {
-    public List<Door> doors;
+    [SerializeField] string prompt = "Press";
+    [SerializeField] string message;           // shown after pressing; leave empty for none
+    [SerializeField] bool singleUse = true;
+    [SerializeField] UnityEvent onInteract;
 
-    public void Interact()  
+    bool used;
+
+    public string GetPrompt(Interactor who) => used ? null : prompt;
+
+    public InteractResult Interact(Interactor who)
     {
-        
-        foreach(Door door in doors)
-        {
-            door.Unlock();
-            door.Open();
-        }
+        if (used) return InteractResult.Fail(null);
+        if (singleUse) used = true;
+        onInteract.Invoke();
+        return InteractResult.Ok(message);
     }
 }

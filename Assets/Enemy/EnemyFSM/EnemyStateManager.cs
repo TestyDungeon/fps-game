@@ -72,6 +72,8 @@ public class EnemyStateManager : MonoBehaviour
     [HideInInspector] public float lastDamage = 0;
     [HideInInspector] public Vector3 lastDamageVector = Vector3.zero;
 
+    private readonly Collider[] alertBuffer = new Collider[5];
+
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -185,15 +187,14 @@ public class EnemyStateManager : MonoBehaviour
 
     public void SwitchState(EnemyBaseState state)
     {
-        if(currentState is EnemyDeadState)
+        if (currentState is EnemyDeadState)
             return;
 
-        //Debug.Log("Switching to " + state + " from " + currentState);
         StopAllCoroutines();
-        currentState.ExitState(this);
-        currentState = state;
+        EnemyBaseState previous = currentState;
+        currentState = state;          // set first, so nested calls see the new state
+        previous.ExitState(this);
         state.EnterState(this);
-
     }
 
     public IEnumerator SwitchState(EnemyBaseState state, float x, float y)
@@ -544,6 +545,25 @@ public class EnemyStateManager : MonoBehaviour
         }
         
         return avoidance;
+    }
+
+    public void NotifyEnemies(float radius = 7)
+    {
+        int hitCount = Physics.OverlapSphereNonAlloc(transform.position, radius, alertBuffer, 1 << 8);
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider col = alertBuffer[i];
+            if (col == null)
+                continue;
+            if (col.gameObject == gameObject)
+                continue;
+            if(Physics.Raycast(transform.position, col.transform.position - transform.position, radius, 1 << 0 | 1 << 8) 
+            && col.TryGetComponent<EnemyStateManager>(out EnemyStateManager esm)
+            && esm.GetCurrentState() is EnemyIdleState)
+            {
+                esm.SwitchState(esm.ChaseState);
+            }
+        }
     }
 
     

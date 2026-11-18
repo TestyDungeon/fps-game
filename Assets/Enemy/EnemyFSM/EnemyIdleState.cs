@@ -23,7 +23,7 @@ public class EnemyIdleState : EnemyBaseState
 
     public override void ExitState(EnemyStateManager enemy)
     {
-        
+        enemy.NotifyEnemies();
     }
 
     

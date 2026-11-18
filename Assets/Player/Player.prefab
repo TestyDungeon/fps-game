@@ -865,7 +865,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerPivot: {fileID: 6537709611539033917}
-  playerMovementConfig: {fileID: 11400000, guid: 5f543a7b1b5949a45afad8c284cd7606, type: 2}
+  playerMovementConfig: {fileID: 11400000, guid: f6aedc0c0dabdf24bb12aa5ff2c02dea, type: 2}
   playerCamera: {fileID: 1861544086572792814}
   defaultFOV: 0
   targetFov: 0
@@ -889,9 +889,9 @@ MonoBehaviour:
   gravity: 25
   targetGravityAlignSpeed: 0.2
   gravityAlignSpeedOnFieldChange: 0.01
-  gravityAlignStep: 0.2
+  gravityAlignStep: 1
   maxClimbAngle: 50
-  stepHeight: 0.6
+  stepHeight: 0.75
   stepClearance: 0.02
   layerMask: -5193
   layerMaskStep: 0
@@ -1001,6 +1001,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7adcd8b357810474ba7e3f560b06075a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  range: 2.7
 --- !u!114 &3052654153804326123
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1677,7 +1678,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 128861
+    m_Bits: 259933
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -1715,7 +1716,6 @@ MonoBehaviour:
   m_CameraType: 0
   m_Cameras:
   - {fileID: 7571185734615396284}
-  - {fileID: 0}
   m_RendererIndex: -1
   m_VolumeLayerMask:
     serializedVersion: 2

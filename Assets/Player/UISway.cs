@@ -10,6 +10,7 @@ public class UISway : MonoBehaviour
 {
     [SerializeField] private List<RectTransform> uiTransforms;
     [SerializeField] private RectTransform hudTransform;
+    [SerializeField] private RectTransform hudMovePosition;
 
     private Vector3 rot;
     private Vector3 hudOrigin;
@@ -18,7 +19,7 @@ public class UISway : MonoBehaviour
 
     void Awake()
     {
-        hudOrigin = hudTransform.transform.localPosition;
+        hudOrigin = hudMovePosition.transform.localPosition;
         hudTargetPosition = hudOrigin;       
     }
 
@@ -69,7 +70,8 @@ public class UISway : MonoBehaviour
 
     private void ApplyHUDPosition()
     {
-        hudTransform.localPosition = Vector3.Lerp(hudTransform.localPosition, hudTargetPosition, Time.deltaTime * 7);
+        hudMovePosition.localPosition = Vector3.Lerp(hudMovePosition.localPosition, hudTargetPosition, Time.deltaTime * 7);
+        
     }
 
     public IEnumerator OnJump()

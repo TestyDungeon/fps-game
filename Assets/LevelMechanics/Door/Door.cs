@@ -69,16 +69,20 @@ public class Door : MonoBehaviour, IInteractable
         }
     }
 
-    // Press-to-use. Automatic doors ignore the use button.
-    public void Interact()
+    public string GetPrompt(Interactor who) => state == State.Closed ? "Open" : null;
+    
+    public InteractResult Interact(Interactor who)
     {
-        if (automatic) return;
+        if (automatic) return InteractResult.Ok();
 
         if (state == State.Closed || state == State.Closing)
         {
             if (!Open())
             {
-                // TODO: play a "locked" sound or show a message here
+                if (locked && key == null)  
+                    return InteractResult.Fail("Opened elsewhere");
+                if (locked && key != null)
+                    return InteractResult.Fail($"{key} key needed");
             }
         }
         else
@@ -86,6 +90,7 @@ public class Door : MonoBehaviour, IInteractable
             if(closable)
                 Close();
         }
+        return InteractResult.Ok();
     }
 
     // Returns false only if the door is locked.
@@ -99,6 +104,11 @@ public class Door : MonoBehaviour, IInteractable
 
         state = State.Opening;
         return true;
+    }
+
+    public void TryOpen()
+    {
+        Open();
     }
 
     public void Close()

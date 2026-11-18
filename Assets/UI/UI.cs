@@ -10,6 +10,7 @@ public class UI : MonoBehaviour
     public Camera UICamera;
     public GameObject HUD;
     public TextUI textUI;
+    public PromptUI promptUI;
     public UISway UISway { get; private set; }
 
     void Awake()

@@ -1,7 +1,7 @@
 using UnityEngine;
 using DG.Tweening;
 
-public class MovingPlatform : MonoBehaviour, IInteractable
+public class MovingPlatform : MonoBehaviour
 {
     Vector3 start;
     public Transform end;

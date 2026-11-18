@@ -42,16 +42,7 @@ public class GunConfig : ScriptableObject
     [Header("Projectile")]
     public GameObject projectilePrefab;
     public GameObject explosionPrefab;
-    public float projectileSpeed = 1f;
-    public float projectileRicoshet = 0;
-    public float gravityMult = 0f;
-    public float explosionRadius = 10;
-    public float explosionForceRB = 5;
-    public float explosionDelay = 0;
-    public float ricoshetSpeedLoss = 0;
-
-    [Header("RigidBody")]
-    public float mass = 1;
+    
 
     [Header("Alt")]
     public GunConfig altConfig;

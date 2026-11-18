@@ -25,7 +25,7 @@ public class Kick : Item, IAmmoHandler
  
     private MovementController mc;
     private int layerMask = 1 << 6;
-    private int swordLayerMask = (1 << 15 | 1 << 6);
+    private int swordLayerMask = (1 << 15 | 1 << 6 | 1 << 17);
     private bool blocking = false;
     private bool canParry = false;
     private bool parried = false;
@@ -175,17 +175,9 @@ public class Kick : Item, IAmmoHandler
             {
                 if(col.TryGetComponent<Rigidbody>(out Rigidbody rb))
                 {
-                    if(col.tag == "Bullet")
-                    {
-                        if(col.TryGetComponent<Projectile>(out Projectile proj))
-                        {
-                            proj.AddForce(cameraPivot.forward);
-                        }
-                    }
-                    else
-                    {
-                        rb.AddForce(cameraPivot.forward * 15, ForceMode.Impulse);
-                    }
+                    
+                    rb.AddForce(cameraPivot.forward * 15, ForceMode.Impulse);
+                    
                 }
 
                 if(col.tag == "Enemy")

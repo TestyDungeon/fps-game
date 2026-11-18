@@ -300,8 +300,11 @@ public class Gun : Item, IAmmoHandler
             else if(hit.transform.gameObject.layer == LayerMask.NameToLayer("Default") || hit.transform.gameObject.layer == LayerMask.NameToLayer("Interactable"))
             {
                 Destroy(Instantiate(GameAssets.Instance.decalParticles, hit.point, Quaternion.LookRotation(hit.normal)), 20f);
-                Quaternion qua = Quaternion.LookRotation(-hit.normal, Vector3.up);
-                DecalManager.Instance.PositionDecal(decalIndex, hit.point + hit.normal * 0.01f, qua, Vector3.one * UnityEngine.Random.Range(0.15f, 0.2f));
+                if(hit.transform.gameObject.layer != LayerMask.NameToLayer("Interactable"))
+                {
+                    Quaternion qua = Quaternion.LookRotation(-hit.normal, Vector3.up);
+                    DecalManager.Instance.PositionDecal(decalIndex, hit.point + hit.normal * UnityEngine.Random.Range(0.01f, 0.005f), qua, Vector3.one * UnityEngine.Random.Range(0.2f, 0.3f));
+                }
                 hitSurface = true;
 
             }
@@ -320,9 +323,10 @@ public class Gun : Item, IAmmoHandler
     {
         newProjectile = Instantiate(gunConfig.projectilePrefab, cameraPivot.position, Quaternion.LookRotation(dir));
         projectileComponent = newProjectile.GetComponent<Projectile>();
-        projectileComponent.gunConfig = gunConfig;
-        projectileComponent.projectileStart = cameraPivot;
-        newProjectile.GetComponent<MeshRenderer>().enabled = false;
+        projectileComponent.Launch(player.transform, cameraPivot.forward, layerMask);
+        //projectileComponent.gunConfig = gunConfig;
+        //projectileComponent.projectileStart = cameraPivot;
+        //newProjectile.GetComponent<MeshRenderer>().enabled = false;
     }
 
     protected virtual void AltShoot()

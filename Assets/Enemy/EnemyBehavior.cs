@@ -165,14 +165,17 @@ public class RangedAttack : IAttackBehavior
 
         Vector3 direction = enemy.targetTransform.position - enemy.bulletStart[bulletStartInd].position + new Vector3(x, y, 0);
         
-        EnemyProjectile projectile = Object.Instantiate(enemy.enemyConfig.projectile, enemy.bulletStart[bulletStartInd].position, Quaternion.LookRotation(direction)).GetComponent<EnemyProjectile>();
+        Projectile projectile = Object.Instantiate(enemy.enemyConfig.projectile, enemy.bulletStart[bulletStartInd].position, Quaternion.LookRotation(direction)).GetComponent<Projectile>();
         if(attackCount >= 3)
         {
             //projectile.ChangeParryable(true);
             attackCount = 0;    
         }
-        projectile.SetTarget(enemy.targetTransform);
-        projectile.SetParent(enemy.transform);
+        if(projectile.TryGetComponent<Projectile>(out Projectile proj))
+        {
+            projectile.Launch(enemy.transform, direction, 1 << 0 | 1 << 14 | 1 << 15 | 1 << 16, enemy.targetTransform);
+        }
+        
     }
 
     IEnumerator TimedShooting(EnemyStateManager enemy)

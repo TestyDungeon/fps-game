@@ -37,7 +37,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 160, y: 30}
+  m_SizeDelta: {x: 225.3, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8162727093771706690
 CanvasRenderer:
@@ -69,8 +69,8 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_HighlightedColor: {r: 0.6037736, g: 0.6037736, b: 0.6037736, a: 1}
+    m_PressedColor: {r: 0.4433962, g: 0.4433962, b: 0.4433962, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
@@ -173,8 +173,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Level Button
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 444dbde6729ec594083fcf0181a29c9c, type: 2}
-  m_sharedMaterial: {fileID: -3345440884320796232, guid: 444dbde6729ec594083fcf0181a29c9c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e883b0cd9bca1c04496f9119c83c194f, type: 2}
+  m_sharedMaterial: {fileID: -7087869482727344934, guid: e883b0cd9bca1c04496f9119c83c194f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

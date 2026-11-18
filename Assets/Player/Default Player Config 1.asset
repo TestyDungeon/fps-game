@@ -17,7 +17,7 @@ MonoBehaviour:
   accel: 9
   airSpeed: 13
   airMaxSpeed: 13
-  airAccel: 2
+  airAccel: 4
   airControl: 0
   friction: 5
   stopSpeed: 3.1

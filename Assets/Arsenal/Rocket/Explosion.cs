@@ -2,7 +2,9 @@ using UnityEngine;
 
 public class Explosion : MonoBehaviour
 {
-    public GunConfig gunConfig;
+    public int damage = 50;
+    public float explosionRadius = 10;
+    public float force = 20;
     private int layerMask = 1 << 15 | 1 << 16 | 1 << 8 | 1 << 3;
 
     void Awake()
@@ -12,7 +14,7 @@ public class Explosion : MonoBehaviour
     void Start()
     {
 
-        var surrounding_objects = Physics.OverlapSphere(transform.position, gunConfig.explosionRadius, layerMask, QueryTriggerInteraction.Collide);
+        var surrounding_objects = Physics.OverlapSphere(transform.position, explosionRadius, layerMask, QueryTriggerInteraction.Collide);
         SoundManager.PlaySound(SoundType.ROCKETEXPLODE, transform.position, 0.2f);
         foreach (var obj in surrounding_objects)
         {
@@ -30,25 +32,25 @@ public class Explosion : MonoBehaviour
                         esm.SwitchState(esm.FalterState); 
                     }
 
-                    if(dist > (gunConfig.explosionRadius * 0.5))
+                    if(dist > (explosionRadius * 0.5))
                     {
-                        mc.addVelocity(gunConfig.force * dir * 0.5f);
+                        mc.addVelocity(force * dir * 0.5f);
                     }
                     else
                     {
 
-                        mc.addVelocity(gunConfig.force * dir);
+                        mc.addVelocity(force * dir);
                     }
                 }
                 
             }
 
-            if (obj.TryGetComponent<IDamageable>(out IDamageable victim) && dist <= gunConfig.explosionRadius)
+            if (obj.TryGetComponent<IDamageable>(out IDamageable victim) && dist <= explosionRadius)
             {
                 if(obj.tag == "Player")
-                    victim.TakeDamage(PlayerMovement.Instance.transform, Mathf.FloorToInt(CalculateDamage(gunConfig.explosionRadius, dist) * 0.5f));
+                    victim.TakeDamage(PlayerMovement.Instance.transform, Mathf.FloorToInt(CalculateDamage(explosionRadius, dist) * 0.5f));
                 else
-                    victim.TakeDamage(PlayerMovement.Instance.transform, CalculateDamage(gunConfig.explosionRadius, dist));
+                    victim.TakeDamage(PlayerMovement.Instance.transform, CalculateDamage(explosionRadius, dist));
             }
             
             //if (rb != null)
@@ -62,13 +64,13 @@ public class Explosion : MonoBehaviour
         //float logDist = Mathf.Log(distance + 1);
         float actualDamage = ((radius - distance)/radius) * 1;
         if(actualDamage > 0.8)
-            actualDamage = gunConfig.damage;
+            actualDamage = damage;
         if(actualDamage <= 0.8)
-            actualDamage = gunConfig.damage * 0.2f;
+            actualDamage = damage * 0.2f;
         Debug.Log("Actual Damage: " + actualDamage);
         if(actualDamage < 0)
             actualDamage = 0;
-        return gunConfig.damage;
+        return damage;
         //return Mathf.FloorToInt(actualDamage);
     }
 }

@@ -33,7 +33,7 @@ public class GravityFieldCuboidal : GravityField
             }
             if(x.TryGetComponent<Projectile>(out Projectile proj))
             {
-                proj.gravityVec = CalculateGravityVector();
+                proj.SetGravityDir(CalculateGravityVector());
             }
         }
         return collided;

@@ -57,7 +57,7 @@ public class GravityFieldCylindrical : GravityField
             }
             if(x.TryGetComponent<Projectile>(out Projectile proj))
             {
-                proj.gravityVec = CalculateGravityVector(x.transform);
+                proj.SetGravityDir(CalculateGravityVector(x.transform));
             }
         }
         return collided;

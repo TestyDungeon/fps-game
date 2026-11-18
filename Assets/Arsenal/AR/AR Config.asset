@@ -16,9 +16,6 @@ MonoBehaviour:
   bulletCasePrefab: {fileID: 1147123391096741731, guid: cc40d7b68a50c8947a05eb3582c55052, type: 3}
   bulletCaseDelay: 0.1
   bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 32695
   equipSFX: {fileID: 8300000, guid: e77afa38c70e27e47ab9bc5c52f1c935, type: 3}
   equipVolume: 0.4
   shootSFX:
@@ -48,7 +45,7 @@ MonoBehaviour:
   timeBetweenShots: 0
   inputDelay: 0
   ricochet: 0
-  projectilePrefab: {fileID: 0}
+  projectilePrefab: {fileID: 5265528337465247437, guid: bc7514c56c9f504428c56d67d805fdac, type: 3}
   explosionPrefab: {fileID: 0}
   projectileSpeed: 1
   projectileRicoshet: 0

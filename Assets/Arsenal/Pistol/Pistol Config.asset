@@ -16,9 +16,6 @@ MonoBehaviour:
   bulletCasePrefab: {fileID: 1147123391096741731, guid: cc40d7b68a50c8947a05eb3582c55052, type: 3}
   bulletCaseDelay: 0.1
   bulletTrail: {fileID: 2120156849253174540, guid: b4a83515c1030f74394cb5bf309fb3c5, type: 3}
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 65207
   equipSFX: {fileID: 8300000, guid: 152860dac3c95a84dbe0b9a1b313c209, type: 3}
   equipVolume: 0.1
   shootSFX:
@@ -41,7 +38,7 @@ MonoBehaviour:
   range: 300
   force: 20
   knockbackForce: 0
-  spread: 0
+  spread: 0.05
   timeBetweenShooting: 0.35
   bulletsPerShot: 1
   ammoPerShot: 1
