@@ -1,70 +1,83 @@
-﻿using UnityEngine;
-using UnityEditor;
-using InternalRealtimeCSG;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections;
-using System.Reflection;
 using System.Linq;
-using UnityEngine.SceneManagement;
+using System.Reflection;
 
 namespace RealtimeCSG
 {
-	internal sealed class UnityGridManager
-	{
-		static Type			UnityAnnotationUtility;
-		static PropertyInfo UnityShowGridProperty;
+    internal sealed class UnityGridManager
+    {
+        private static Type m_UnityAnnotationUtility;
+        private static PropertyInfo m_UnityShowGridProperty;
 
-		static bool         initialized = false;
-		static bool			reflectionSucceeded = false;
+        private static bool m_Initialized;
+        private static bool m_ReflectionSucceeded;
 
-		static void InitReflectedData()
-		{
-			if (initialized)
-				return;
-			initialized = true;
-			reflectionSucceeded = false;
+        private static void InitReflectedData()
+        {
+            if(m_Initialized)
+            {
+                return;
+            }
 
-			var assemblies = System.AppDomain.CurrentDomain.GetAssemblies();
-			var types = new List<System.Type>();
-			foreach(var assembly in assemblies)
-			{
-				try
-				{
-					types.AddRange(assembly.GetTypes());
-				}
-				catch { }
-			}
-			UnityAnnotationUtility		= types.FirstOrDefault(t => t.FullName == "UnityEditor.AnnotationUtility");
-			
-			if (UnityAnnotationUtility != null)
-			{
-				UnityShowGridProperty = UnityAnnotationUtility.GetProperty("showGrid", BindingFlags.NonPublic | BindingFlags.Static);
-				if (UnityShowGridProperty != null)
-					UnityShowGridProperty.SetValue(UnityAnnotationUtility, false, null);
-			} else
-			{
-				UnityShowGridProperty = null;
-			}
-			
-			reflectionSucceeded =	UnityShowGridProperty   != null;
-		}
+            m_Initialized         = true;
+            m_ReflectionSucceeded = false;
 
-		internal static bool ShowGrid
-		{
-			get
-			{
-				InitReflectedData();
-				if (reflectionSucceeded && UnityShowGridProperty != null)
-					return (bool)UnityShowGridProperty.GetValue(UnityAnnotationUtility, null);
-				return true;
-			}
-			set
-			{
-				InitReflectedData();
-				if (reflectionSucceeded && UnityShowGridProperty != null)
-					UnityShowGridProperty.SetValue(UnityAnnotationUtility, value, null);
-			}
-		}
-	}
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            List<Type> types      = new List<Type>();
+
+            foreach(Assembly assembly in assemblies)
+            {
+                try
+                {
+                    types.AddRange(assembly.GetTypes());
+                }
+                catch
+                {
+                }
+            }
+
+            m_UnityAnnotationUtility = types.FirstOrDefault(t => t.FullName == "UnityEditor.AnnotationUtility");
+
+            if(m_UnityAnnotationUtility != null)
+            {
+                m_UnityShowGridProperty = m_UnityAnnotationUtility.GetProperty("showGrid", BindingFlags.NonPublic | BindingFlags.Static);
+
+                if(m_UnityShowGridProperty != null)
+                {
+                    m_UnityShowGridProperty.SetValue(m_UnityAnnotationUtility, false, null);
+                }
+            }
+            else
+            {
+                m_UnityShowGridProperty = null;
+            }
+
+            m_ReflectionSucceeded = m_UnityShowGridProperty != null;
+        }
+
+        internal static bool ShowGrid
+        {
+            get
+            {
+                InitReflectedData();
+
+                if(m_ReflectionSucceeded && m_UnityShowGridProperty != null)
+                {
+                    return (bool)m_UnityShowGridProperty.GetValue(m_UnityAnnotationUtility, null);
+                }
+
+                return true;
+            }
+            set
+            {
+                InitReflectedData();
+
+                if(m_ReflectionSucceeded && m_UnityShowGridProperty != null)
+                {
+                    m_UnityShowGridProperty.SetValue(m_UnityAnnotationUtility, value, null);
+                }
+            }
+        }
+    }
 }

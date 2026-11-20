@@ -1,201 +1,204 @@
-﻿#pragma warning disable 0619
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using RealtimeCSG.Components;
 
 namespace RealtimeCSG
 {
-	internal static class HierarchyItemExtension
-	{
-		internal static bool FindSiblingIndex(this HierarchyItem self, Transform searchTransform, int siblingIndex, int searchTransformID, out int index)
-		{
-			if (self.ChildNodes == null ||
-				self.ChildNodes.Length == 0)
-			{
-				index = 0;
-				return false;
-			}
+    internal static class HierarchyItemExtension
+    {
+        internal static bool FindSiblingIndex(this HierarchyItem self, int siblingIndex, int searchTransformID, out int index)
+        {
+            if(self.childNodes == null || self.childNodes.Length == 0)
+            {
+                index = 0;
 
-			var checkIndex		 = siblingIndex;
-			var last			 = self.ChildNodes.Length - 1;
-			var currentLoopCount = HierarchyItem.CurrentLoopCount;
+                return false;
+            }
 
-			if (self.ChildNodes[last].LastLoopCount != currentLoopCount)
-			{
-				if (self.ChildNodes[last].Transform != null && self.ChildNodes[last].Transform)
-					self.ChildNodes[last].CachedTransformSiblingIndex = self.ChildNodes[last].Transform.GetSiblingIndex();
-				else
-					self.ChildNodes[last].CachedTransformSiblingIndex = -1;
-				self.ChildNodes[last].LastLoopCount = currentLoopCount;
-			}
-			if (self.ChildNodes[last].CachedTransformSiblingIndex < checkIndex)
-			{
-				index = self.ChildNodes.Length;
-				return false;
-			}
+            int last             = self.childNodes.Length - 1;
+            int currentLoopCount = HierarchyItem.CurrentLoopCount;
 
-			// continue searching while [imin,imax] is not empty
-			var imin = 0;
-			var imax = last;
-			while (imin <= imax)
-			{
-				// calculate the midpoint for roughly equal partition
-				var imid = (imin + imax) / 2;
+            if(self.childNodes[last].lastLoopCount != currentLoopCount)
+            {
+                if(self.childNodes[last].transform != null && self.childNodes[last].transform)
+                {
+                    self.childNodes[last].cachedTransformSiblingIndex =
+                        self.childNodes[last].transform.GetSiblingIndex();
+                }
+                else
+                {
+                    self.childNodes[last].cachedTransformSiblingIndex = -1;
+                }
 
-				if (self.ChildNodes[imid].LastLoopCount != currentLoopCount)
-				{
-					if (self.ChildNodes[imid].Transform != null && self.ChildNodes[imid].Transform)
-						self.ChildNodes[imid].CachedTransformSiblingIndex = self.ChildNodes[imid].Transform.GetSiblingIndex();
-					else
-						self.ChildNodes[imid].CachedTransformSiblingIndex = -1;
-					self.ChildNodes[imid].LastLoopCount = currentLoopCount;
-				}
-				var midKey2 = self.ChildNodes[imid].CachedTransformSiblingIndex;
+                self.childNodes[last].lastLoopCount = currentLoopCount;
+            }
 
-				// determine which subarray to search
-				if (midKey2 < checkIndex)
-				{
-					// change min index to search upper subarray
-					imin = imid + 1;
-				} else
-				{
-					if (midKey2 == checkIndex)
-					{
-						// key found at index imid
+            if(self.childNodes[last].cachedTransformSiblingIndex < siblingIndex)
+            {
+                index = self.childNodes.Length;
 
-						index = imid;
-						return (searchTransformID == self.ChildNodes[imid].TransformID);
-					}
-					if (imid > 0)
-					{
-						if (self.ChildNodes[imid - 1].LastLoopCount != currentLoopCount)
-						{
-							if (self.ChildNodes[imid - 1].Transform != null && self.ChildNodes[imid - 1].Transform)
-								self.ChildNodes[imid - 1].CachedTransformSiblingIndex = self.ChildNodes[imid - 1].Transform.GetSiblingIndex();
-							else
-								self.ChildNodes[imid - 1].CachedTransformSiblingIndex = -1;
-							self.ChildNodes[imid - 1].LastLoopCount = currentLoopCount;
-						}
-						var midKey1 = self.ChildNodes[imid - 1].CachedTransformSiblingIndex;
+                return false;
+            }
 
-						if (midKey1 < checkIndex)
-						{
-							// key found at index imid
-							index = imid;
-							return (searchTransformID == self.ChildNodes[imid].TransformID);
-						}
-					}
-					// change max index to search lower subarray
-					imax = imid - 1;
-				}
-			}
+            // continue searching while [imin,imax] is not empty
+            int imin = 0;
+            int imax = last;
 
-			index = 0;
-			return false;
-		}
+            while(imin <= imax)
+            {
+                // calculate the midpoint for roughly equal partition
+                int imid = (imin + imax) / 2;
 
-		internal static bool FindSiblingIndex(this HierarchyItem self, HierarchyItem item, out int index)
-		{
-			if (self.ChildNodes == null ||
-				self.ChildNodes.Length == 0)
-			{
-				index = 0;
-				return false;
-			}
+                if(self.childNodes[imid].lastLoopCount != currentLoopCount)
+                {
+                    if(self.childNodes[imid].transform != null && self.childNodes[imid].transform)
+                    {
+                        self.childNodes[imid].cachedTransformSiblingIndex = self.childNodes[imid].transform.GetSiblingIndex();
+                    }
+                    else
+                    {
+                        self.childNodes[imid].cachedTransformSiblingIndex = -1;
+                    }
 
-			for (var i = 0; i < self.ChildNodes.Length; i++)
-			{
-				if (item != self.ChildNodes[i])
-					continue;
+                    self.childNodes[imid].lastLoopCount = currentLoopCount;
+                }
 
-				index = i;
-				return true;
-			}
+                int midKey2 = self.childNodes[imid].cachedTransformSiblingIndex;
 
-			index = 0;
-			return false;
-		}
+                // determine which subarray to search
+                if(midKey2 < siblingIndex)
+                {
+                    // change min index to search upper subarray
+                    imin = imid + 1;
+                }
+                else
+                {
+                    if(midKey2 == siblingIndex)
+                    {
+                        // key found at index imid
 
-		internal static bool AddChildItem(this HierarchyItem self, HierarchyItem item)
-		{
-			int index;
-			if (self.FindSiblingIndex(item, out index))
-				// The transform is already in the array?
-				return false;
+                        index = imid;
 
-			var currentLoopCount = HierarchyItem.CurrentLoopCount;
-			if (item.LastLoopCount != currentLoopCount)
-			{
-				item.CachedTransformSiblingIndex = item.Transform.GetSiblingIndex();
-				item.LastLoopCount = currentLoopCount;
-			}
+                        return searchTransformID == self.childNodes[imid].transformID;
+                    }
 
-			if (self.FindSiblingIndex(item.Transform, item.CachedTransformSiblingIndex, item.TransformID, out index))
-			{
-				return false;
-			}
+                    if(imid > 0)
+                    {
+                        if(self.childNodes[imid - 1].lastLoopCount != currentLoopCount)
+                        {
+                            if(self.childNodes[imid - 1].transform != null && self.childNodes[imid - 1].transform)
+                            {
+                                self.childNodes[imid - 1].cachedTransformSiblingIndex = self.childNodes[imid - 1].transform.GetSiblingIndex();
+                            }
+                            else
+                            {
+                                self.childNodes[imid - 1].cachedTransformSiblingIndex = -1;
+                            }
 
-			// make sure item is added in the correct position within the array
-			UnityEditor.ArrayUtility.Insert(ref self.ChildNodes, index, item);
-			item.SiblingIndex = index;
-			/*
-			bool childrenModified = false;
-			for (int i = index + 1; i < ChildNodes.Length; i++)
-			{
-				if (ChildNodes[i].SiblingIndex != i)
-				{
-					ChildNodes[i].SiblingIndex = i;
-					childrenModified = true;
-				}
-			}
-			if (childrenModified)*/
-			{
-				var parentData = self as ParentNodeData;
-				if (parentData != null)
-					parentData.ChildrenModified = true;
-			}
+                            self.childNodes[imid - 1].lastLoopCount = currentLoopCount;
+                        }
 
-			Debug.Assert(self.ChildNodes[index] == item);
-			return true;
-		}
+                        int midKey1 = self.childNodes[imid - 1].cachedTransformSiblingIndex;
 
-		internal static bool RemoveChildItem(this HierarchyItem self, HierarchyItem item)
-		{
-			int index;
-			if (!self.FindSiblingIndex(item, out index))
-				// The transform is not in the array?
-				return false;
+                        if(midKey1 < siblingIndex)
+                        {
+                            // key found at index imid
+                            index = imid;
 
-			// make sure item is removed from the array
-			UnityEditor.ArrayUtility.RemoveAt(ref self.ChildNodes, index);
-			//item.siblingIndex = -1;
-			return true;
-		}
+                            return searchTransformID == self.childNodes[imid].transformID;
+                        }
+                    }
 
-		public static IEnumerable<HierarchyItem> IterateChildrenDeep(this HierarchyItem self)
-		{
-			for (var i = 0; i < self.ChildNodes.Length; i++)
-			{
-				var childNode = self.ChildNodes[i];
-				yield return childNode;
+                    // change max index to search lower subarray
+                    imax = imid - 1;
+                }
+            }
 
-				if (childNode.ChildNodes.Length == 0)
-					continue;
+            index = 0;
 
-				foreach (var item in childNode.IterateChildrenDeep())
-				{
-					yield return item;
-				}
-			}
-		}
+            return false;
+        }
 
-		public static void Init(this HierarchyItem self, CSGNode node, Int32 nodeID)
-		{
-			self.Transform		= node.transform;
-			self.TransformID	= node.transform.GetInstanceIDCompat();
-			self.NodeID			= nodeID;
-		}
-	}
+        internal static bool FindSiblingIndex(this HierarchyItem self, HierarchyItem item, out int index)
+        {
+            if(self.childNodes == null || self.childNodes.Length == 0)
+            {
+                index = 0;
+
+                return false;
+            }
+
+            for(int i = 0; i < self.childNodes.Length; i++)
+            {
+                if(item != self.childNodes[i])
+                {
+                    continue;
+                }
+
+                index = i;
+
+                return true;
+            }
+
+            index = 0;
+
+            return false;
+        }
+
+        internal static bool AddChildItem(this HierarchyItem self, HierarchyItem item)
+        {
+            // The transform is already in the array?
+            if(self.FindSiblingIndex(item, out int index))
+            {
+                return false;
+            }
+
+            int currentLoopCount = HierarchyItem.CurrentLoopCount;
+
+            if(item.lastLoopCount != currentLoopCount)
+            {
+                item.cachedTransformSiblingIndex = item.transform.GetSiblingIndex();
+                item.lastLoopCount               = currentLoopCount;
+            }
+
+            if(self.FindSiblingIndex(item.cachedTransformSiblingIndex, item.transformID, out index))
+            {
+                return false;
+            }
+
+            // make sure item is added in the correct position within the array
+            UnityEditor.ArrayUtility.Insert(ref self.childNodes, index, item);
+            item.siblingIndex = index;
+
+            if(self is ParentNodeData parentData)
+            {
+                parentData.childrenModified = true;
+            }
+
+            Debug.Assert(self.childNodes[index] == item);
+
+            return true;
+        }
+
+        internal static bool RemoveChildItem(this HierarchyItem self, HierarchyItem item)
+        {
+            // The transform is not in the array?
+            if(!self.FindSiblingIndex(item, out int index))
+            {
+                return false;
+            }
+
+            // make sure item is removed from the array
+            UnityEditor.ArrayUtility.RemoveAt(ref self.childNodes, index);
+
+            return true;
+        }
+
+        public static void Init(this HierarchyItem self, CSGNode node, int nodeID)
+        {
+            self.transform   = node.transform;
+            self.transformID = node.transform.GetIntegerID();
+            self.nodeID      = nodeID;
+        }
+    }
 }
-

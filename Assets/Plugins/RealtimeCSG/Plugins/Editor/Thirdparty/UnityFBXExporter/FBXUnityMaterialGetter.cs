@@ -101,7 +101,7 @@ namespace UnityFBXExporter
 				if(copyMaterials)
 					materialName = gameObj.name + "_" + mat.name;
 
-				int referenceId = Mathf.Abs(mat.GetInstanceIDCompat());
+				int referenceId = Mathf.Abs(mat.GetIntegerID());
 
                 var color = Color.white;
                 if (mat.HasProperty("_Color"))
@@ -224,7 +224,7 @@ namespace UnityFBXExporter
 			StringBuilder objectsSb = new StringBuilder();
 			StringBuilder connectionsSb = new StringBuilder();
 
-			int materialId = Mathf.Abs(material.GetInstanceIDCompat());
+			int materialId = Mathf.Abs(material.GetIntegerID());
 
 			Texture mainTexture = material.GetTexture("_MainTex");
 

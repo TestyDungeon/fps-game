@@ -1,171 +1,184 @@
-using UnityEngine;
 using UnityEditor;
-using InternalRealtimeCSG;
-using System;
-using System.Collections.Generic;
-using System.Collections;
-using System.Reflection;
-using System.Linq;
-using UnityEngine.SceneManagement;
+using UnityEngine;
 
 namespace RealtimeCSG
 {
-	internal sealed class SceneDragToolManager
-	{
-		public static bool IsDraggingObjectInScene { get; internal set; }
+    internal sealed class SceneDragToolManager
+    {
+        public static bool IsDraggingObjectInScene { get; internal set; }
 
-		static SceneDragToolMeshDragOnSurface	meshDragTool				= new SceneDragToolMeshDragOnSurface();
-		static SceneDragToolBrushDragOnSurface	brushDragTool				= new SceneDragToolBrushDragOnSurface();
-		static SceneDragToolMaterials			materialDragTool			= new SceneDragToolMaterials();
+        private static readonly SceneDragToolMeshDragOnSurface meshDragTool = new SceneDragToolMeshDragOnSurface();
+        private static readonly SceneDragToolBrushDragOnSurface brushDragTool = new SceneDragToolBrushDragOnSurface();
+        private static readonly SceneDragToolMaterials materialDragTool = new SceneDragToolMaterials();
 
-		static ISceneDragTool					currentDragTool				= null;
-		static bool								currentDragToolActive		= false;
-		static Transform						currentTransformInInspector = null;
-		static bool								draggingInScene				= false;
+        private static ISceneDragTool m_CurrentDragTool;
+        private static bool m_CurrentDragToolActive;
+        private static Transform m_CurrentTransformInInspector;
+        private static bool m_DraggingInScene;
 
-		internal static void UpdateDragAndDrop()
-		{
+        internal static void UpdateDragAndDrop()
+        {
+            // TODO: never use drag & drop code when dropping into inspector
+            //      instead:
+            //      find 'new' components, check if they're part of a prefab,
+            //      check if that prefab has a copy flag, and replace it with a copy
 
-			// TODO: never use drag & drop code when dropping into inspector
-			//			instead:
-			//			find 'new' components, check if they're part of a prefab, 
-			//			check if that prefab has a copy flag, and replace it with a copy
-
-
-			if (currentTransformInInspector)
-			{
-				if (currentDragTool != null)
-				{
-					DragAndDrop.visualMode = DragAndDropVisualMode.Generic;
-					if (currentDragToolActive)
-					{
-						currentDragTool.Reset();
-					}
-					currentDragTool = null;
-					currentTransformInInspector = null;
-					draggingInScene = false;
-				}
-				currentTransformInInspector = null;
-			}
-		}
-
-		internal static void OnPaint(Camera camera)
-		{
-			if (currentDragTool != null)
-				currentDragTool.OnPaint(camera);
-		}
-
-		static void ValidateDrop(SceneView sceneView, Transform transformInInspector)
-		{
-			if (currentDragTool != null)
-				currentDragTool.Reset(); 
-			currentDragTool = null;
-			currentDragToolActive = false;
-			currentTransformInInspector = transformInInspector;
-			if (materialDragTool.ValidateDrop(sceneView))
-			{
-				currentDragTool = materialDragTool;
-			} else
-			if (brushDragTool.ValidateDrop(sceneView))
-			{
-				currentDragTool = brushDragTool;
-			} else
-			if (meshDragTool.ValidateDrop(sceneView))
-			{
-				currentDragTool = meshDragTool;
-			}
-		}
-
-		internal static void OnHandleDragAndDrop(SceneView sceneView, Transform transformInInspector = null, Rect? selectionRect = null)
-		{
-			switch (Event.current.type)
-			{
-				case EventType.DragUpdated:
-				{
-					InternalCSGModelManager.IgnoreMaterials = true;
-					if (!draggingInScene)
-					{
-						ValidateDrop(sceneView, transformInInspector);
-					}
-
-					if (currentDragTool != null)
-					{
-						if (!currentDragTool.ValidateDropPoint(sceneView))
-						{
-							if (currentDragTool != null && currentDragToolActive)
-							{
-								currentDragTool.DragExited(sceneView);
-							}
-							currentDragToolActive = false;
-							Event.current.Use();
-						} else
-						{
-							currentDragToolActive = true;
-							IsDraggingObjectInScene = true;
-							DragAndDrop.visualMode = DragAndDropVisualMode.Generic;
-							if (sceneView)
-							{
-								if (currentDragTool.DragUpdated(sceneView))
-								{
-									HandleUtility.Repaint();
-								}
-							} else
-							{
-								if (currentDragTool.DragUpdated(sceneView, transformInInspector, selectionRect.Value))
-								{
-									CSG_EditorGUIUtility.RepaintAll();
-								}
-							}
-							Event.current.Use();
-							draggingInScene = true;
-						}
-					}
-					break;
-				}
-				case EventType.DragPerform:
-				{
-					InternalCSGModelManager.IgnoreMaterials = true;
-					if (currentDragTool != null)
-					{
-						DragAndDrop.visualMode = DragAndDropVisualMode.Generic;
-						if (currentDragToolActive)
-						{
-							currentDragTool.DragPerform(sceneView);
-							currentDragTool.Reset();
-							Event.current.Use();
-							GUIUtility.ExitGUI();
-						}
-						currentDragTool = null;
-						currentTransformInInspector = null;
-						draggingInScene = false;
-					}
-					break;
-				}
-				case EventType.DragExited:
-				//case EventType.MouseMove:
-				{
-					InternalCSGModelManager.IgnoreMaterials = true;
-					if (currentDragTool != null)
-					{
-						currentDragTool.DragExited(sceneView);
-						Event.current.Use();
-						IsDraggingObjectInScene = false;
-						currentDragTool = null;
-						currentTransformInInspector = null;
-						draggingInScene = false;
-						CSG_EditorGUIUtility.RepaintAll();
-						GUIUtility.ExitGUI();
-					}
-					break;
-				}
-				case EventType.MouseUp:
-				case EventType.MouseMove:
-				case EventType.MouseDrag:
+            if(m_CurrentTransformInInspector)
+            {
+                if(m_CurrentDragTool != null)
                 {
-					InternalCSGModelManager.IgnoreMaterials = false;
-					break;
-				}
-			}
-		}
-	}
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Generic;
+
+                    if(m_CurrentDragToolActive)
+                    {
+                        m_CurrentDragTool.Reset();
+                    }
+
+                    m_CurrentDragTool             = null;
+                    m_CurrentTransformInInspector = null;
+                    m_DraggingInScene             = false;
+                }
+
+                m_CurrentTransformInInspector = null;
+            }
+        }
+
+        internal static void OnPaint(Camera camera)
+        {
+            if(m_CurrentDragTool != null)
+            {
+                m_CurrentDragTool.OnPaint(camera);
+            }
+        }
+
+        private static void ValidateDrop(SceneView sceneView, Transform transformInInspector)
+        {
+            if(m_CurrentDragTool != null)
+            {
+                m_CurrentDragTool.Reset();
+            }
+
+            m_CurrentDragTool             = null;
+            m_CurrentDragToolActive       = false;
+            m_CurrentTransformInInspector = transformInInspector;
+
+            if(materialDragTool.ValidateDrop(sceneView))
+            {
+                m_CurrentDragTool = materialDragTool;
+            }
+            else if(brushDragTool.ValidateDrop(sceneView))
+            {
+                m_CurrentDragTool = brushDragTool;
+            }
+            else if(meshDragTool.ValidateDrop(sceneView))
+            {
+                m_CurrentDragTool = meshDragTool;
+            }
+        }
+
+        internal static void OnHandleDragAndDrop(SceneView sceneView, Transform transformInInspector = null, Rect? selectionRect = null)
+        {
+            switch(Event.current.type)
+            {
+                case EventType.DragUpdated:
+                {
+                    InternalCSGModelManager.IgnoreMaterials = true;
+
+                    if(!m_DraggingInScene)
+                    {
+                        ValidateDrop(sceneView, transformInInspector);
+                    }
+
+                    if(m_CurrentDragTool != null)
+                    {
+                        if(!m_CurrentDragTool.ValidateDropPoint(sceneView))
+                        {
+                            if(m_CurrentDragTool != null && m_CurrentDragToolActive)
+                            {
+                                m_CurrentDragTool.DragExited(sceneView);
+                            }
+
+                            m_CurrentDragToolActive = false;
+                            Event.current.Use();
+                        }
+                        else
+                        {
+                            m_CurrentDragToolActive = true;
+                            IsDraggingObjectInScene = true;
+                            DragAndDrop.visualMode  = DragAndDropVisualMode.Generic;
+
+                            if(sceneView)
+                            {
+                                if(m_CurrentDragTool.DragUpdated(sceneView))
+                                {
+                                    HandleUtility.Repaint();
+                                }
+                            }
+                            else
+                            {
+                                if(selectionRect != null && m_CurrentDragTool.DragUpdated(sceneView, transformInInspector, selectionRect.Value))
+                                {
+                                    CSGEditorGUIUtility.RepaintAll();
+                                }
+                            }
+
+                            Event.current.Use();
+                            m_DraggingInScene = true;
+                        }
+                    }
+
+                    break;
+                }
+                case EventType.DragPerform:
+                {
+                    InternalCSGModelManager.IgnoreMaterials = true;
+
+                    if(m_CurrentDragTool != null)
+                    {
+                        DragAndDrop.visualMode = DragAndDropVisualMode.Generic;
+
+                        if(m_CurrentDragToolActive)
+                        {
+                            m_CurrentDragTool.DragPerform(sceneView);
+                            m_CurrentDragTool.Reset();
+                            Event.current.Use();
+                            GUIUtility.ExitGUI();
+                        }
+
+                        m_CurrentDragTool             = null;
+                        m_CurrentTransformInInspector = null;
+                        m_DraggingInScene             = false;
+                    }
+
+                    break;
+                }
+                case EventType.DragExited:
+                {
+                    InternalCSGModelManager.IgnoreMaterials = true;
+
+                    if(m_CurrentDragTool != null)
+                    {
+                        m_CurrentDragTool.DragExited(sceneView);
+                        Event.current.Use();
+                        IsDraggingObjectInScene       = false;
+                        m_CurrentDragTool             = null;
+                        m_CurrentTransformInInspector = null;
+                        m_DraggingInScene             = false;
+                        CSGEditorGUIUtility.RepaintAll();
+                        GUIUtility.ExitGUI();
+                    }
+
+                    break;
+                }
+                case EventType.MouseUp:
+                case EventType.MouseMove:
+                case EventType.MouseDrag:
+                {
+                    InternalCSGModelManager.IgnoreMaterials = false;
+
+                    break;
+                }
+            }
+        }
+    }
 }

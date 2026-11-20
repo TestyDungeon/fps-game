@@ -1,42 +1,45 @@
 using System;
+using RealtimeCSG.Components;
 using UnityEngine;
-using InternalRealtimeCSG;
-using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 
 namespace RealtimeCSG
 {
 #if UNITY_EDITOR
-	[Serializable]
-	public class HierarchyItem
-	{
-        public bool             TransformInitialized = false;
-		public Transform        Transform;
-		public int              TransformID;
-		public HierarchyItem    Parent;
-		public int              PrevSiblingIndex    = -1;
-		public int              SiblingIndex        = -1;
-		public Int32            NodeID              = Components.CSGNode.InvalidNodeID;
-		public HierarchyItem[]  ChildNodes          = new HierarchyItem[0];
+    [Serializable]
+    public class HierarchyItem
+    {
+        public bool transformInitialized;
 
+        public Transform transform;
+        public int transformID;
+        public HierarchyItem parent;
 
-		public int LastLoopCount = -1;
-		public int CachedTransformSiblingIndex;
+        public int prevSiblingIndex = -1;
+        public int siblingIndex = -1;
 
-		public static int CurrentLoopCount { get; set; }
-		
-		public virtual void Reset()
-		{
-			Transform			= null;
-			TransformID			= 0;
-			Parent				= null;
-			PrevSiblingIndex	= -1;
-			SiblingIndex		= -1;
-			NodeID				= Components.CSGNode.InvalidNodeID;
-			ChildNodes			= new HierarchyItem[0];
+        public int nodeID = CSGNode.INVALID_NODE_ID;
+        public HierarchyItem[] childNodes = Array.Empty<HierarchyItem>();
+        public int lastLoopCount = -1;
 
-			LastLoopCount		= -1;
-			CachedTransformSiblingIndex = 0;
-		}
-	}
+        [FormerlySerializedAs("CachedTransformSiblingIndex")]
+        public int cachedTransformSiblingIndex;
+
+        public static int CurrentLoopCount { get; set; }
+
+        public virtual void Reset()
+        {
+            transform        = null;
+            transformID      = 0;
+            parent           = null;
+            prevSiblingIndex = -1;
+            siblingIndex     = -1;
+            nodeID           = CSGNode.INVALID_NODE_ID;
+            childNodes       = Array.Empty<HierarchyItem>();
+
+            lastLoopCount               = -1;
+            cachedTransformSiblingIndex = 0;
+        }
+    }
 #endif
 }

@@ -18,6 +18,7 @@ public class GunConfig : ScriptableObject
     public AudioClip[] altStartSFX;
     public AudioClip[] caseFallSFX;
     public float caseFallVolume = 1;
+    public AudioClip hitSFX;
 
     [Header("Camera Recoil")]
     public float recoilAmountCamera;
@@ -38,6 +39,7 @@ public class GunConfig : ScriptableObject
     public float timeBetweenShots;
     public float inputDelay = 0f;
     public int ricochet = 0;
+    public bool sphereCast = false;
 
     [Header("Projectile")]
     public GameObject projectilePrefab;

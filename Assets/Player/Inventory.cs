@@ -73,9 +73,9 @@ public class Inventory : MonoBehaviour
         if(slots.Length > 0)
             EquipItem(0);
             
-        AddAmmo(LootType.BulletAmmo, maxAmmoCount[LootType.BulletAmmo] / 4);
-        AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo] / 4);
-        AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo] / 4);
+        //AddAmmo(LootType.BulletAmmo, maxAmmoCount[LootType.BulletAmmo] / 4);
+        //AddAmmo(LootType.ShellAmmo, maxAmmoCount[LootType.ShellAmmo] / 4);
+        //AddAmmo(LootType.RocketAmmo, maxAmmoCount[LootType.RocketAmmo] / 4);
         AddAmmo(LootType.MeleeAmmo, maxAmmoCount[LootType.MeleeAmmo]);
     }
 

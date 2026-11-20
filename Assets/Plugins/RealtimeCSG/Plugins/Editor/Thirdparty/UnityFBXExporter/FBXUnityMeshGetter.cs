@@ -524,14 +524,14 @@ namespace UnityFBXExporter
 							continue;
 						}
 
-						int referenceId = Mathf.Abs(mat.GetInstanceIDCompat());
+						int referenceId = Mathf.Abs(mat.GetIntegerID());
 						tempConnectionsSb.AppendLine("\t;Material::" + mat.name + ", Model::" + mesh.name);
 						tempConnectionsSb.AppendLine("\tC: \"OO\"," + referenceId + "," + modelId);
 						tempConnectionsSb.AppendLine();
 					}
 				} else
 				{
-					int referenceId = Mathf.Abs(colliderMaterial.GetInstanceIDCompat());
+					int referenceId = Mathf.Abs(colliderMaterial.GetIntegerID());
 					tempConnectionsSb.AppendLine("\t;Material::" + colliderMaterial.name + ", Model::" + mesh.name);
 					tempConnectionsSb.AppendLine("\tC: \"OO\"," + referenceId + "," + modelId);
 					tempConnectionsSb.AppendLine();

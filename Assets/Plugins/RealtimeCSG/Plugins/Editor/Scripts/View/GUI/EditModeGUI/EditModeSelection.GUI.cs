@@ -1,584 +1,620 @@
-﻿using UnityEditor;
-using UnityEngine;
-using InternalRealtimeCSG;
+﻿using InternalRealtimeCSG;
+using RealtimeCSG.Components;
 using RealtimeCSG.Foundation;
 using RealtimeCSG.Legacy;
-using RealtimeCSG.Components;
+using UnityEditor;
+using UnityEngine;
 
 namespace RealtimeCSG
 {
-	internal sealed partial class EditModeSelectionGUI
-	{
-		static int SceneViewBrushEditorOverlayHash = "SceneViewBrushEditorOverlay".GetHashCode();
+    internal sealed partial class EditModeSelectionGUI
+    {
+        private static readonly int sceneViewBrushEditorOverlayHash = "SceneViewBrushEditorOverlay".GetHashCode();
 
+        public static float OnEditModeSelectionGUI()
+        {
+            EditorGUI.BeginChangeCheck();
 
-		public static float OnEditModeSelectionGUI()
-		{			
-			CSG_GUIStyleUtility.InitStyles();
+            ToolEditMode newEditMode = (ToolEditMode)CSGEditorGUIUtility.ToolbarWrapped((int)EditModeManager.EditMode, ref m_EditModeRects, out Rect editModeBounds, CsgguiStyleUtility.BrushEditModeContent, CsgguiStyleUtility.BrushEditModeTooltips);
 
-			EditorGUI.BeginChangeCheck();
-			Rect editModeBounds;
-			var newEditMode = (ToolEditMode)CSG_EditorGUIUtility.ToolbarWrapped((int)EditModeManager.EditMode, ref editModeRects, out editModeBounds, CSG_GUIStyleUtility.brushEditModeContent, CSG_GUIStyleUtility.brushEditModeTooltips);
-			if (EditorGUI.EndChangeCheck())
-			{
-				EditModeManager.EditMode = newEditMode;
-				CSG_EditorGUIUtility.RepaintAll();
-			}
-			GUILayout.Space(editModeBounds.height);
-				
+            if(EditorGUI.EndChangeCheck())
+            {
+                EditModeManager.EditMode = newEditMode;
+                CSGEditorGUIUtility.RepaintAll();
+            }
 
-			return editModeBounds.height;
-		}
+            GUILayout.Space(editModeBounds.height);
 
-		static GUIStyle sceneViewOverlayTransparentBackground = "SceneViewOverlayTransparentBackground";
-		static GUI.WindowFunction windowFunction = new GUI.WindowFunction(EditModeSelectionGUI.HandleSceneGUI);
-		
-		public static void HandleWindowGUI(Rect windowRect)
-		{
-			GUI.Window(SceneViewBrushEditorOverlayHash,
-						windowRect,
-						windowFunction,
-						string.Empty, sceneViewOverlayTransparentBackground);
-		}
+            return editModeBounds.height;
+        }
 
-		static void HandleSceneGUI(int id)
-		{
-			var sceneView = SceneView.currentDrawingSceneView;
-			TooltipUtility.InitToolTip(sceneView);
-			var originalSkin = GUI.skin;
-			{
-				if (!SceneDragToolManager.IsDraggingObjectInScene)
-					OnEditModeSelectionSceneGUI();
-#if UNITY_2018_3_OR_NEWER
-				var viewRect = new Rect(4, 0, sceneView.rootVisualElement.contentRect.width, sceneView.rootVisualElement.contentRect.height - (CSG_GUIStyleUtility.BottomToolBarHeight + 4));
-#else
-                var viewRect = new Rect( 4, 0, sceneView.position.width, sceneView.position.height - ( CSG_GUIStyleUtility.BottomToolBarHeight + 4 ) );
+        private static readonly GUIStyle sceneViewOverlayTransparentBackground = "SceneViewOverlayTransparentBackground";
+
+        private static readonly GUI.WindowFunction windowFunction = HandleSceneGUI;
+
+        public static void HandleWindowGUI(Rect windowRect)
+        {
+            GUILayout.Window(sceneViewBrushEditorOverlayHash, windowRect, windowFunction, string.Empty, sceneViewOverlayTransparentBackground, CsgguiStyleUtility.contentEmpty);
+        }
+
+        private static void HandleSceneGUI(int id)
+        {
+            SceneView sceneView = SceneView.currentDrawingSceneView;
+            TooltipUtility.InitToolTip(sceneView);
+            GUISkin originalSkin = GUI.skin;
+
+            if(!SceneDragToolManager.IsDraggingObjectInScene)
+            {
+                OnEditModeSelectionSceneGUI();
+            }
+
+            GUI.skin = originalSkin;
+            Handles.BeginGUI();
+            TooltipUtility.DrawToolTip(false);
+            Handles.EndGUI();
+        }
+
+        public static void HandleWindowGUI(EditorWindow window)
+        {
+            TooltipUtility.InitToolTip(window);
+            GUISkin originalSkin = GUI.skin;
+
+            float height = OnEditModeSelectionGUI();
+
+            EditorGUILayout.Space();
+
+            ShowRealtimeCSGDisabledMessage();
+
+            EditorGUI.BeginDisabledGroup(!CSGSettings.EnableRealtimeCSG);
+
+            if(EditModeManager.ActiveTool != null)
+            {
+                EditModeManager.ActiveTool.OnInspectorGUI(window, height);
+            }
+
+            EditorGUI.EndDisabledGroup();
+
+            GUILayout.Label(versionLabel, EditorStyles.miniLabel);
+
+            GUI.skin = originalSkin;
+            TooltipUtility.DrawToolTip();
+        }
+
+        private static Rect[] m_EditModeRects;
+
+        private static void OnEditModeSelectionSceneGUI()
+        {
+            if(CsgguiStyleUtility.BrushEditModeNames == null || CsgguiStyleUtility.BrushEditModeNames.Length == 0)
+            {
+                return;
+            }
+
+            GUISkin oldSkin = GUI.skin;
+            CsgguiStyleUtility.SetDefaultGUISkin();
+            GUILayout.BeginHorizontal(CsgguiStyleUtility.contentEmpty);
+
+            GUIStyle windowStyle = GUI.skin.window;
+
+            float topBarSize = 5;
+
+            Rect bounds = new Rect(6, topBarSize, 500, 40);
+
+            GUILayout.BeginArea(bounds, contentTitleLabel, windowStyle);
+
+            EditorGUI.BeginChangeCheck();
+
+            ToolEditMode newEditMode = (ToolEditMode)CSGEditorGUIUtility.ToolbarWrapped((int)EditModeManager.EditMode, ref m_EditModeRects, out Rect _, CsgguiStyleUtility.BrushEditModeContent, CsgguiStyleUtility.BrushEditModeTooltips, 20, bounds.width);
+
+            if(EditorGUI.EndChangeCheck())
+            {
+                EditModeManager.EditMode = newEditMode;
+                CSGEditorGUIUtility.RepaintAll();
+            }
+
+            Rect buttonArea = bounds;
+            buttonArea.x      = bounds.width - 17;
+            buttonArea.y      = 2;
+            buttonArea.height = 13;
+            buttonArea.width  = 13;
+
+            if (GUI.Button(buttonArea, EditorGUIUtility.IconContent("d_SearchJump Icon"), GUIStyle.none))
+            {
+                EditModeToolWindowSceneGUI.GetWindow();
+            }
+
+            TooltipUtility.SetToolTip(CsgguiStyleUtility.popOutTooltip, buttonArea);
+
+            Vector2 versionWidth = CsgguiStyleUtility.VersionLabelStyle.CalcSize(versionLabel);
+            Rect    versionArea  = bounds;
+            versionArea.x      = bounds.width - (17 + versionWidth.x);
+            versionArea.y      = 1;
+            versionArea.height = 15;
+            versionArea.width  = versionWidth.x;
+            GUI.Label(versionArea, versionLabel, CsgguiStyleUtility.VersionLabelStyle);
+
+            GUILayout.EndArea();
+
+            int controlID = GUIUtility.GetControlID(sceneViewBrushEditorOverlayHash, FocusType.Keyboard, bounds);
+
+            switch(Event.current.GetTypeForControl(controlID))
+            {
+                case EventType.MouseDown:
+                {
+                    if(bounds.Contains(Event.current.mousePosition))
+                    {
+                        GUIUtility.hotControl             = controlID;
+                        GUIUtility.keyboardControl        = controlID;
+                        EditorGUIUtility.editingTextField = false;
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+                case EventType.MouseMove:
+                {
+                    if(bounds.Contains(Event.current.mousePosition))
+                    {
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+                case EventType.MouseUp:
+                {
+                    if(GUIUtility.hotControl == controlID)
+                    {
+                        GUIUtility.hotControl      = 0;
+                        GUIUtility.keyboardControl = 0;
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+                case EventType.MouseDrag:
+                {
+                    if(GUIUtility.hotControl == controlID)
+                    {
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+                case EventType.ScrollWheel:
+                {
+                    if(bounds.Contains(Event.current.mousePosition))
+                    {
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            GUI.skin = oldSkin;
+        }
+
+        private static Camera MainCamera
+        {
+            get
+            {
+                Camera mainCamera = Camera.main;
+
+                if(mainCamera != null)
+                {
+                    return mainCamera;
+                }
+
+                Camera[] allCameras = Camera.allCameras;
+
+                if(allCameras != null && allCameras.Length == 1)
+                {
+                    return allCameras[0];
+                }
+
+                return null;
+            }
+        }
+
+        public static void ShowRealtimeCSGDisabledMessage()
+        {
+            if(!CSGSettings.EnableRealtimeCSG)
+            {
+                GUILayout.BeginVertical(CsgguiStyleUtility.RedTextArea);
+
+                GUILayout.Label(disabledLabelContent, CsgguiStyleUtility.RedTextLabel);
+
+                if(GUILayout.Button(enableRealtimeCSGContent))
+                {
+                    CSGSettings.SetRealtimeCSGEnabled(true);
+                }
+
+                GUILayout.EndVertical();
+            }
+        }
+
+        private static bool m_OpenSurfaces;
+
+        public static void OnInspectorGUI(Editor editor, Object[] targets)
+        {
+            TooltipUtility.InitToolTip(editor);
+
+            try
+            {
+                CSGModel[] models = new CSGModel[targets.Length];
+
+                for(int i = targets.Length - 1; i >= 0; i--)
+                {
+                    models[i] = targets[i] as CSGModel;
+
+                    if(!models[i])
+                    {
+                        ArrayUtility.RemoveAt(ref models, i);
+                    }
+                }
+
+                ShowRealtimeCSGDisabledMessage();
+
+                if(models.Length > 0 && models.Length == targets.Length)
+                {
+                    CSGModelComponentInspectorGUI.OnInspectorGUI(targets);
+
+                    return;
+                }
+
+                FilteredSelection filteredSelection = EditModeManager.FilteredSelection;
+                CSGNode[]         targetNodes       = filteredSelection.nodeTargets;
+                CSGModel[]        targetModels      = filteredSelection.modelTargets;
+                CSGBrush[]        targetBrushes     = filteredSelection.brushTargets;
+                CSGOperation[]    targetOperations  = filteredSelection.operationTargets;
+
+                if(targetNodes == null)
+                {
+                    return;
+                }
+
+                bool?                       isPrefab                   = false;
+                PrefabInstantiateBehaviour? prefabBehaviour            = PrefabInstantiateBehaviour.Reference;
+                PrefabSourceAlignment?      prefabSourceAlignment      = PrefabSourceAlignment.AlignedTop;
+                PrefabDestinationAlignment? prefabDestinationAlignment = PrefabDestinationAlignment.AlignToSurface;
+
+                if(targetNodes.Length > 0)
+                {
+                    GameObject gameObject = targetNodes[0].gameObject;
+                    isPrefab                   = CSGPrefabUtility.IsPrefabAsset(gameObject);
+                    prefabBehaviour            = targetNodes[0].prefabBehaviour;
+                    prefabSourceAlignment      = targetNodes[0].prefabSourceAlignment;
+                    prefabDestinationAlignment = targetNodes[0].prefabDestinationAlignment;
+
+                    for(int i = 1; i < targetNodes.Length; i++)
+                    {
+                        gameObject = targetNodes[i].gameObject;
+
+                        bool currentIsPrefab = CSGPrefabUtility.IsPrefabAsset(gameObject);
+
+                        PrefabInstantiateBehaviour currentPrefabBehaviour            = targetNodes[i].prefabBehaviour;
+                        PrefabSourceAlignment      currentPrefabSourceAlignment      = targetNodes[i].prefabSourceAlignment;
+                        PrefabDestinationAlignment currentPrefabDestinationAlignment = targetNodes[i].prefabDestinationAlignment;
+
+                        if(isPrefab.HasValue && isPrefab.Value != currentIsPrefab)
+                        {
+                            isPrefab = null;
+                        }
+
+                        if(prefabBehaviour.HasValue && prefabBehaviour.Value != currentPrefabBehaviour)
+                        {
+                            prefabBehaviour = null;
+                        }
+
+                        if(prefabSourceAlignment.HasValue && prefabSourceAlignment.Value != currentPrefabSourceAlignment)
+                        {
+                            prefabSourceAlignment = null;
+                        }
+
+                        if(prefabDestinationAlignment.HasValue && prefabDestinationAlignment.Value != currentPrefabDestinationAlignment)
+                        {
+                            prefabDestinationAlignment = null;
+                        }
+                    }
+                }
+
+                GUILayout.BeginVertical(GUI.skin.box);
+
+                {
+                    if(isPrefab.HasValue && isPrefab.Value)
+                    {
+                        EditorGUILayout.LabelField(prefabLabelContent);
+                    }
+                    else
+                    {
+                        EditorGUILayout.LabelField(raySnappingLabelContent);
+                        TooltipUtility.SetToolTip(raySnappingBehaviourTooltip);
+                    }
+
+                    EditorGUI.indentLevel++;
+
+                    if(isPrefab.HasValue && isPrefab.Value)
+                    {
+                        EditorGUI.showMixedValue = !prefabBehaviour.HasValue;
+
+                        PrefabInstantiateBehaviour prefabBehavour = prefabBehaviour.HasValue ? prefabBehaviour.Value : PrefabInstantiateBehaviour.Reference;
+
+                        EditorGUI.BeginChangeCheck();
+
+                        prefabBehavour = (PrefabInstantiateBehaviour)EditorGUILayout.EnumPopup(prefabInstantiateBehaviourContent, prefabBehavour);
+
+                        TooltipUtility.SetToolTip(prefabInstantiateBehaviourTooltip);
+
+                        if(EditorGUI.EndChangeCheck())
+                        {
+                            Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
+
+                            for(int i = 0; i < targetNodes.Length; i++)
+                            {
+                                targetNodes[i].prefabBehaviour = prefabBehavour;
+                            }
+                        }
+
+                        EditorGUI.showMixedValue = false;
+                    }
+
+                    EditorGUI.showMixedValue = !prefabDestinationAlignment.HasValue;
+
+                    PrefabDestinationAlignment destinationAlignment = prefabDestinationAlignment.HasValue ? prefabDestinationAlignment.Value : PrefabDestinationAlignment.AlignToSurface;
+
+                    EditorGUI.BeginChangeCheck();
+
+                    destinationAlignment = (PrefabDestinationAlignment)EditorGUILayout.EnumPopup(destinationAlignmentContent, destinationAlignment);
+
+                    TooltipUtility.SetToolTip(destinationAlignmentTooltip);
+
+                    if(EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
+
+                        for(int i = 0; i < targetNodes.Length; i++)
+                        {
+                            targetNodes[i].prefabDestinationAlignment = destinationAlignment;
+                        }
+                    }
+
+                    EditorGUI.showMixedValue = false;
+
+                    EditorGUI.showMixedValue = !prefabSourceAlignment.HasValue;
+
+                    PrefabSourceAlignment sourceAlignment = prefabSourceAlignment.HasValue ? prefabSourceAlignment.Value : PrefabSourceAlignment.AlignedFront;
+
+                    EditorGUI.BeginChangeCheck();
+
+                    sourceAlignment = (PrefabSourceAlignment)EditorGUILayout.EnumPopup(sourceAlignmentContent, sourceAlignment);
+
+                    TooltipUtility.SetToolTip(sourceAlignmentTooltip);
+
+                    if(EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
+
+                        for(int i = 0; i < targetNodes.Length; i++)
+                        {
+                            targetNodes[i].prefabSourceAlignment = sourceAlignment;
+                        }
+                    }
+
+                    EditorGUI.showMixedValue = false;
+
+                    EditorGUI.indentLevel--;
+                }
+
+                GUILayout.EndVertical();
+                GUILayout.Space(10);
+
+                if(targetModels.Length == 0)
+                {
+                    int              invalidOperationType = 999;
+                    bool?            handleAsOne          = null;
+                    bool             selMixedValues       = false;
+                    CSGOperationType operationType        = (CSGOperationType)invalidOperationType;
+                    bool             opMixedValues        = false;
+
+                    if(targetBrushes.Length > 0)
+                    {
+                        operationType = targetBrushes[0].operationType;
+                    }
+
+                    for(int b = 1; b < targetBrushes.Length; b++)
+                    {
+                        CSGBrush brush = targetBrushes[b];
+
+                        if(operationType != brush.operationType)
+                        {
+                            opMixedValues = true;
+                        }
+                    }
+
+                    foreach(CSGOperation operation in targetOperations)
+                    {
+                        if(operationType == (CSGOperationType)invalidOperationType)
+                        {
+                            operationType = operation.operationType;
+                        }
+                        else if(operationType != operation.operationType)
+                        {
+                            opMixedValues = true;
+                        }
+
+                        if(!handleAsOne.HasValue)
+                        {
+                            handleAsOne = operation.handleAsOne;
+                        }
+                        else if(handleAsOne.Value != operation.handleAsOne)
+                        {
+                            selMixedValues = true;
+                        }
+                    }
+
+                    GUILayout.BeginVertical(GUI.skin.box);
+
+                    {
+                        if(targetBrushes.Length == 0 && targetOperations.Length > 0) // only operations
+                        {
+                            bool? passThrough = targetOperations[0].PassThrough;
+
+                            for(int i = 1; i < targetOperations.Length; i++)
+                            {
+                                if(passThrough.HasValue && passThrough.Value != targetOperations[i].PassThrough)
+                                {
+                                    passThrough = null;
+
+                                    break;
+                                }
+                            }
+
+                            opMixedValues = !passThrough.HasValue || passThrough.Value;
+
+                            bool ptMixedValues    = !passThrough.HasValue;
+                            bool passThroughValue = passThrough.HasValue && passThrough.Value;
+
+                            if(CSGEditorGUIUtility.PassThroughButton(passThroughValue, ptMixedValues))
+                            {
+                                Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
+
+                                foreach(CSGOperation operation in targetOperations)
+                                {
+                                    operation.PassThrough = true;
+                                }
+
+                                InternalCSGModelManager.CheckForChanges();
+                                EditorApplication.RepaintHierarchyWindow();
+#if UNITY_6000_5_OR_NEWER
+                                HierarchyWindowItemGUI.RepaintHierarchy();
 #endif
-                GUILayout.BeginArea(viewRect);
+                            }
 
-				if (EditModeManager.ActiveTool != null)
-				{
-					EditModeManager.ActiveTool.OnSceneGUI(viewRect);
-				}
-				GUILayout.EndArea();
+                            if (passThroughValue)
+                            {
+                                operationType = (CSGOperationType)255;
+                            }
+                        }
 
-				if (RealtimeCSG.CSGSettings.EnableRealtimeCSG && !SceneDragToolManager.IsDraggingObjectInScene)
-					SceneViewBottomBarGUI.ShowGUI(sceneView, haveOffset: false);
-			}
-			GUI.skin = originalSkin;
-			Handles.BeginGUI();
-			TooltipUtility.DrawToolTip(getLastRect: false);
-			Handles.EndGUI();
-		}
-		
-		//static Vector2 scrollPos;
+                        EditorGUI.BeginChangeCheck();
 
-		public static void HandleWindowGUI(EditorWindow window)
-		{
-			TooltipUtility.InitToolTip(window);
-			var originalSkin = GUI.skin;
-			{
-				var height = OnEditModeSelectionGUI(); 
-				//var applyOffset = !TooltipUtility.FoundToolTip();
+                        operationType = CSGEditorGUIUtility.ChooseOperation(operationType, opMixedValues);
 
-				EditorGUILayout.Space();
+                        if(EditorGUI.EndChangeCheck())
+                        {
+                            Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
 
-				ShowRealtimeCSGDisabledMessage();
+                            foreach(CSGBrush brush in targetBrushes)
+                            {
+                                brush.operationType = operationType;
+                            }
 
-				//scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
-				{
-					EditorGUI.BeginDisabledGroup(!RealtimeCSG.CSGSettings.EnableRealtimeCSG);
-					{
-						if (EditModeManager.ActiveTool != null)
-							EditModeManager.ActiveTool.OnInspectorGUI(window, height);
-					}
-					EditorGUI.EndDisabledGroup();
-				}
-				//EditorGUILayout.EndScrollView();
-				//if (applyOffset) 
-				//	TooltipUtility.HandleAreaOffset(scrollPos);
+                            foreach(CSGOperation operation in targetOperations)
+                            {
+                                operation.PassThrough   = false;
+                                operation.operationType = operationType;
+                            }
 
-				GUILayout.Label(VersionLabel, EditorStyles.miniLabel);
-			}
-			GUI.skin = originalSkin;
-			TooltipUtility.DrawToolTip();
-		}
-
-
-		static Rect[] editModeRects;
-
-		
-		static void OnEditModeSelectionSceneGUI()
-		{
-			CSG_GUIStyleUtility.InitStyles();
-			if (CSG_GUIStyleUtility.brushEditModeNames == null ||
-				CSG_GUIStyleUtility.brushEditModeNames.Length == 0)
-				return;
-
-			var oldSkin = GUI.skin;
-			CSG_GUIStyleUtility.SetDefaultGUISkin();
-			GUIStyle windowStyle = GUI.skin.window;
-
-			float topBarSize = 20;
-#if UNITY_2018_3_OR_NEWER
-			if (CSGPrefabUtility.AreInPrefabMode())
-				topBarSize += 25;
+                            InternalCSGModelManager.CheckForChanges();
+                            EditorApplication.RepaintHierarchyWindow();
+#if UNITY_6000_5_OR_NEWER
+                            HierarchyWindowItemGUI.RepaintHierarchy();
 #endif
+                        }
+                    }
 
+                    GUILayout.EndVertical();
 
-			var bounds = new Rect(10, 10 + topBarSize, 500, 40);
+                    if(targetOperations.Length == 0 && targetModels.Length == 0)
+                    {
+                        GUILayout.Space(10);
 
-			GUI.BeginGroup(bounds, ContentTitleLabel, windowStyle);
-			{
-				//GUILayout.Space(bounds.height);
-				Rect editModeBounds;
+                        if(targetBrushes.Length == 1)
+                        {
+                            GUILayout.BeginVertical(GUI.skin.box);
 
-				CSG_GUIStyleUtility.InitStyles();
-				EditorGUI.BeginChangeCheck();
-				var newEditMode = (ToolEditMode)CSG_EditorGUIUtility.ToolbarWrapped((int)EditModeManager.EditMode, ref editModeRects, out editModeBounds, CSG_GUIStyleUtility.brushEditModeContent, CSG_GUIStyleUtility.brushEditModeTooltips, yOffset:20, areaWidth: bounds.width);
-				//var newEditMode = (ToolEditMode)GUILayout.Toolbar((int)CSGBrushEditorManager.EditMode, GUIStyleUtility.brushEditModeContent, GUIStyleUtility.brushEditModeTooltips);
-				if (EditorGUI.EndChangeCheck())
-				{
-					EditModeManager.EditMode = newEditMode;
-					CSG_EditorGUIUtility.RepaintAll();
-				}
+                            EditorGUI.indentLevel++;
+                            m_OpenSurfaces = EditorGUILayout.Foldout(m_OpenSurfaces, surfacesContent);
+                            EditorGUI.indentLevel--;
 
-				var buttonArea = bounds;
-				buttonArea.x = bounds.width - 17;
-				buttonArea.y = 2;
-				buttonArea.height = 13;
-				buttonArea.width = 13;
-				if (GUI.Button(buttonArea, GUIContent.none, "WinBtnClose"))
-					EditModeToolWindowSceneGUI.GetWindow();
-				TooltipUtility.SetToolTip(CSG_GUIStyleUtility.PopOutTooltip, buttonArea);
+                            if(m_OpenSurfaces)
+                            {
+                                Shape         targetShape     = targetBrushes[0].shape;
+                                TexGen[]      texGens         = targetShape.texGens;
+                                TexGenFlags[] texGenFlagArray = targetShape.texGenFlags;
 
-				var versionWidth = CSG_GUIStyleUtility.versionLabelStyle.CalcSize(VersionLabel);
-				var versionArea = bounds;
-				versionArea.x = bounds.width - (17 + versionWidth.x);
-				versionArea.y = 1;
-				versionArea.height = 15;
-				versionArea.width = versionWidth.x;
-				GUI.Label(versionArea, VersionLabel, CSG_GUIStyleUtility.versionLabelStyle);
-			}
-			GUI.EndGroup();
+                                for(int t = 0; t < texGens.Length; t++)
+                                {
+                                    GUILayout.Space(2);
 
-			int controlID = GUIUtility.GetControlID(SceneViewBrushEditorOverlayHash, FocusType.Keyboard, bounds);
-			switch (Event.current.GetTypeForControl(controlID))
-			{
-				case EventType.MouseDown:	{ if (bounds.Contains(Event.current.mousePosition)) { GUIUtility.hotControl = controlID; GUIUtility.keyboardControl = controlID; EditorGUIUtility.editingTextField = false; Event.current.Use(); } break; }
-				case EventType.MouseMove:	{ if (bounds.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
-				case EventType.MouseUp:		{ if (GUIUtility.hotControl == controlID) { GUIUtility.hotControl = 0; GUIUtility.keyboardControl = 0; Event.current.Use(); } break; }
-				case EventType.MouseDrag:	{ if (GUIUtility.hotControl == controlID) { Event.current.Use(); } break; }
-				case EventType.ScrollWheel: { if (bounds.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
-			}
-			GUI.skin = oldSkin;
-		}
+                                    TexGenFlags texGenFlags = texGenFlagArray[t];
+                                    Material    material    = targetShape.texGens[t].RenderMaterial;
+                                    EditorGUI.BeginChangeCheck();
 
-		
-		
-		static Camera MainCamera
-		{
-			get
-			{
-				var mainCamera = Camera.main;
-				if (mainCamera != null)
-					return mainCamera;
+                                    GUILayout.BeginHorizontal();
 
-				Camera[] allCameras = Camera.allCameras;
-				if (allCameras != null && allCameras.Length == 1)
-					return allCameras[0];
+                                    GUILayout.Space(4);
+                                    material = CSGEditorGUIUtility.MaterialImage(material);
+                                    GUILayout.Space(2);
+                                    GUILayout.BeginVertical();
 
-				return null;
-			}
-		}
+                                    EditorGUI.BeginDisabledGroup(texGenFlags != TexGenFlags.None);
 
-		static public void ShowRealtimeCSGDisabledMessage()
-		{
-			if (!RealtimeCSG.CSGSettings.EnableRealtimeCSG)
-			{
-				GUILayout.BeginVertical(CSG_GUIStyleUtility.redTextArea);
-				{
-					GUILayout.Label(DisabledLabelContent, CSG_GUIStyleUtility.redTextLabel);
-					if (GUILayout.Button(EnableRealtimeCSGContent))
-						RealtimeCSG.CSGSettings.SetRealtimeCSGEnabled(true);
-				}
-				GUILayout.EndVertical();
-			}
-		}
+                                    material = EditorGUILayout.ObjectField(material, typeof(Material), true) as Material;
 
-		static bool OpenSurfaces = false;
+                                    EditorGUI.EndDisabledGroup();
 
-		static public void OnInspectorGUI(Editor editor, UnityEngine.Object[] targets)
-		{
-			TooltipUtility.InitToolTip(editor);
-			try
-			{ 
-				var models = new CSGModel[targets.Length];
+                                    texGenFlags = EditModeCommonGUI.OnSurfaceFlagButtons(texGenFlags);
 
-				for (int i = targets.Length - 1; i >= 0; i--)
-				{
-					models[i] = targets[i] as CSGModel;
-					if (!models[i])
-					{
-						ArrayUtility.RemoveAt(ref models, i);
-					}
-				}
-			
-				CSG_GUIStyleUtility.InitStyles();
-				ShowRealtimeCSGDisabledMessage();
+                                    GUILayout.EndVertical();
+                                    GUILayout.Space(4);
 
-				if (models.Length > 0 && models.Length == targets.Length)
-				{
-					CSGModelComponentInspectorGUI.OnInspectorGUI(targets);
-					return;
-				}
+                                    GUILayout.EndHorizontal();
 
-				var filteredSelection	= EditModeManager.FilteredSelection;
-				var targetNodes			= filteredSelection.NodeTargets;
-				var targetModels		= filteredSelection.ModelTargets;
-				var targetBrushes		= filteredSelection.BrushTargets;
-				var targetOperations	= filteredSelection.OperationTargets;
-				if (targetNodes == null)
-				{
-					return;
-				}
+                                    if(EditorGUI.EndChangeCheck())
+                                    {
+                                        SelectedBrushSurface[] selectedBrushSurfaces = { new SelectedBrushSurface(targetBrushes[0], t) };
 
-			
+                                        using(new UndoGroup(selectedBrushSurfaces, "discarding surface"))
+                                        {
+                                            texGenFlagArray[t]                    = texGenFlags;
+                                            targetShape.texGens[t].RenderMaterial = material;
+                                        }
+                                    }
 
-				bool? isPrefab = false;
-				PrefabInstantiateBehaviour? prefabBehaviour				= PrefabInstantiateBehaviour.Reference;
-				PrefabSourceAlignment?		prefabSourceAlignment		= PrefabSourceAlignment.AlignedTop;
-				PrefabDestinationAlignment?	prefabDestinationAlignment	= PrefabDestinationAlignment.AlignToSurface;
-				
-				if (targetNodes.Length > 0)
-				{
-					var gameObject = targetNodes[0].gameObject;
-					isPrefab					= CSGPrefabUtility.IsPrefabAsset(gameObject);
-					prefabBehaviour				= targetNodes[0].PrefabBehaviour;
-					prefabSourceAlignment		= targetNodes[0].PrefabSourceAlignment;
-					prefabDestinationAlignment	= targetNodes[0].PrefabDestinationAlignment;
-					for (int i = 1; i < targetNodes.Length; i++)
-					{
-						gameObject = targetNodes[i].gameObject;
+                                    GUILayout.Space(4);
+                                }
+                            }
 
-						var currentIsPrefab = CSGPrefabUtility.IsPrefabAsset(gameObject);
-						var currentPrefabBehaviour = targetNodes[i].PrefabBehaviour;
-						var currentPrefabSourceAlignment = targetNodes[i].PrefabSourceAlignment;
-						var currentPrefabDestinationAlignment = targetNodes[i].PrefabDestinationAlignment;
-						if (isPrefab.HasValue && isPrefab.Value != currentIsPrefab)
-							isPrefab = null;
-						if (prefabBehaviour.HasValue && prefabBehaviour.Value != currentPrefabBehaviour)
-							prefabBehaviour = null;
-						if (prefabSourceAlignment.HasValue && prefabSourceAlignment.Value != currentPrefabSourceAlignment)
-							prefabSourceAlignment = null;
-						if (prefabDestinationAlignment.HasValue && prefabDestinationAlignment.Value != currentPrefabDestinationAlignment)
-							prefabDestinationAlignment = null;
-					}
-				}
-				
-				GUILayout.BeginVertical(GUI.skin.box);
-				{
-					if (isPrefab.HasValue && isPrefab.Value)
-					{
-						EditorGUILayout.LabelField(PrefabLabelContent);
-					} else
-					{
-						EditorGUILayout.LabelField(RaySnappingLabelContent);
-						TooltipUtility.SetToolTip(RaySnappingBehaviourTooltip);
-					}
-			
-					EditorGUI.indentLevel++;
-					{
-						if (isPrefab.HasValue && isPrefab.Value)
-						{
-							EditorGUI.showMixedValue = !prefabBehaviour.HasValue;
-							var prefabBehavour = prefabBehaviour.HasValue ? prefabBehaviour.Value : PrefabInstantiateBehaviour.Reference;
-							EditorGUI.BeginChangeCheck();
-							{
-								prefabBehavour = (PrefabInstantiateBehaviour)EditorGUILayout.EnumPopup(PrefabInstantiateBehaviourContent, prefabBehavour);
-								TooltipUtility.SetToolTip(PrefabInstantiateBehaviourTooltip);
-							}
-							if (EditorGUI.EndChangeCheck())
-							{
-								Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
-								for (int i = 0; i < targetNodes.Length; i++)
-								{
-									targetNodes[i].PrefabBehaviour = prefabBehavour;
-								}
-							}
-							EditorGUI.showMixedValue = false;
-						}
+                            GUILayout.EndVertical();
+                        }
+                    }
 
+                    if(handleAsOne.HasValue)
+                    {
+                        EditorGUI.BeginChangeCheck();
 
-						EditorGUI.showMixedValue = !prefabDestinationAlignment.HasValue;
-						var destinationAlignment = prefabDestinationAlignment.HasValue ? prefabDestinationAlignment.Value : PrefabDestinationAlignment.AlignToSurface;
-						EditorGUI.BeginChangeCheck();
-						{
-							destinationAlignment = (PrefabDestinationAlignment)EditorGUILayout.EnumPopup(DestinationAlignmentContent, destinationAlignment);
-							TooltipUtility.SetToolTip(DestinationAlignmentTooltip);
-						}
-						if (EditorGUI.EndChangeCheck())
-						{
-							Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
-							for (int i = 0; i < targetNodes.Length; i++)
-							{
-								targetNodes[i].PrefabDestinationAlignment = destinationAlignment;
-							}
-						}
-						EditorGUI.showMixedValue = false;
+                        EditorGUI.showMixedValue = selMixedValues;
+                        handleAsOne              = EditorGUILayout.Toggle(handleAsOneLabel, handleAsOne.Value);
 
+                        if(EditorGUI.EndChangeCheck())
+                        {
+                            Undo.RecordObjects(targetNodes, "Changed CSG operation 'Handle as one object'");
 
-						EditorGUI.showMixedValue = !prefabSourceAlignment.HasValue;
-						var sourceAlignment = prefabSourceAlignment.HasValue ? prefabSourceAlignment.Value : PrefabSourceAlignment.AlignedFront;
-						EditorGUI.BeginChangeCheck();
-						{
-							sourceAlignment = (PrefabSourceAlignment)EditorGUILayout.EnumPopup(SourceAlignmentContent, sourceAlignment);
-							TooltipUtility.SetToolTip(SourceAlignmentTooltip);
-						}
-						if (EditorGUI.EndChangeCheck())
-						{
-							Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
-							for (int i = 0; i < targetNodes.Length; i++)
-							{
-								targetNodes[i].PrefabSourceAlignment = sourceAlignment;
-							}
-						}
-						EditorGUI.showMixedValue = false;
-					}
-					EditorGUI.indentLevel--;
-				}
-				GUILayout.EndVertical();
-				GUILayout.Space(10);
-				
+                            foreach(CSGOperation operation in targetOperations)
+                            {
+                                operation.handleAsOne = handleAsOne.Value;
+                            }
 
-				if (targetModels.Length == 0)
-				{
-					int					invalidOperationType	= 999;
-					bool?				handleAsOne		= null;
-					bool				selMixedValues	= false;
-					CSGOperationType	operationType	= (CSGOperationType)invalidOperationType;
-					bool				opMixedValues	= false;
-					if (targetBrushes.Length > 0)
-					{
-						operationType		= targetBrushes[0].OperationType;
-					}
-					for (int b = 1; b < targetBrushes.Length; b++)
-					{
-						var brush = targetBrushes[b];
-						if (operationType != brush.OperationType)
-						{
-							opMixedValues = true;
-						}
-					}
-					foreach(var operation in targetOperations)
-					{
-						if (operationType == (CSGOperationType)invalidOperationType)
-						{
-							operationType = operation.OperationType;
-						} else
-						if (operationType != operation.OperationType)
-						{
-							opMixedValues = true;
-						}
-					
-						if (!handleAsOne.HasValue)
-						{
-							handleAsOne = operation.HandleAsOne;
-						} else
-						if (handleAsOne.Value != operation.HandleAsOne)
-						{
-							selMixedValues	= true; 
-						}
-					}
-					GUILayout.BeginVertical(GUI.skin.box);
-					{
-						bool passThroughValue	= false;
-						if (targetBrushes.Length == 0 && targetOperations.Length > 0) // only operations
-						{
-							bool? passThrough = targetOperations[0].PassThrough;
-							for (int i = 1; i < targetOperations.Length; i++)
-							{
-								if (passThrough.HasValue && passThrough.Value != targetOperations[i].PassThrough)
-								{
-									passThrough = null;
-									break;
-								}
-							}
-							
-							opMixedValues = !passThrough.HasValue || passThrough.Value;
-
-							var ptMixedValues		= !passThrough.HasValue;
-							passThroughValue		= passThrough.HasValue ? passThrough.Value : false;
-							if (CSG_EditorGUIUtility.PassThroughButton(passThroughValue, ptMixedValues))
-							{
-								Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
-								foreach (var operation in targetOperations)
-								{
-									operation.PassThrough = true;
-								}
-								InternalCSGModelManager.CheckForChanges();
-								EditorApplication.RepaintHierarchyWindow();
-							}
-
-							if (passThroughValue)							
-								operationType = (CSGOperationType)255;
-						}
-						EditorGUI.BeginChangeCheck();
-						{
-							operationType = CSG_EditorGUIUtility.ChooseOperation(operationType, opMixedValues);
-						}
-						if (EditorGUI.EndChangeCheck())
-						{
-							Undo.RecordObjects(targetNodes, "Changed CSG operation of nodes");
-							foreach (var brush in targetBrushes)
-							{
-								brush.OperationType = operationType;
-							}
-							foreach (var operation in targetOperations)
-							{
-								operation.PassThrough = false;
-								operation.OperationType = operationType;
-							}
-							InternalCSGModelManager.CheckForChanges();
-							EditorApplication.RepaintHierarchyWindow();
-						}
-					}
-					GUILayout.EndVertical();
-
-					if (targetOperations.Length == 0 && targetModels.Length == 0)
-					{
-						GUILayout.Space(10);
-						if (targetBrushes.Length == 1)
-						{ 
-							GUILayout.BeginVertical(GUI.skin.box);
-							{
-								EditorGUI.indentLevel++;
-								OpenSurfaces = EditorGUILayout.Foldout(OpenSurfaces, SurfacesContent);
-								EditorGUI.indentLevel--;
-								if (OpenSurfaces)
-								{ 
-									var targetShape		= targetBrushes[0].Shape;
-									var texGens			= targetShape.TexGens;
-									var texGenFlagArray = targetShape.TexGenFlags;
-									for (int t = 0; t < texGens.Length; t++)
-									{
-										GUILayout.Space(2);
-
-										var texGenFlags			= texGenFlagArray[t];
-										var material			= targetShape.TexGens[t].RenderMaterial;
-										EditorGUI.BeginChangeCheck();
-										{
-											GUILayout.BeginHorizontal();
-											{
-												GUILayout.Space(4);
-												material = CSG_EditorGUIUtility.MaterialImage(material);
-												GUILayout.Space(2);
-												GUILayout.BeginVertical();
-												{
-													EditorGUI.BeginDisabledGroup(texGenFlags != TexGenFlags.None);
-													{
-														material = EditorGUILayout.ObjectField(material, typeof(Material), true) as Material;
-													}
-													EditorGUI.EndDisabledGroup();
-
-													texGenFlags = EditModeCommonGUI.OnSurfaceFlagButtons(texGenFlags);
-												}
-												GUILayout.EndVertical();
-												GUILayout.Space(4);
-											}
-											GUILayout.EndHorizontal();
-										}
-										if (EditorGUI.EndChangeCheck())
-										{
-											var selectedBrushSurfaces = new []
-											{
-												new SelectedBrushSurface(targetBrushes[0], t)
-											};
-											using (new UndoGroup(selectedBrushSurfaces, "discarding surface"))
-											{
-												texGenFlagArray[t] = texGenFlags;
-												targetShape.TexGens[t].RenderMaterial = material;
-											}
-										}
-										GUILayout.Space(4);
-									}
-								}
-							}
-							GUILayout.EndVertical();
-						}
-					}
-
-					if (handleAsOne.HasValue)
-					{ 
-						EditorGUI.BeginChangeCheck();
-						{
-							EditorGUI.showMixedValue = selMixedValues;
-							handleAsOne = EditorGUILayout.Toggle(HandleAsOneLabel, handleAsOne.Value);
-						}
-						if (EditorGUI.EndChangeCheck())
-						{
-							Undo.RecordObjects(targetNodes, "Changed CSG operation 'Handle as one object'");
-							foreach (var operation in targetOperations)
-							{
-								operation.HandleAsOne = handleAsOne.Value;
-							}
-							EditorApplication.RepaintHierarchyWindow();
-						}
-					}
-				}
-
-#if false
-				if (targetNodes.Length == 1)
-				{
-					var node = targetNodes[0];
-					var brush = node as CSGBrush;
-					if (brush != null)
-					{
-						var brush_cache = CSGSceneManager.GetBrushCache(brush);
-						if (brush_cache == null ||
-							brush_cache.childData == null ||
-							brush_cache.childData.modelTransform == null)
-						{
-							EditorGUILayout.LabelField("brush-cache: null");
-						} else
-						{
-							EditorGUILayout.LabelField("node-id: " + brush.brushNodeID);
-						}
-					}
-					var operation = node as CSGOperation;
-					if (operation != null)
-					{
-						var operation_cache = CSGSceneManager.GetOperationCache(operation);
-						if (operation_cache == null ||
-							operation_cache.childData == null ||
-							operation_cache.childData.modelTransform == null)
-						{
-							EditorGUILayout.LabelField("operation-cache: null");
-						} else
-						{
-							EditorGUILayout.LabelField("operation-id: " + operation.operationNodeID);
-						}
-					}
-					var model = node as CSGModel;
-					if (model != null)
-					{
-						var model_cache = CSGSceneManager.GetModelCache(model);
-						if (model_cache == null ||
-							model_cache.meshContainer == null)
-						{
-							EditorGUILayout.LabelField("model-cache: null");
-						}  else
-						{
-							EditorGUILayout.LabelField("model-id: " + model.modelNodeID);
-						}
-					}
-				}
-#endif
-			}
-			finally
-			{
-				TooltipUtility.DrawToolTip(getLastRect: true, goUp: true);
-			}
-		}
-	}
+                            EditorApplication.RepaintHierarchyWindow();
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                TooltipUtility.DrawToolTip(true, true);
+            }
+        }
+    }
 }

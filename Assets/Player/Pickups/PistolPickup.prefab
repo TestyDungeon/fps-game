@@ -164,7 +164,6 @@ GameObject:
   - component: {fileID: 1061987086887619825}
   - component: {fileID: 7030954984920147640}
   - component: {fileID: 5351785483729525687}
-  - component: {fileID: 3020957161585701803}
   m_Layer: 10
   m_Name: PistolPickup
   m_TagString: Untagged
@@ -221,36 +220,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05cc6b0ca6ad7e5459ae9da9a0fd3f09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lootType: 8
-  amount: 0
-  item: {fileID: 2600209598671328778, guid: d06b4ab3f24fdf94eba1a6881a9528df, type: 3}
   rotationSpeed: 200
   amplitude: 0.1
   frequency: 1
   playSound: 1
   soundType: 10
   volume: 0.4
---- !u!114 &3020957161585701803
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2789795905933830011}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 05cc6b0ca6ad7e5459ae9da9a0fd3f09, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lootType: 0
-  amount: 12
-  item: {fileID: 0}
-  rotationSpeed: 0
-  amplitude: 0
-  frequency: 0
-  playSound: 0
-  soundType: 0
-  volume: 0
+  magnetic: 0
+  effects:
+  - type: 3
+    amount: 0
+    ammoType: 0
+    itemName: pistol
 --- !u!1 &3198526231037795690
 GameObject:
   m_ObjectHideFlags: 0

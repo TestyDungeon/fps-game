@@ -1,512 +1,567 @@
-﻿#pragma warning disable 0619
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using InternalRealtimeCSG;
+using RealtimeCSG.Components;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using InternalRealtimeCSG;
-using RealtimeCSG.Components;
 
 namespace RealtimeCSG
 {
-	internal static class UnitySelectionCompatibility
-	{
-		public static bool Contains(int instanceID)
-		{
-			return Selection.objects.Any(target => target != null && target.GetInstanceIDCompat() == instanceID);
-		}
+    internal enum SelectionType
+    {
+        Replace
+      , Additive
+      , Subtractive
+      , Toggle
+    }
 
-		public static int[] GetInstanceIDs()
-		{
-			return Selection.objects
-				.Where(target => target != null)
-				.Select(target => target.GetInstanceIDCompat())
-				.ToArray();
-		}
+    internal static class SelectionUtility
+    {
+        private static CSGModel m_LastUsedModelInstance;
 
-		public static void SetInstanceIDs(int[] instanceIDs)
-		{
-			Selection.objects = instanceIDs
-				.Select(UnityObjectCompatibility.InstanceIDToObjectCompat)
-				.Where(target => target != null)
-				.ToArray();
-		}
-	}
+        internal static CSGModel LastUsedModel
+        {
+            get
+            {
+                CSGModel returnModel = null;
 
-	internal enum SelectionType
-	{
-		Replace,
-		Additive,
-		Subtractive,
-		Toggle
-	};
+                if(m_LastUsedModelInstance != null)
+                {
+                    HideFlags flags = m_LastUsedModelInstance.gameObject.hideFlags;
 
-	internal static class SelectionUtility
-	{
-		private static CSGModel lastUsedModelInstance = null;
-		internal static CSGModel LastUsedModel
-		{
-			get
-			{
-				CSGModel returnModel = null;
-				if (lastUsedModelInstance != null)
-				{
-					var flags = lastUsedModelInstance.gameObject.hideFlags;
-					if ((flags & (HideFlags.HideInHierarchy | HideFlags.NotEditable | HideFlags.DontSaveInBuild)) == 0)
-						returnModel = lastUsedModelInstance;
-				}
-				if (returnModel != null &&
-                    returnModel.gameObject.activeInHierarchy)
-				{
-					return returnModel;
-				}
+                    if((flags & (HideFlags.HideInHierarchy | HideFlags.NotEditable | HideFlags.DontSaveInBuild)) == 0)
+                    {
+                        returnModel = m_LastUsedModelInstance;
+                    }
+                }
 
-				foreach (var model in InternalCSGModelManager.Models)
-				{
-					var flags = model.gameObject.hideFlags;
-					if ((flags & (HideFlags.HideInHierarchy | HideFlags.NotEditable | HideFlags.DontSaveInBuild)) == 0 &&
-                        model.gameObject.activeInHierarchy)
-					{
-						// don't want new stuff to be added to a prefab instance
-						if (CSGPrefabUtility.IsPrefabAssetOrInstance(model.gameObject))
-						{
-							continue;
-						}
-						return model;
-					}
-				}
-				return null;
-			}
-			set
-			{
-                if (!value)
+                if(returnModel != null && returnModel.gameObject.activeInHierarchy)
+                {
+                    return returnModel;
+                }
+
+                foreach(CSGModel model in InternalCSGModelManager.Models)
+                {
+                    HideFlags flags = model.gameObject.hideFlags;
+
+                    if((flags & (HideFlags.HideInHierarchy | HideFlags.NotEditable | HideFlags.DontSaveInBuild)) == 0 && model.gameObject.activeInHierarchy)
+                    {
+                        // don't want new stuff to be added to a prefab instance
+                        if(CSGPrefabUtility.IsPrefabAssetOrInstance(model.gameObject))
+                        {
+                            continue;
+                        }
+
+                        return model;
+                    }
+                }
+
+                return null;
+            }
+            set
+            {
+                if(!value)
+                {
                     return;
+                }
 
-				var flags = value.gameObject.hideFlags;
-				if ((flags & (HideFlags.HideInHierarchy | HideFlags.NotEditable | HideFlags.DontSaveInBuild)) != 0 &&
-                    value.gameObject.activeInHierarchy)
-					return;
+                HideFlags flags = value.gameObject.hideFlags;
 
-				// don't want new stuff to be added to a prefab instance
-				if (CSGPrefabUtility.IsPrefabAssetOrInstance(value.gameObject))
-				{
-					return;
-				}
+                if((flags & (HideFlags.HideInHierarchy | HideFlags.NotEditable | HideFlags.DontSaveInBuild)) != 0 && value.gameObject.activeInHierarchy)
+                {
+                    return;
+                }
 
-				lastUsedModelInstance = value;
-			}
-		}
+                // don't want new stuff to be added to a prefab instance
+                if(CSGPrefabUtility.IsPrefabAssetOrInstance(value.gameObject))
+                {
+                    return;
+                }
 
-		public static Transform FindParentToAssignTo(LegacyBrushIntersection intersection)
-		{
-			if (intersection.brush == null ||
-				CSGPrefabUtility.IsPrefabAsset(intersection.brush.gameObject))
-			{
-				var lastModel = SelectionUtility.LastUsedModel;
-				if (lastModel == null ||
-					CSGPrefabUtility.IsPrefabAsset(lastModel.gameObject))
-					return null;
+                m_LastUsedModelInstance = value;
+            }
+        }
 
-				return lastModel.transform;
-			}
+        public static Transform FindParentToAssignTo(LegacyBrushIntersection intersection)
+        {
+            if(intersection.brush == null || CSGPrefabUtility.IsPrefabAsset(intersection.brush.gameObject))
+            {
+                CSGModel lastModel = LastUsedModel;
 
-			var hoverParent	= intersection.brush.transform.parent;
-			var iterator	= hoverParent;
-			while (iterator != null)
-			{
-				var node = iterator.GetComponent<CSGNode>();
-				if (node != null)
-					hoverParent = node.transform;
-				iterator = iterator.transform.parent;
-			}
-			if (!hoverParent)
-				return null;
-			if (CSGPrefabUtility.GetCorrespondingObjectFromSource(hoverParent.gameObject) != null)
-				return null;
-			return hoverParent;
-		}
+                if(lastModel == null || CSGPrefabUtility.IsPrefabAsset(lastModel.gameObject))
+                {
+                    return null;
+                }
 
-		public static Quaternion FindDragOrientation(SceneView sceneView, Vector3 normal, PrefabSourceAlignment sourceSurfaceAlignment, PrefabDestinationAlignment destinationSurfaceAlignment)
-		{
-			Quaternion srcRotation;
-			switch (sourceSurfaceAlignment)
-			{
-				default:
-				case PrefabSourceAlignment.AlignedFront: srcRotation = Quaternion.LookRotation(MathConstants.forwardVector3); break;
-				case PrefabSourceAlignment.AlignedBack: srcRotation = Quaternion.LookRotation(MathConstants.backVector3); break;
-				case PrefabSourceAlignment.AlignedLeft: srcRotation = Quaternion.LookRotation(MathConstants.rightVector3); break;
-				case PrefabSourceAlignment.AlignedRight: srcRotation = Quaternion.LookRotation(MathConstants.leftVector3); break;
-				case PrefabSourceAlignment.AlignedTop: srcRotation = Quaternion.LookRotation(MathConstants.upVector3, MathConstants.forwardVector3); break;
-				case PrefabSourceAlignment.AlignedBottom: srcRotation = Quaternion.LookRotation(MathConstants.downVector3, MathConstants.backVector3); break;
-			}
+                return lastModel.transform;
+            }
 
-			switch (destinationSurfaceAlignment)
-			{
-				default:
-				case PrefabDestinationAlignment.AlignToSurface:
-				{
-					var tangent = MathConstants.upVector3; // assume up is up in the world
-					var absX = Mathf.Abs(normal.x);
-					var absY = Mathf.Abs(normal.y);
-					var absZ = Mathf.Abs(normal.z);
+            Transform hoverParent = intersection.brush.transform.parent;
+            Transform iterator    = hoverParent;
 
-					// if our surface is a floor / ceiling then assume up is the axis
-					// aligned vector that is most aligned with the camera's up vector
-					if (absX <= absY && absX <= absZ && absY > absZ)
-					{
-						tangent = GeometryUtility.SnapToClosestAxis(sceneView.camera ? sceneView.camera.transform.up : MathConstants.upVector3);
-					}
+            while(iterator != null)
+            {
+                CSGNode node = iterator.GetComponent<CSGNode>();
 
-					return Quaternion.LookRotation(normal, tangent) * srcRotation;
-				}
-				case PrefabDestinationAlignment.AlignSurfaceUp:
-				{
-					normal.y = 0;
-					normal.Normalize();
-					if (normal.sqrMagnitude == 0)
-						normal = GeometryUtility.SnapToClosestAxis(sceneView.camera ? sceneView.camera.transform.forward : MathConstants.forwardVector3);
+                if(node != null)
+                {
+                    hoverParent = node.transform;
+                }
 
-					var tangent = MathConstants.upVector3; // assume up is up in the world
-					var absX = Mathf.Abs(normal.x);
-					var absY = Mathf.Abs(normal.y);
-					var absZ = Mathf.Abs(normal.z);
+                iterator = iterator.transform.parent;
+            }
 
-					// if our surface is a floor / ceiling then assume up is the axis
-					// aligned vector that is most aligned with the camera's up vector
-					if (absX <= absY && absX <= absZ && absY > absZ)
-					{
-						tangent = GeometryUtility.SnapToClosestAxis(sceneView.camera ? sceneView.camera.transform.up : MathConstants.upVector3);
-					}
+            if(!hoverParent)
+            {
+                return null;
+            }
 
-					return Quaternion.LookRotation(normal, tangent) * srcRotation;
-				}
-				case PrefabDestinationAlignment.Default:
-				{
-					return Quaternion.identity;
-				}
-			}
-		}
+            return CSGPrefabUtility.GetCorrespondingObjectFromSource(hoverParent.gameObject) != null ? null : hoverParent;
+        }
 
-		static bool				shiftPressed		= false;
-		static bool				actionKeyPressed	= false;
-		static EventModifiers	currentModifiers	= EventModifiers.None;
-		public static EventModifiers CurrentModifiers { get { return currentModifiers; } internal set { currentModifiers = value; } }
+        public static Quaternion FindDragOrientation(SceneView sceneView, Vector3 normal, PrefabSourceAlignment sourceSurfaceAlignment, PrefabDestinationAlignment destinationSurfaceAlignment)
+        {
+            Quaternion srcRotation;
 
-		public static void HandleEvents()
-		{
-			switch (Event.current.type)
-			{
-				case EventType.MouseDown:
-				case EventType.MouseUp:
-				case EventType.MouseDrag:
-				case EventType.MouseMove:
-				case EventType.KeyDown:
-				case EventType.KeyUp:
-				case EventType.ValidateCommand:
-				case EventType.ExecuteCommand:
-				case EventType.Repaint:
-				{
-					shiftPressed		= Event.current.shift;
-					actionKeyPressed	= EditorGUI.actionKey;
-					currentModifiers	= Event.current.modifiers & (EventModifiers.Alt | EventModifiers.Control | EventModifiers.Shift | EventModifiers.Command);
-					break;
-				}
-			}
-		}
+            switch(sourceSurfaceAlignment)
+            {
+                default:
+                case PrefabSourceAlignment.AlignedFront:
+                    srcRotation = Quaternion.LookRotation(MathConstants.forwardVector3); break;
+                case PrefabSourceAlignment.AlignedBack:
+                    srcRotation = Quaternion.LookRotation(MathConstants.backVector3); break;
+                case PrefabSourceAlignment.AlignedLeft:
+                    srcRotation = Quaternion.LookRotation(MathConstants.rightVector3); break;
+                case PrefabSourceAlignment.AlignedRight:
+                    srcRotation = Quaternion.LookRotation(MathConstants.leftVector3); break;
+                case PrefabSourceAlignment.AlignedTop:
+                    srcRotation = Quaternion.LookRotation(MathConstants.upVector3, MathConstants.forwardVector3); break;
+                case PrefabSourceAlignment.AlignedBottom:
+                    srcRotation = Quaternion.LookRotation(MathConstants.downVector3, MathConstants.backVector3); break;
+            }
 
-		public static void HideObjectsRemoteOnly(List<GameObject> gameObjects)
-		{
-			if (gameObjects == null ||
-				gameObjects.Count == 0)
-				return;
+            switch(destinationSurfaceAlignment)
+            {
+                default:
+                case PrefabDestinationAlignment.AlignToSurface:
+                {
+                    Vector3 tangent = MathConstants.upVector3; // assume up is up in the world
+                    float   absX    = Mathf.Abs(normal.x);
+                    float   absY    = Mathf.Abs(normal.y);
+                    float   absZ    = Mathf.Abs(normal.z);
 
-			for (var i = gameObjects.Count - 1; i >= 0; i--)
-			{
-				if (gameObjects[i])
-					gameObjects[i].SetActive(false);
-			}
+                    // if our surface is a floor / ceiling then assume up is the axis
+                    // aligned vector that is most aligned with the camera's up vector
+                    if(absX <= absY && absX <= absZ && absY > absZ)
+                    {
+                        tangent = GeometryUtility.SnapToClosestAxis(sceneView.camera ? sceneView.camera.transform.up : MathConstants.upVector3);
+                    }
 
-			InternalCSGModelManager.CheckTransformChanged();
-			InternalCSGModelManager.OnHierarchyModified();
-			InternalCSGModelManager.UpdateRemoteMeshes();
-		}
+                    return Quaternion.LookRotation(normal, tangent) * srcRotation;
+                }
+                case PrefabDestinationAlignment.AlignSurfaceUp:
+                {
+                    normal.y = 0;
+                    normal.Normalize();
 
-		public static void ShowObjectsAndUpdate(List<GameObject> gameObjects)
-		{
-			if (gameObjects == null ||
-				gameObjects.Count == 0)
-				return;
+                    if(normal.sqrMagnitude == 0)
+                    {
+                        normal = GeometryUtility.SnapToClosestAxis(sceneView.camera ? sceneView.camera.transform.forward : MathConstants.forwardVector3);
+                    }
 
-			for (var i = gameObjects.Count - 1; i >= 0; i--)
-			{
-				if (gameObjects[i])
-					gameObjects[i].SetActive(true);
-			}
+                    Vector3 tangent = MathConstants.upVector3; // assume up is up in the world
+                    float   absX    = Mathf.Abs(normal.x);
+                    float   absY    = Mathf.Abs(normal.y);
+                    float   absZ    = Mathf.Abs(normal.z);
 
-			InternalCSGModelManager.CheckTransformChanged();
-			InternalCSGModelManager.OnHierarchyModified();
-			InternalCSGModelManager.UpdateMeshes(forceUpdate: true);
-			MeshInstanceManager.UpdateHelperSurfaceVisibility();
-		}
+                    // if our surface is a floor / ceiling then assume up is the axis
+                    // aligned vector that is most aligned with the camera's up vector
+                    if(absX <= absY && absX <= absZ && absY > absZ)
+                    {
+                        tangent = GeometryUtility.SnapToClosestAxis(sceneView.camera ? sceneView.camera.transform.up : MathConstants.upVector3);
+                    }
 
+                    return Quaternion.LookRotation(normal, tangent) * srcRotation;
+                }
+                case PrefabDestinationAlignment.Default:
+                {
+                    return Quaternion.identity;
+                }
+            }
+        }
 
-		public static bool IsSnappingToggled
-		{
-			get
-			{
-				return actionKeyPressed;
-			}
-		}
+        private static bool m_ShiftPressed;
+        private static bool m_ActionKeyPressed;
+        private static EventModifiers m_CurrentModifiers = EventModifiers.None;
 
-		public static SelectionType GetEventSelectionType()
-		{
-			if (shiftPressed && actionKeyPressed) return SelectionType.Subtractive;
-			if (                actionKeyPressed) return SelectionType.Toggle;
-			if (shiftPressed                    ) return SelectionType.Additive;
-			return SelectionType.Replace;
-		}
+        public static EventModifiers CurrentModifiers
+        {
+            get => m_CurrentModifiers;
+            internal set => m_CurrentModifiers = value;
+        }
 
-		public static void DeselectAll()
-		{
-			if (EditModeManager.DeselectAll())
-				return;
-			DeselectAllBrushes();
-		}
+        public static void HandleEvents()
+        {
+            switch(Event.current.type)
+            {
+                case EventType.MouseDown:
+                case EventType.MouseUp:
+                case EventType.MouseDrag:
+                case EventType.MouseMove:
+                case EventType.KeyDown:
+                case EventType.KeyUp:
+                case EventType.ValidateCommand:
+                case EventType.ExecuteCommand:
+                case EventType.Repaint:
+                {
+                    m_ShiftPressed     = Event.current.shift;
+                    m_ActionKeyPressed = EditorGUI.actionKey;
 
-		public static void DeselectAllBrushes()
-		{
-			Selection.activeObject = null;
-		}
+                    m_CurrentModifiers = Event.current.modifiers & (EventModifiers.Alt | EventModifiers.Control
+                      | EventModifiers.Shift | EventModifiers.Command);
 
-		public static void ToggleSelectedObjectVisibility()
-		{
-			Undo.IncrementCurrentGroup();
-			int undo_group_index = Undo.GetCurrentGroup();
+                    break;
+                }
+            }
+        }
 
-			var selected = Selection.gameObjects.ToArray();
-			Undo.RecordObjects(selected, "Toggle Object Visibility");
-			bool haveVisibleSelection = false;
-			for (int i = 0; i < selected.Length; i++)
-			{
-				haveVisibleSelection = selected[i].activeInHierarchy || haveVisibleSelection;
-			}
-			if (haveVisibleSelection)
-			{
-				for (int i = 0; i < selected.Length; i++)
-					selected[i].SetActive(false);
-			} else
-			{
-				for (int i = 0; i < selected.Length; i++)
-					selected[i].SetActive(true);
-			}
+        public static void HideObjectsRemoteOnly(List<GameObject> gameObjects)
+        {
+            if(gameObjects == null || gameObjects.Count == 0)
+            {
+                return;
+            }
 
-			Undo.CollapseUndoOperations(undo_group_index);
-		}
+            for(int i = gameObjects.Count - 1; i >= 0; i--)
+            {
+                if(gameObjects[i])
+                {
+                    gameObjects[i].SetActive(false);
+                }
+            }
 
-		public static void HideSelectedObjects()
-		{
-			Undo.IncrementCurrentGroup();
-			int undo_group_index = Undo.GetCurrentGroup();
+            InternalCSGModelManager.CheckTransformChanged();
+            InternalCSGModelManager.OnHierarchyModified();
+            InternalCSGModelManager.UpdateRemoteMeshes();
+        }
 
-			var selected = Selection.gameObjects.ToArray();
-			Undo.RecordObjects(selected, "Hiding Objects");
-			for (int i = 0; i < selected.Length; i++)
-				selected[i].SetActive(false);
+        public static void ShowObjectsAndUpdate(List<GameObject> gameObjects)
+        {
+            if(gameObjects == null || gameObjects.Count == 0)
+            {
+                return;
+            }
 
-			Undo.CollapseUndoOperations(undo_group_index);
-		}
+            for(int i = gameObjects.Count - 1; i >= 0; i--)
+            {
+                if(gameObjects[i])
+                {
+                    gameObjects[i].SetActive(true);
+                }
+            }
 
-		public static void UnHideAll()
-		{
-			Undo.IncrementCurrentGroup();
-			int undo_group_index = Undo.GetCurrentGroup();
+            InternalCSGModelManager.CheckTransformChanged();
+            InternalCSGModelManager.OnHierarchyModified();
+            InternalCSGModelManager.UpdateMeshes(forceUpdate: true);
+            MeshInstanceManager.UpdateHelperSurfaceVisibility();
+        }
 
-			for (int sceneIndex = 0; sceneIndex < SceneManager.sceneCount; sceneIndex++)
-			{
-				var activeScene = SceneManager.GetSceneAt(sceneIndex);
-				var rootGameObjects = activeScene.GetRootGameObjects();
-				for (int i = 0; i < rootGameObjects.Length; i++)
-				{
-					var children = rootGameObjects[i].GetComponentsInChildren<Transform>(true);
-					for (int c = 0; c < children.Length; c++)
-					{
-						var transform = children[c];
-						var gameObject = transform.gameObject;
-						if (gameObject.activeInHierarchy || (gameObject.hideFlags != HideFlags.None))
-							continue;
+        public static bool IsSnappingToggled
+        {
+            get => m_ActionKeyPressed;
+        }
 
-						Undo.RecordObject(gameObject, "Un-hiding Object");
-						gameObject.SetActive(true);
-					}
-				}
-			}
-			Undo.CollapseUndoOperations(undo_group_index);
-		}
+        public static SelectionType GetEventSelectionType()
+        {
+            if(m_ShiftPressed && m_ActionKeyPressed)
+            {
+                return SelectionType.Subtractive;
+            }
 
-		public static void HideUnselectedObjects()
-		{
-			Undo.IncrementCurrentGroup();
-			var undoGroupIndex  = Undo.GetCurrentGroup();
+            if(m_ActionKeyPressed)
+            {
+                return SelectionType.Toggle;
+            }
 
-			var selected		= Selection.gameObjects.ToList();
-			var selectedIDs		= new HashSet<int>();
+            return m_ShiftPressed ? SelectionType.Additive : SelectionType.Replace;
+        }
 
-			var models = InternalCSGModelManager.Models;
-			for (var i = 0; i < models.Length; i++)
-			{
-				var model = models[i];
-                if (!ModelTraits.IsModelSelectable(model))
-					continue;
+        public static void DeselectAll()
+        {
+            if(EditModeManager.DeselectAll())
+            {
+                return;
+            }
 
-				if (!model.generatedMeshes)
-					continue;
+            DeselectAllBrushes();
+        }
 
-				var meshContainerChildren = model.generatedMeshes.GetComponentsInChildren<Transform>();
-				foreach (var child in meshContainerChildren)
-					selected.Add(child.gameObject);
-			}
+        public static void DeselectAllBrushes()
+        {
+            Selection.activeObject = null;
+        }
 
-			for (int i = 0; i < selected.Count; i++) // we keep adding parents, and their parents until we hit the root-objects
-			{
-				selectedIDs.Add(selected[i].GetInstanceIDCompat());
-				var transform = selected[i].transform;
-				var parent    = transform.parent;
-				if (parent == null)
-					continue;
-				selected.Add(parent.gameObject);
-			}
+        public static void ToggleSelectedObjectVisibility()
+        {
+            Undo.IncrementCurrentGroup();
+            int undoGroupIndex = Undo.GetCurrentGroup();
 
-			for (var sceneIndex = 0; sceneIndex < SceneManager.sceneCount; sceneIndex++)
-			{
-				var activeScene = SceneManager.GetSceneAt(sceneIndex);
-				var rootGameObjects = activeScene.GetRootGameObjects();
-				for (var i = 0; i < rootGameObjects.Length; i++)
-				{
-					var children = rootGameObjects[i].GetComponentsInChildren<Transform>();
-					for (var c = 0; c < children.Length; c++)
-					{
-						var transform = children[c];
-						var gameObject = transform.gameObject;
-						if (!gameObject.activeInHierarchy || (gameObject.hideFlags != HideFlags.None))
-							continue;
+            GameObject[] selected = Selection.gameObjects.ToArray();
+            Undo.RecordObjects(selected, "Toggle Object Visibility");
+            bool haveVisibleSelection = false;
 
-						if (selectedIDs.Contains(gameObject.GetInstanceIDCompat()))
-							continue;
+            for(int i = 0; i < selected.Length; i++)
+            {
+                haveVisibleSelection = selected[i].activeInHierarchy || haveVisibleSelection;
+            }
 
-						Undo.RecordObject(gameObject, "Hiding Object");
-						gameObject.SetActive(false);
-					}
-				}
-			}
+            if(haveVisibleSelection)
+            {
+                for(int i = 0; i < selected.Length; i++)
+                {
+                    selected[i].SetActive(false);
+                }
+            }
+            else
+            {
+                for(int i = 0; i < selected.Length; i++)
+                {
+                    selected[i].SetActive(true);
+                }
+            }
 
-			Undo.CollapseUndoOperations(undoGroupIndex);
-		}
+            Undo.CollapseUndoOperations(undoGroupIndex);
+        }
 
+        public static void HideSelectedObjects()
+        {
+            Undo.IncrementCurrentGroup();
+            int undoGroupIndex = Undo.GetCurrentGroup();
+
+            GameObject[] selected = Selection.gameObjects.ToArray();
+            Undo.RecordObjects(selected, "Hiding Objects");
+
+            for(int i = 0; i < selected.Length; i++)
+            {
+                selected[i].SetActive(false);
+            }
+
+            Undo.CollapseUndoOperations(undoGroupIndex);
+        }
+
+        public static void UnHideAll()
+        {
+            Undo.IncrementCurrentGroup();
+            int undoGroupIndex = Undo.GetCurrentGroup();
+
+            for(int sceneIndex = 0; sceneIndex < SceneManager.sceneCount; sceneIndex++)
+            {
+                Scene        activeScene     = SceneManager.GetSceneAt(sceneIndex);
+                GameObject[] rootGameObjects = activeScene.GetRootGameObjects();
+
+                for(int i = 0; i < rootGameObjects.Length; i++)
+                {
+                    Transform[] children = rootGameObjects[i].GetComponentsInChildren<Transform>(true);
+
+                    for(int c = 0; c < children.Length; c++)
+                    {
+                        Transform  transform  = children[c];
+                        GameObject gameObject = transform.gameObject;
+
+                        if(gameObject.activeInHierarchy || gameObject.hideFlags != HideFlags.None)
+                        {
+                            continue;
+                        }
+
+                        Undo.RecordObject(gameObject, "Un-hiding Object");
+                        gameObject.SetActive(true);
+                    }
+                }
+            }
+
+            Undo.CollapseUndoOperations(undoGroupIndex);
+        }
+
+        public static void HideUnselectedObjects()
+        {
+            Undo.IncrementCurrentGroup();
+            int undoGroupIndex = Undo.GetCurrentGroup();
+
+            List<GameObject> selected    = Selection.gameObjects.ToList();
+            HashSet<int>     selectedIDs = new HashSet<int>();
+            CSGModel[]       models      = InternalCSGModelManager.Models;
+
+            for(int i = 0; i < models.Length; i++)
+            {
+                CSGModel model = models[i];
+
+                if(!ModelTraits.IsModelSelectable(model))
+                {
+                    continue;
+                }
+
+                if(!model.generatedMeshes)
+                {
+                    continue;
+                }
+
+                Transform[] meshContainerChildren = model.generatedMeshes.GetComponentsInChildren<Transform>();
+
+                foreach(Transform child in meshContainerChildren)
+                {
+                    selected.Add(child.gameObject);
+                }
+            }
+
+            // we keep adding parents, and their parents until we hit the root-objects
+            for(int i = 0; i < selected.Count; i++)
+            {
+                selectedIDs.Add(selected[i].GetIntegerID());
+                Transform transform = selected[i].transform;
+                Transform parent    = transform.parent;
+
+                if(parent == null)
+                {
+                    continue;
+                }
+
+                selected.Add(parent.gameObject);
+            }
+
+            for(int sceneIndex = 0; sceneIndex < SceneManager.sceneCount; sceneIndex++)
+            {
+                Scene        activeScene     = SceneManager.GetSceneAt(sceneIndex);
+                GameObject[] rootGameObjects = activeScene.GetRootGameObjects();
+
+                for(int i = 0; i < rootGameObjects.Length; i++)
+                {
+                    Transform[] children = rootGameObjects[i].GetComponentsInChildren<Transform>();
+
+                    for(int c = 0; c < children.Length; c++)
+                    {
+                        Transform  transform  = children[c];
+                        GameObject gameObject = transform.gameObject;
+
+                        if(!gameObject.activeInHierarchy || gameObject.hideFlags != HideFlags.None)
+                        {
+                            continue;
+                        }
+
+                        if(selectedIDs.Contains(gameObject.GetIntegerID()))
+                        {
+                            continue;
+                        }
+
+                        Undo.RecordObject(gameObject, "Hiding Object");
+                        gameObject.SetActive(false);
+                    }
+                }
+            }
+
+            Undo.CollapseUndoOperations(undoGroupIndex);
+        }
 
 #region DoSelectionClick
-		public static void DoSelectionClick(SceneView sceneView, bool ignoreInvisibleSurfaces = true)
-		{
-            var camera = sceneView.camera;
-			GameObject gameobject;
-			SceneQueryUtility.FindClickWorldIntersection(camera, Event.current.mousePosition, out gameobject, ignoreInvisibleSurfaces);
 
-			gameobject = SceneQueryUtility.FindSelectionBase(gameobject);
+        public static void DoSelectionClick(SceneView sceneView, bool ignoreInvisibleSurfaces = true)
+        {
+            Camera camera = sceneView.camera;
 
-            var selectedObjectsOnClick = new List<int>(UnitySelectionCompatibility.GetInstanceIDs());
-			bool addedSelection = false;
-			if (EditorGUI.actionKey)
-			{
-				if (gameobject != null)
-				{
-					var instanceID = gameobject.GetInstanceIDCompat();
-					if (selectedObjectsOnClick.Contains(instanceID))
-					{
-						selectedObjectsOnClick.Remove(instanceID);
-					}
-					else
-					{
-						selectedObjectsOnClick.Add(instanceID);
-						addedSelection = true;
-					}
+            SceneQueryUtility.FindClickWorldIntersection(camera, Event.current.mousePosition, out GameObject gameobject, ignoreInvisibleSurfaces);
 
-					if (selectedObjectsOnClick.Count == 0)
-						Selection.activeTransform = null;
-					else
-						UnitySelectionCompatibility.SetInstanceIDs(selectedObjectsOnClick.ToArray());
-				}
-			}
-			else
-			if (Event.current.shift)
-			{
-				if (gameobject != null)
-				{
-					var instanceID = gameobject.GetInstanceIDCompat();
-					selectedObjectsOnClick.Add(instanceID);
-					UnitySelectionCompatibility.SetInstanceIDs(selectedObjectsOnClick.ToArray());
-					addedSelection = true;
-				}
-			}
-			else
-			if (Event.current.alt)
-			{
-				if (gameobject != null)
-				{
-					var instanceID = gameobject.GetInstanceIDCompat();
-					selectedObjectsOnClick.Remove(instanceID);
-					UnitySelectionCompatibility.SetInstanceIDs(selectedObjectsOnClick.ToArray());
-					return;
-				}
-			}
-			else
-			{
-				Selection.activeGameObject = gameobject;
-				addedSelection = true;
-			}
+            gameobject = SceneQueryUtility.FindSelectionBase(gameobject);
 
-			if (!addedSelection)
-			{
-				foreach (var item in Selection.GetFiltered(typeof(CSGBrush), SelectionMode.Deep))
-				{
-					var brush = item as CSGBrush;
-					if (brush.ChildData == null ||
-                        !ModelTraits.IsModelEditable(brush.ChildData.Model))
-						continue;
-					SelectionUtility.LastUsedModel = brush.ChildData.Model;
-					break;
-				}
-			}
-			else
-			if (gameobject != null)
-			{
-				var brush = gameobject.GetComponent<CSGBrush>();
-				if (brush != null)
-				{
-					if (brush.ChildData == null ||
-                        !ModelTraits.IsModelEditable(brush.ChildData.Model))
-						return;
-					SelectionUtility.LastUsedModel = brush.ChildData.Model;
-				}
-			}
-		}
+            List<EntityId> selectedObjectsOnClick = new List<EntityId>(Selection.entityIds);
+            bool addedSelection = false;
+
+            if(EditorGUI.actionKey)
+            {
+                if(gameobject != null)
+                {
+                    EntityId entityID = gameobject.GetEntityId();
+                    
+                    if (selectedObjectsOnClick.Contains(entityID))
+                    {
+                        selectedObjectsOnClick.Remove(entityID);
+                    }
+                    else
+                    {
+                        selectedObjectsOnClick.Add(entityID);
+                        addedSelection = true;
+                    }
+
+                    if(selectedObjectsOnClick.Count == 0)
+                    {
+                        Selection.activeTransform = null;
+                    }
+                    else
+                    {
+                        Selection.entityIds = selectedObjectsOnClick.ToArray();
+                    }
+                }
+            }
+            else if(Event.current.shift)
+            {
+                if(gameobject != null)
+                {
+                    EntityId entityID = gameobject.GetEntityId();
+                    selectedObjectsOnClick.Add(entityID);
+
+                    Selection.entityIds = selectedObjectsOnClick.ToArray();
+                    addedSelection        = true;
+                }
+            }
+            else if(Event.current.alt)
+            {
+                if(gameobject != null)
+                {
+                    EntityId entityID = gameobject.GetEntityId();
+                    selectedObjectsOnClick.Remove(entityID);
+
+                    Selection.entityIds = selectedObjectsOnClick.ToArray();
+
+                    return;
+                }
+            }
+            else
+            {
+                Selection.activeGameObject = gameobject;
+                addedSelection             = true;
+            }
+
+            if(!addedSelection)
+            {
+                foreach(Object item in Selection.GetFiltered(typeof(CSGBrush), SelectionMode.Deep))
+                {
+                    CSGBrush brush = item as CSGBrush;
+
+                    if(brush.childData == null || !ModelTraits.IsModelEditable(brush.childData.model))
+                    {
+                        continue;
+                    }
+
+                    LastUsedModel = brush.childData.model;
+
+                    break;
+                }
+            }
+            else if(gameobject != null)
+            {
+                CSGBrush brush = gameobject.GetComponent<CSGBrush>();
+
+                if(brush != null)
+                {
+                    if(brush.childData == null || !ModelTraits.IsModelEditable(brush.childData.model))
+                    {
+                        return;
+                    }
+
+                    LastUsedModel = brush.childData.model;
+                }
+            }
+        }
+
 #endregion
-
-
-#region DoesSelectionContainCSGNodes
-		public static bool DoesSelectionContainCSGNodes()
-		{
-			var gameObjects = Selection.gameObjects;
-			if (gameObjects == null)
-				return false;
-
-			foreach (var gameObject in gameObjects)
-			{
-				if (gameObject.GetComponentInChildren<CSGNode>())
-					return true;
-			}
-			return false;
-		}
-#endregion
-
-	}
+    }
 }
-

@@ -3,18 +3,24 @@ using RealtimeCSG.Components;
 
 namespace RealtimeCSG
 {
-	internal sealed class SelectedBrushSurface
-	{
-		public SelectedBrushSurface(CSGBrush _brush, int _surfaceIndex, CSGPlane _surfacePlane)
-		{
-			brush = _brush; surfaceIndex = _surfaceIndex;  surfacePlane = _surfacePlane;
-		}
-		public SelectedBrushSurface(CSGBrush _brush, int _surfaceIndex, CSGPlane? _surfacePlane = null)
-		{
-			brush = _brush; surfaceIndex = _surfaceIndex;  surfacePlane = _surfacePlane;
-		}
-		public CSGBrush		brush;
-		public int			surfaceIndex;
-		public CSGPlane?	surfacePlane;
-	}
+    internal sealed class SelectedBrushSurface
+    {
+        public SelectedBrushSurface(CSGBrush brush, int surfaceIndex, CSGPlane surfacePlane)
+        {
+            this.brush        = brush;
+            this.surfaceIndex = surfaceIndex;
+            this.surfacePlane = surfacePlane;
+        }
+
+        public SelectedBrushSurface(CSGBrush brush, int surfaceIndex, CSGPlane? surfacePlane = null)
+        {
+            this.brush        = brush;
+            this.surfaceIndex = surfaceIndex;
+            this.surfacePlane = surfacePlane;
+        }
+
+        public CSGBrush brush;
+        public readonly int surfaceIndex;
+        public CSGPlane? surfacePlane;
+    }
 }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75abfbe4c99e2a24e8d6f057bd866ff4, type: 3}
   m_Name: GameAssets
   m_EditorClassIdentifier: Assembly-CSharp::GameAssets
-  decalParticles: {fileID: 7853611592334637332, guid: 7f3531d146f3dd346aed4e2e9ec920ff, type: 3}
+  decalParticles: {fileID: 7853611592334637332, guid: e6da12bfdefd87d49807be2e2df1e8f1, type: 3}
   enemySpawnParticles: {fileID: 4455388225042208415, guid: 67e480219ceeca4419fbe282d916f7e3, type: 3}
   bloodParticles: {fileID: 1257824197082757075, guid: 7791c853dcbbc0b4691e3eaeaae37e47, type: 3}
   whiteMaterial: {fileID: 0}

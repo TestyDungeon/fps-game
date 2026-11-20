@@ -25,7 +25,7 @@ public class MeleeAttack : IAttackBehavior
         Debug.Log("Attack attempt");
 
         enemy.lookDir = enemy.GetVectorToTarget();
-        enemy.GoToTarget(15);
+        //enemy.GoToTarget(15);
 
         enemy.canAttack = false;
         enemy.animator.Play("Attack", 0, 0f);
@@ -37,7 +37,7 @@ public class MeleeAttack : IAttackBehavior
         events.Add(0.25f, () =>
         {
             enemy.UpdateTargetPosition();
-            enemy.GoToTarget(9, false);
+            enemy.GoToTarget(6, false);
         });
 
         events.Add(0.35f, () =>
@@ -45,20 +45,20 @@ public class MeleeAttack : IAttackBehavior
             enemy.UpdateTargetPosition();
             Hit(enemy);
             enemy.lookDir = enemy.GetVectorToTarget();
-            enemy.GoToTarget(9, false);
+            //enemy.GoToTarget(9, false);
         });
 
         events.Add(0.5f, () =>
         {
             enemy.UpdateTargetPosition();
-            enemy.GoToTarget(9, false);
+            enemy.GoToTarget(6, false);
         });
 
         events.Add(0.65f, () =>
         {
             enemy.UpdateTargetPosition();
             Hit(enemy);
-            enemy.GoToTarget(9, false);
+            //enemy.GoToTarget(9, false);
         });
 
         events.Add(0.8f, () =>
@@ -122,7 +122,7 @@ public class RangedAttack : IAttackBehavior
     {
         enemy.canAttack = false;
          // Set immediately to prevent duplicate calls from FixedUpdate
-        SoundManager.PlaySound(enemy.enemyConfig.preAttackSFX, enemy.transform.position, 1, 0.96f);
+        SoundManager.PlaySound(enemy.enemyConfig.preAttackSFX, enemy.transform.position, 0.2f, 0.96f);
         attackCount++;
         
         enemy.animator.Play("Attack", 0, 0f);
@@ -134,7 +134,7 @@ public class RangedAttack : IAttackBehavior
         events.Add(0.5f, () =>
         {
             //SpawnMuzzleFlash(enemy);
-            SoundManager.PlaySound(enemy.enemyConfig.attackSFX, enemy.transform.position, 1, 0.96f);
+            SoundManager.PlaySound(enemy.enemyConfig.attackSFX, enemy.transform.position, 0.3f, 0.96f);
             bulletStartInd = 0;
             enemy.StartCoroutine(TimedShooting(enemy));
         });
@@ -143,7 +143,7 @@ public class RangedAttack : IAttackBehavior
         events.Add(0.8f, () => 
         {
             
-            enemy.StartCoroutine(enemy.ResetAttack(enemy.ChaseState));
+            enemy.StartCoroutine(enemy.ResetAttack(enemy.WanderState));
             enemy.animator.Play("Attack");
 
         });

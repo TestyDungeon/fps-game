@@ -54,6 +54,7 @@ public class Health : MonoBehaviour
 
     virtual protected void Death()
     {
+        isAlive = false;
         OnDeath?.Invoke();
         Debug.Log(name + " died.");
         //Destroy(gameObject);

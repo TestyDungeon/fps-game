@@ -16,6 +16,7 @@ public class Kick : Item, IAmmoHandler
     [SerializeField] private float returnSpeedCamera = 5;
 
     private bool canMelee = true;
+    private float meleeReadyTime;
 
     //private BoxCollider shieldCollider;
     //private Vector3 shieldSize;
@@ -47,26 +48,29 @@ public class Kick : Item, IAmmoHandler
         
     }
 
-    
+    private void OnEnable()
+    {
+        canMelee = true;
+        meleeReadyTime = 0f;
+    }
 
     void Update()
     {
         bool stagger = CheckStagger();
 
+        if (!canMelee && Time.unscaledTime >= meleeReadyTime)
+        {
+            canMelee = true;
+        }
+
         if (Input.GetKeyDown(KeyCode.E) && ((canMelee && inventory.GetAmmo(LootType.MeleeAmmo) > 0) || stagger))
         {
             canMelee = false;
+            meleeReadyTime = Time.unscaledTime + meleeCooldown;
             StartCoroutine(ExecuteAttack(stagger));
-            StartCoroutine(AttackReset());
             
             if(!IsInvoking("RechargeMelee"))
                 Invoke("RechargeMelee", meleeRechargeCooldown);
-            
-            IEnumerator AttackReset()
-            {
-                yield return new WaitForSeconds(meleeCooldown);
-                canMelee = true;
-            }
         }
 
         /*
@@ -170,14 +174,25 @@ public class Kick : Item, IAmmoHandler
             //    inventory.ConsumeAmmo(LootType.MeleeAmmo, 1);
             //}
             yield return new WaitForSeconds(0.035f);
-            SoundManager.PlaySound(SoundType.KICK, 0.25f);
+            SoundManager.PlaySound(SoundType.KICK, 0.2f);
             foreach(Collider col in cols)
             {
                 if(col.TryGetComponent<Rigidbody>(out Rigidbody rb))
                 {
                     
-                    rb.AddForce(cameraPivot.forward * 15, ForceMode.Impulse);
+                    Vector3 impactPoint = col.ClosestPoint(worldCenter);
+
+                    rb.AddForceAtPosition(
+                        cameraPivot.forward * 25f,
+                        impactPoint,
+                        ForceMode.Impulse
+                    );
                     
+                }
+
+                if(col.TryGetComponent<IDamageable>(out IDamageable victim))
+                {
+                    victim.TakeDamage(player.transform, damage, col.transform.position, col.transform.up);
                 }
 
                 if(col.tag == "Enemy")
@@ -191,10 +206,10 @@ public class Kick : Item, IAmmoHandler
                     if(esm.GetCurrentState() != esm.DeadState)
                     {
                         inventory.ConsumeAmmo(LootType.MeleeAmmo, 1);
-                        Destroy(Instantiate(GameAssets.Instance.ammoOrb, col.transform.position, Quaternion.identity), 8);
+                        //Destroy(Instantiate(GameAssets.Instance.ammoOrb, col.transform.position, Quaternion.identity), 8);
                     }
-                    ehr.TakeDamage(player.transform, damage, col.transform.position, col.transform.up);
-                    ehr.CheckStaggerKill();
+                    
+                    //ehr.CheckStaggerKill();
                     esm.Kicked(cameraPivot.forward);
                     
                 }

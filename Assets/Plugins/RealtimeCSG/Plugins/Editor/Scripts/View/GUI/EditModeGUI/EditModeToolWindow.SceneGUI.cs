@@ -4,48 +4,56 @@ using UnityEngine;
 
 public class EditModeToolWindowSceneGUI : EditorWindow
 {
-	private const string WindowTitle = "Realtime-CSG";
-	private static List<EditModeToolWindowSceneGUI> windows = new List<EditModeToolWindowSceneGUI>();
-	
-	public static List<EditModeToolWindowSceneGUI> GetEditorWindows()
-	{
-		for (int i = windows.Count - 1; i >= 0; i--)
-		{
-			if (!windows[i])
-				windows.Remove(windows[i]);
-		}
-		return windows; 
-	}
+    private const string WINDOW_TITLE = "Realtime-CSG";
+    private static readonly List<EditModeToolWindowSceneGUI> windows = new List<EditModeToolWindowSceneGUI>();
 
-	[MenuItem ("Window/Realtime-CSG window %F2")]
-	public static EditModeToolWindowSceneGUI GetWindow ()
-	{
-		var editorWindow = EditorWindow.GetWindow<EditModeToolWindowSceneGUI>(WindowTitle, true, typeof(EditModeToolWindowEditor));
-		editorWindow.minSize = new Vector2(32,  64);
-		editorWindow.Show();
-		return editorWindow;
-	}
+    public static List<EditModeToolWindowSceneGUI> GetEditorWindows()
+    {
+        for(int i = windows.Count - 1; i >= 0; i--)
+        {
+            if(!windows[i])
+            {
+                windows.Remove(windows[i]);
+            }
+        }
 
-	public void OnGUI()
-	{
-		RealtimeCSG.EditModeSelectionGUI.HandleWindowGUI(this);
-	}
+        return windows;
+    }
 
-	void Awake()
-	{
-		windows.Add(this);
-	}
+    [MenuItem("Window/Realtime-CSG window %F2")]
+    public static EditModeToolWindowSceneGUI GetWindow()
+    {
+        EditModeToolWindowSceneGUI editorWindow = EditorWindow.GetWindow<EditModeToolWindowSceneGUI>(WINDOW_TITLE, true, typeof(EditModeToolWindowEditor));
 
-	void Update()
-	{
-		// apparently 'Awake' is not reliable ...
-		if (windows.Contains(this))
-			return;
-		windows.Add(this);
-	}
-	
-	void OnDestroy()
-	{
-		windows.Remove(this);
-	}
+        editorWindow.minSize = new Vector2(32, 64);
+        editorWindow.Show();
+
+        return editorWindow;
+    }
+
+    public void OnGUI()
+    {
+        RealtimeCSG.EditModeSelectionGUI.HandleWindowGUI(this);
+    }
+
+    private void Awake()
+    {
+        windows.Add(this);
+    }
+
+    private void Update()
+    {
+        // apparently 'Awake' is not reliable ...
+        if(windows.Contains(this))
+        {
+            return;
+        }
+
+        windows.Add(this);
+    }
+
+    private void OnDestroy()
+    {
+        windows.Remove(this);
+    }
 }

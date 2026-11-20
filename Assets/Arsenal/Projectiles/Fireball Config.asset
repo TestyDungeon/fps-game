@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: Fireball Config
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   speed: 20
-  radius: 0.25
+  radius: 0.2
   gravity: 0
   maxRange: 100
   fuse: 2
   bounces: 0
   bounceSpeedKeep: 0.25
-  homingTurnRate: 2
+  homingTurnRate: 1.5
   homingDecay: 1
   damage: 15
   parryable: 0

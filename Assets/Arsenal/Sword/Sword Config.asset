@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9d1f3a9e35c094e9adfba833efea7b, type: 3}
+  m_Name: Sword Config
+  m_EditorClassIdentifier: 
+  muzzleFlashPrefab: {fileID: 0}
+  bulletCasePrefab: {fileID: 0}
+  bulletCaseDelay: 0.1
+  bulletTrail: {fileID: 0}
+  equipSFX: {fileID: 0}
+  equipVolume: 0.1
+  shootSFX:
+  - {fileID: 8300000, guid: ee9679d99eeff254ba26ec6eac9ac304, type: 3}
+  volume: 0.5
+  altStartSFX: []
+  caseFallSFX: []
+  caseFallVolume: 0.05
+  hitSFX: {fileID: 8300000, guid: 75752dbbe2d0dcb4aad74bbbc97c92b9, type: 3}
+  recoilAmountCamera: 6
+  recoilSpeedCamera: 15
+  returnSpeedCamera: 5
+  allowButtonHold: 1
+  damage: 50
+  ammoType: 0
+  range: 3
+  force: 20
+  knockbackForce: 2.5
+  spread: 0.1
+  timeBetweenShooting: 0.5
+  bulletsPerShot: 1
+  ammoPerShot: 0
+  timeBetweenShots: 0
+  inputDelay: 0.15
+  ricochet: 0
+  sphereCast: 1
+  projectilePrefab: {fileID: 0}
+  explosionPrefab: {fileID: 0}
+  altConfig: {fileID: 11400000}

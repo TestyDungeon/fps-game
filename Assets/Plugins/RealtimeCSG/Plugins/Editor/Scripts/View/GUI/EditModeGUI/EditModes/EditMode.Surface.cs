@@ -1,1469 +1,1726 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
+using InternalRealtimeCSG;
+using RealtimeCSG.Components;
+using RealtimeCSG.Legacy;
 using UnityEditor;
 using UnityEngine;
-using InternalRealtimeCSG;
-using RealtimeCSG.Legacy;
-using RealtimeCSG.Components;
 
 namespace RealtimeCSG
 {
     internal sealed class EditModeSurface : ScriptableObject, IEditMode
     {
-        static readonly int surfaceSelectPaintControlToolHash	= "surfaceSelectPaintControl".GetHashCode();
-        static readonly int textureCopyDragControlToolHash		= "textureCopyDragControl".GetHashCode();
-        static readonly int textureSurfaceControlToolHash		= "textureSurfaceControl".GetHashCode();
-        //static readonly int surfaceEditBrushToolHash			= "surfaceEditBrushTool".GetHashCode();
-        
-        public bool UsesUnitySelection	{ get { return false; } }
-        public bool IgnoreUnityRect		{ get { return true; } }
+        private static readonly int surfaceSelectPaintControlToolHash = "surfaceSelectPaintControl".GetHashCode();
+        private static readonly int textureCopyDragControlToolHash = "textureCopyDragControl".GetHashCode();
+        private static readonly int textureSurfaceControlToolHash = "textureSurfaceControl".GetHashCode();
 
-        public bool UndoRedoPerformed() { forceOutlineUpdate = true; return false; }
-
-        
-        enum EditMode
+        public bool UsesUnitySelection
         {
-            None,
-            TranslateSurface,
-            RotateTexture,
-            ScaleTexture
-        };
+            get => false;
+        }
 
-        enum DragMode
+        public bool IgnoreUnityRect
         {
-            None,
-            TextureCopy,
-            SurfaceSelectAdd,
-            SurfaceSelectRemove,
-            SurfaceSelectToggle
-        };
+            get => true;
+        }
 
+        public bool UndoRedoPerformed()
+        {
+            _forceOutlineUpdate = true;
 
-        [NonSerialized] EditMode		editMode	= EditMode.None;
-        [NonSerialized] DragMode		dragMode	= DragMode.None;
-        
-        [NonSerialized] bool			isEnabled			= false;
-        [NonSerialized] bool			hideTool			= false;
-        [NonSerialized] bool			forceOutlineUpdate	= false;
+            return false;
+        }
 
-        
-        [NonSerialized] int				surfaceSelectPaintControl	= -1;		
-        [NonSerialized] int				textureCopyDragControlID	= -1;
+        private enum EditMode
+        {
+            None
+          , TranslateSurface
+          , RotateTexture
+          , ScaleTexture
+        }
 
-        [NonSerialized] int				hoverOnSurfaceIndex			= -1;
-        [NonSerialized] int             hoverOnBrushNodeID			= CSGNode.InvalidNodeID;
-        [NonSerialized] int				hoverOnTarget				= -1;
-        [NonSerialized] int				currentControl				= -1;
-        [NonSerialized] int				hoverOnlyTarget				= -1;
-        [NonSerialized] int				undoGroupIndex				= -1;
-                
-        [NonSerialized] RotationCircle	rotationCircle = new RotationCircle();
-        
-        [NonSerialized] Vector2			deltaMovement;
-        [NonSerialized] Vector3			originalSurfacePoint;
-        [NonSerialized] Vector3			snappingOffset;
-        [NonSerialized] Vector3			snappingOffset2;
-        
-        [NonSerialized] SelectedBrushSurface	lastSelectedSurface = null;
+        private enum DragMode
+        {
+            None
+          , TextureCopy
+          , SurfaceSelectAdd
+          , SurfaceSelectRemove
+          , SurfaceSelectToggle
+        }
 
-        [SerializeField] CSGBrush[]				brushTargets		= new CSGBrush[0];
-        [SerializeField] TexGenState[]			surfaceStates		= new TexGenState[0];
-        [SerializeField] SelectedBrushSurface[]	selectedSurfaces	= new SelectedBrushSurface[0];
-                
-        #region Selection
+        [NonSerialized] private EditMode _editMode = EditMode.None;
+        [NonSerialized] private DragMode _dragMode = DragMode.None;
+
+        [NonSerialized] private bool _isEnabled;
+        [NonSerialized] private bool _hideTool;
+        [NonSerialized] private bool _forceOutlineUpdate;
+
+        [NonSerialized] private int _surfaceSelectPaintControl = -1;
+        [NonSerialized] private int _textureCopyDragControlID = -1;
+
+        [NonSerialized] private int _hoverOnSurfaceIndex = -1;
+        [NonSerialized] private int _hoverOnBrushNodeID = CSGNode.INVALID_NODE_ID;
+        [NonSerialized] private int _hoverOnTarget = -1;
+        [NonSerialized] private int _currentControl = -1;
+        [NonSerialized] private int _hoverOnlyTarget = -1;
+        [NonSerialized] private int _undoGroupIndex = -1;
+
+        [NonSerialized] private readonly RotationCircle _rotationCircle = new RotationCircle();
+
+        [NonSerialized] private Vector2 _deltaMovement;
+        [NonSerialized] private Vector3 _originalSurfacePoint;
+        [NonSerialized] private Vector3 _snappingOffset;
+        [NonSerialized] private Vector3 _snappingOffset2;
+
+        [NonSerialized] private SelectedBrushSurface _lastSelectedSurface;
+
+        [SerializeField] private CSGBrush[] brushTargets = Array.Empty<CSGBrush>();
+        [SerializeField] private TexGenState[] surfaceStates = Array.Empty<TexGenState>();
+        private SelectedBrushSurface[] _selectedSurfaces = Array.Empty<SelectedBrushSurface>();
+
+#region Selection
+
         public void SetTargets(FilteredSelection filteredSelection)
         {
-            if (brushTargets == null)
+            if(brushTargets == null)
             {
-                brushTargets			= new CSGBrush[0];
-                surfaceStates			= new TexGenState[0];
-                hoverOnBrushNodeID		= CSGNode.InvalidNodeID;
-                hoverOnTarget			= -1;
+                brushTargets        = Array.Empty<CSGBrush>();
+                surfaceStates       = Array.Empty<TexGenState>();
+                _hoverOnBrushNodeID = CSGNode.INVALID_NODE_ID;
+                _hoverOnTarget      = -1;
             }
 
-            var foundBrushes = filteredSelection.GetAllContainedBrushes();
-            for (int i = surfaceStates.Length - 1; i >= 0; i--)
+            HashSet<CSGBrush> foundBrushes = filteredSelection.GetAllContainedBrushes();
+
+            for(int i = surfaceStates.Length - 1; i >= 0; i--)
             {
-                if (foundBrushes.Contains(brushTargets[i]))
+                if(foundBrushes.Contains(brushTargets[i]))
+                {
                     continue;
-                
+                }
+
                 ArrayUtility.RemoveAt(ref surfaceStates, i);
                 ArrayUtility.RemoveAt(ref brushTargets, i);
-                if (hoverOnTarget > i)
-                    hoverOnTarget--;
-                else if (hoverOnTarget == i)
+
+                if(_hoverOnTarget > i)
                 {
-                    hoverOnTarget      = -1;
-                    hoverOnBrushNodeID = CSGNode.InvalidNodeID;
+                    _hoverOnTarget--;
+                }
+                else if(_hoverOnTarget == i)
+                {
+                    _hoverOnTarget      = -1;
+                    _hoverOnBrushNodeID = CSGNode.INVALID_NODE_ID;
                 }
             }
-            
-            foreach(var brush in foundBrushes)
+
+            foreach(CSGBrush brush in foundBrushes)
             {
-                var index = ArrayUtility.IndexOf(brushTargets, brush);
-                if (index != -1)
+                int index = ArrayUtility.IndexOf(brushTargets, brush);
+
+                if(index != -1)
+                {
                     continue;
-                
+                }
+
                 ArrayUtility.Add(ref brushTargets, brush);
-                var texGenState = new TexGenState(brush);
+                TexGenState texGenState = new TexGenState(brush);
                 texGenState.SelectAll();
                 ArrayUtility.Add(ref surfaceStates, texGenState);
             }
-            
-            hideTool = filteredSelection.NodeTargets.Length > 0;
-            if (isEnabled)
-                Tools.hidden = hideTool;
-            
+
+            _hideTool = filteredSelection.nodeTargets.Length > 0;
+
+            if(_isEnabled)
+            {
+                Tools.hidden = _hideTool;
+            }
+
             UpdateSelectedSurfaces();
             UpdateLayouts();
-            forceOutlineUpdate = true;
+
+            _forceOutlineUpdate = true;
         }
 
         public void SelectAllSurfacesOfSelectedBrushes()
         {
             Undo.RecordObject(this, "Select all surfaces of selected brushes");
-            for (int i = surfaceStates.Length - 1; i >= 0; i--)
-                surfaceStates[i].SelectAll();
-            
+
+            for(int i = surfaceStates.Length - 1; i >= 0; i--)
+            {
+                if (surfaceStates[i].HaveSurfaceSelection)
+                {
+                    surfaceStates[i].SelectAll();
+                }
+            }
+
             UpdateSelectedSurfaces();
             UpdateLayouts();
-            forceOutlineUpdate = true;
+
+            _forceOutlineUpdate = true;
         }
 
         public void SelectSurfaces(SelectedBrushSurface[] brushSurfaces, HashSet<GameObject> gameObjects, bool selectAllSurfacesOnBrushes)
         {
-            if (brushTargets != null &&
-                brushTargets.Length > 0)
+            if(brushTargets != null && brushTargets.Length > 0)
             {
-                for (int i = surfaceStates.Length - 1; i >= 0; i--)
+                for(int i = surfaceStates.Length - 1; i >= 0; i--)
                 {
-                    if (gameObjects == null ||
-                        !gameObjects.Contains(brushTargets[i].gameObject))
+                    if(gameObjects == null || !gameObjects.Contains(brushTargets[i].gameObject))
                     {
                         ArrayUtility.RemoveAt(ref surfaceStates, i);
                         ArrayUtility.RemoveAt(ref brushTargets, i);
-                        if (hoverOnTarget > i)
-                            hoverOnTarget--;
-                        else if (hoverOnTarget == i)
+
+                        if(_hoverOnTarget > i)
                         {
-                            hoverOnTarget		= -1;
-                            hoverOnBrushNodeID	= CSGNode.InvalidNodeID;
+                            _hoverOnTarget--;
                         }
+                        else if(_hoverOnTarget == i)
+                        {
+                            _hoverOnTarget      = -1;
+                            _hoverOnBrushNodeID = CSGNode.INVALID_NODE_ID;
+                        }
+
                         continue;
                     }
-                    
+
                     surfaceStates[i].DeselectAll();
                 }
-            } else
-            {
-                brushTargets		= new CSGBrush[0];
-                surfaceStates		= new TexGenState[0];
-                hoverOnTarget		= -1;
-                hoverOnBrushNodeID	= CSGNode.InvalidNodeID;
             }
-            
-            if (brushSurfaces != null && 
-                brushSurfaces.Length > 0)
+            else
             {
-                for (int j = 0; j < brushSurfaces.Length; j++)
+                brushTargets        = Array.Empty<CSGBrush>();
+                surfaceStates       = Array.Empty<TexGenState>();
+                _hoverOnTarget      = -1;
+                _hoverOnBrushNodeID = CSGNode.INVALID_NODE_ID;
+            }
+
+            if(brushSurfaces != null && brushSurfaces.Length > 0)
+            {
+                for(int j = 0; j < brushSurfaces.Length; j++)
                 {
-                    var index = ArrayUtility.IndexOf(brushTargets, brushSurfaces[j].brush);
-                    if (index != -1)
+                    int index = ArrayUtility.IndexOf(brushTargets, brushSurfaces[j].brush);
+
+                    if(index != -1)
+                    {
                         continue;
+                    }
 
                     ArrayUtility.Add(ref brushTargets, brushSurfaces[j].brush);
                     ArrayUtility.Add(ref surfaceStates, new TexGenState(brushSurfaces[j].brush));
                 }
 
-                for (int i = surfaceStates.Length - 1; i >= 0; i--)
+                for(int i = surfaceStates.Length - 1; i >= 0; i--)
                 {
-                    var brushTarget = brushTargets[i];
-                    var surfaceState = surfaceStates[i];
-                    for (int j = 0; j < brushSurfaces.Length; j++)
-                    {
-                        if (brushTarget != brushSurfaces[j].brush)
-                            continue;
+                    CSGBrush    brushTarget  = brushTargets[i];
+                    TexGenState surfaceState = surfaceStates[i];
 
-                        if (selectAllSurfacesOnBrushes)
+                    for(int j = 0; j < brushSurfaces.Length; j++)
+                    {
+                        if(brushTarget != brushSurfaces[j].brush)
                         {
-                            for (int k = 0; k < surfaceState.surfaceSelectState.Length; k++)
+                            continue;
+                        }
+
+                        if(selectAllSurfacesOnBrushes)
+                        {
+                            for(int k = 0; k < surfaceState.surfaceSelectState.Length; k++)
                             {
                                 surfaceState.surfaceSelectState[k] = SelectState.Selected;
                             }
-                        } else
+                        }
+                        else
                         {
-                            var surfaceIndex = brushSurfaces[j].surfaceIndex;
-                            if (surfaceIndex >= 0)
+                            int surfaceIndex = brushSurfaces[j].surfaceIndex;
+
+                            if(surfaceIndex >= 0)
                             {
                                 surfaceState.surfaceSelectState[surfaceIndex] = SelectState.Selected;
                             }
                         }
                     }
                 }
-                lastSelectedSurface	= brushSurfaces[0];
-            } else
-                lastSelectedSurface	= null;
 
-            if (gameObjects == null)
-                Selection.activeTransform = null;
+                _lastSelectedSurface = brushSurfaces[0];
+            }
             else
+            {
+                _lastSelectedSurface = null;
+            }
+
+            if(gameObjects == null)
+            {
+                Selection.activeTransform = null;
+            }
+            else
+            {
                 Selection.objects = gameObjects.ToArray();
-            
+            }
+
             UpdateSelectedSurfaces();
             UpdateLayouts();
-            forceOutlineUpdate = true;
+
+            _forceOutlineUpdate = true;
         }
 
-        void UpdateLayouts()
+        private void UpdateLayouts()
         {
-            for (int t = 0; t < brushTargets.Length; t++)
+            for(int t = 0; t < brushTargets.Length; t++)
             {
-                var surfaceState = surfaceStates[t];
+                TexGenState surfaceState = surfaceStates[t];
                 surfaceState.UpdateLayout(brushTargets[t]);
             }
         }
 
-        
-        GameObject[] GetSelectedGameObjects()
+        private GameObject[] GetSelectedGameObjects()
         {
-            var gameObjects = new GameObject[brushTargets.Length];
-            for (int i = 0; i < brushTargets.Length; i++)
+            GameObject[] gameObjects = new GameObject[brushTargets.Length];
+
+            for(int i = 0; i < brushTargets.Length; i++)
             {
-                if (surfaceStates[i].HaveSurfaceSelection)
+                if(surfaceStates[i].HaveSurfaceSelection)
+                {
                     gameObjects[i] = brushTargets[i].gameObject;
+                }
             }
+
             return gameObjects;
         }
-        
-        void UpdateSelectedSurfaces()
+
+        private void UpdateSelectedSurfaces()
         {
-            if (surfaceStates == null ||
-                surfaceStates.Length == 0)
+            if(surfaceStates == null || surfaceStates.Length == 0)
             {
-                selectedSurfaces = new SelectedBrushSurface[0];
+                _selectedSurfaces = Array.Empty<SelectedBrushSurface>();
+
                 return;
             }
-            
-            var selected_surfaces = new List<SelectedBrushSurface>();
-            for (int b = 0; b < surfaceStates.Length; b++)
+
+            List<SelectedBrushSurface> selectedSurfaces = new List<SelectedBrushSurface>();
+
+            for(int b = 0; b < surfaceStates.Length; b++)
             {
-                var brush = brushTargets[b];
+                CSGBrush brush = brushTargets[b];
                 surfaceStates[b].UpdateTexGenState(brush);
-                for (int s = 0; s < surfaceStates[b].surfaceSelectState.Length; s++)
+
+                for(int s = 0; s < surfaceStates[b].surfaceSelectState.Length; s++)
                 {
-                    if ((surfaceStates[b].surfaceSelectState[s] & SelectState.Selected) == SelectState.Selected)
+                    if((surfaceStates[b].surfaceSelectState[s] & SelectState.Selected) == SelectState.Selected)
                     {
-                        selected_surfaces.Add(new SelectedBrushSurface(brushTargets[b], s));
+                        selectedSurfaces.Add(new SelectedBrushSurface(brushTargets[b], s));
                     }
                 }
             }
-            selectedSurfaces = selected_surfaces.ToArray();
-            forceOutlineUpdate = true;
+
+            _selectedSurfaces   = selectedSurfaces.ToArray();
+            _forceOutlineUpdate = true;
         }
 
         public SelectedBrushSurface[] GetSelectedSurfaces()
         {
-            return selectedSurfaces;
+            return _selectedSurfaces;
         }
-        
-        bool IsSelected(LegacyBrushIntersection intersection)
-        {
-            if (intersection.gameObject == null ||
-                intersection.surfaceIndex == -1)
-                return false;
 
-            var brush = intersection.gameObject.GetComponent<CSGBrush>();
-            int brushIndex = ArrayUtility.IndexOf(brushTargets, brush);
-            if (brushIndex == -1)
-                return false;
-            
-            if ((surfaceStates[brushIndex].surfaceSelectState[intersection.surfaceIndex] & SelectState.Selected) == SelectState.Selected)
-                return true;
-            return false;
-        }
-                    
-        bool RemoveSurfaceSelection(LegacyBrushIntersection intersection)
+        private bool IsSelected(LegacyBrushIntersection intersection)
         {
-            var brush		= intersection.gameObject.GetComponent<CSGBrush>();
-            int brushIndex	= ArrayUtility.IndexOf(brushTargets, brush);
-            if (brushIndex == -1)
-                return false;			
-            
+            if(intersection.gameObject == null || intersection.surfaceIndex == -1)
+            {
+                return false;
+            }
+
+            CSGBrush brush      = intersection.gameObject.GetComponent<CSGBrush>();
+            int      brushIndex = ArrayUtility.IndexOf(brushTargets, brush);
+
+            if(brushIndex == -1)
+            {
+                return false;
+            }
+
+            return (surfaceStates[brushIndex].surfaceSelectState[intersection.surfaceIndex] & SelectState.Selected) == SelectState.Selected;
+        }
+
+        private bool RemoveSurfaceSelection(LegacyBrushIntersection intersection)
+        {
+            CSGBrush brush      = intersection.gameObject.GetComponent<CSGBrush>();
+            int      brushIndex = ArrayUtility.IndexOf(brushTargets, brush);
+
+            if(brushIndex == -1)
+            {
+                return false;
+            }
+
             Undo.RecordObject(this, "Deselect surface selection");
             surfaceStates[brushIndex].surfaceSelectState[intersection.surfaceIndex] &= ~SelectState.Selected;
-            if (brushTargets == null || brushTargets.Length == 0)
+
+            if(brushTargets == null || brushTargets.Length == 0)
+            {
                 Selection.activeTransform = null;
+            }
             else
+            {
                 Selection.objects = GetSelectedGameObjects();
-                        
+            }
+
             UpdateSelectedSurfaces();
+
             return true;
         }
-        
-        bool AddSurfaceSelection(LegacyBrushIntersection intersection)
-        {			
-            if (intersection.gameObject == null ||
-                intersection.surfaceIndex == -1)
-                return false;
 
-            var brush = intersection.gameObject.GetComponent<CSGBrush>();
+        private bool AddSurfaceSelection(LegacyBrushIntersection intersection)
+        {
+            if(intersection.gameObject == null || intersection.surfaceIndex == -1)
+            {
+                return false;
+            }
+
+            CSGBrush brush = intersection.gameObject.GetComponent<CSGBrush>();
 
             int brushIndex = ArrayUtility.IndexOf(brushTargets, brush);
-            if (brushIndex == -1)
+
+            if(brushIndex == -1)
             {
                 ArrayUtility.Add(ref brushTargets, brush);
                 TexGenState newState = new TexGenState(brush);
                 ArrayUtility.Add(ref surfaceStates, newState);
+
                 return false;
             }
-            
+
             Undo.RecordObject(this, "Add surface selection");
-            var surfaceState = surfaceStates[brushIndex];
+            TexGenState surfaceState = surfaceStates[brushIndex];
             surfaceState.surfaceSelectState[intersection.surfaceIndex] |= SelectState.Selected;
-            
-            if (brushTargets == null || brushTargets.Length == 0)
+
+            if(brushTargets == null || brushTargets.Length == 0)
+            {
                 Selection.activeTransform = null;
+            }
             else
+            {
                 Selection.objects = GetSelectedGameObjects();
-                        
+            }
+
             UpdateSelectedSurfaces();
+
             return true;
         }
-        
-        bool UpdateSelection(bool allowSubstraction = true)
+
+        private bool UpdateSelection(bool allowSubstraction = true)
         {
-            if (hoverOnTarget == -1)
+            if(_hoverOnTarget == -1)
+            {
                 return false;
-
-            var surfaceState	= surfaceStates[hoverOnTarget];
-            var selectionType	= SelectionUtility.GetEventSelectionType();
-
-            if (!allowSubstraction)
-            {
-                if (selectionType == SelectionType.Toggle ||
-                    selectionType == SelectionType.Subtractive)
-                    selectionType = SelectionType.Additive;
-
-                if (surfaceState.IsSurfaceSelected(hoverOnSurfaceIndex))
-                    selectionType = SelectionType.Additive;
             }
 
-            if (selectionType == SelectionType.Replace ||
-                selectionType == SelectionType.Additive)
+            TexGenState   surfaceState  = surfaceStates[_hoverOnTarget];
+            SelectionType selectionType = SelectionUtility.GetEventSelectionType();
+
+            if(!allowSubstraction)
             {
-            //	if (surfaceState.IsSurfaceSelected(hoverOnSurfaceIndex))
-            //		return false;
+                if(selectionType == SelectionType.Toggle || selectionType == SelectionType.Subtractive)
+                {
+                    selectionType = SelectionType.Additive;
+                }
+
+                if(surfaceState.IsSurfaceSelected(_hoverOnSurfaceIndex))
+                {
+                    selectionType = SelectionType.Additive;
+                }
             }
-            
+
             Undo.RecordObject(this, "Update selection");
-            if (selectionType == SelectionType.Replace)
+
+            if(selectionType == SelectionType.Replace)
             {
-                for (int t = 0; t < brushTargets.Length; t++)
+                for(int t = 0; t < brushTargets.Length; t++)
+                {
                     surfaceStates[t].DeselectAll();
+                }
             }
 
             bool repaint = false;
-            for (int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+
+            for(int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
             {
                 bool modified = surfaceState.SelectSurface(s, selectionType);
-                repaint = modified || repaint;/*
-                if (modified && (surfaceState.surfaceSelectState[s] & SelectState.Selected) == SelectState.Selected)
-                {
-                    lastSelectedSurface = new SelectedBrushSurface(brushTargets[hoverOnTarget], s);
-                }*/
+
+                repaint = modified || repaint;
             }
 
-            if (brushTargets == null || brushTargets.Length == 0)
+            if(brushTargets == null || brushTargets.Length == 0)
+            {
                 Selection.activeTransform = null;
+            }
             else
+            {
                 Selection.objects = GetSelectedGameObjects();
-            
+            }
+
             UpdateSelectedSurfaces();
+
             return repaint;
         }
-                
+
         public bool DeselectAll()
         {
             Selection.activeTransform = null;
+
             return true;
         }
-        #endregion
 
-        public void OnEnableTool ()
+#endregion
+
+        public void OnEnableTool()
         {
-            isEnabled = true;
-            Tools.hidden = hideTool;
+            _isEnabled   = true;
+            Tools.hidden = _hideTool;
+
             ResetTool();
             UpdateSelectedSurfaces();
             UpdateLayouts();
         }
-        public void OnDisableTool() { isEnabled = false; Tools.hidden = false; ResetTool(); }
 
-        void ResetTool()
+        public void OnDisableTool()
         {
-            outlineGeneration			= -1;
-            hoverOnlyTarget				= -1;
-            rotationCircle.Clear();
-            mouseIsDown					= false;
-            mouseIsDragging				= false;
-            firstDrag					= false;
-            firstMove					= false;
-            dragMode					= DragMode.None;
-            textureCopyDragControlID	= -1;
-            surfaceSelectPaintControl	= -1;
-            lastSelectedSurface			= null;
+            _isEnabled   = false;
+            Tools.hidden = false;
+
+            ResetTool();
         }
-        
-        void CopyBackupTexgens()
-        {
-            for (int t = 0; t < brushTargets.Length; t++)
-            {
-                var targetBrush	= brushTargets[t];
-                var targetShape	= targetBrush.Shape;
 
-                surfaceStates[t].backupTexGens = new TexGen[targetShape.TexGens.Length];
-                Array.Copy(targetShape.TexGens, surfaceStates[t].backupTexGens, targetShape.TexGens.Length);
+        private void ResetTool()
+        {
+            _outlineGeneration = -1;
+            _hoverOnlyTarget   = -1;
+            _rotationCircle.Clear();
+            _mouseIsDown               = false;
+            _mouseIsDragging           = false;
+            _firstDrag                 = false;
+            _firstMove                 = false;
+            _dragMode                  = DragMode.None;
+            _textureCopyDragControlID  = -1;
+            _surfaceSelectPaintControl = -1;
+            _lastSelectedSurface       = null;
+        }
+
+        private void CopyBackupTexgens()
+        {
+            for(int t = 0; t < brushTargets.Length; t++)
+            {
+                CSGBrush targetBrush = brushTargets[t];
+                Shape    targetShape = targetBrush.shape;
+
+                surfaceStates[t].backupTexGens = new TexGen[targetShape.texGens.Length];
+
+                Array.Copy(targetShape.texGens, surfaceStates[t].backupTexGens, targetShape.texGens.Length);
             }
         }
 
-        void RestoreBackupTexgens()
+        private void RestoreBackupTexgens()
         {
-            for (int t = 0; t < this.brushTargets.Length; t++)
+            for(int t = 0; t < brushTargets.Length; t++)
             {
-                var targetBrush = this.brushTargets[t];
-                var targetShape = targetBrush.Shape;
-                for (int s = 0; s < targetShape.Surfaces.Length; s++)
+                CSGBrush targetBrush = brushTargets[t];
+                Shape    targetShape = targetBrush.shape;
+
+                for(int s = 0; s < targetShape.surfaces.Length; s++)
                 {
-                    var texGenIndex = targetShape.Surfaces[s].TexGenIndex;
-                    if (this.surfaceStates.Length <= t)
+                    int texGenIndex = targetShape.surfaces[s].TexGenIndex;
+
+                    if(surfaceStates.Length <= t)
                     {
                         Debug.LogWarning("this.surfaceStates.Length <= t");
+
                         continue;
                     }
-                    if (this.surfaceStates[t].backupTexGens.Length <= texGenIndex)
+
+                    if(surfaceStates[t].backupTexGens.Length <= texGenIndex)
                     {
                         Debug.LogWarning("this.surfaceStates[t].backupTexGens.Length <= texGenIndex");
+
                         continue;
                     }
-                    if (targetShape.TexGens.Length <= texGenIndex)
+
+                    if(targetShape.texGens.Length <= texGenIndex)
                     {
                         Debug.LogWarning("targetShape.TexGens.Length <= texGenIndex");
+
                         continue;
                     }
-                    targetShape.TexGens[texGenIndex] = this.surfaceStates[t].backupTexGens[texGenIndex];
+
+                    targetShape.texGens[texGenIndex] = surfaceStates[t].backupTexGens[texGenIndex];
                 }
             }
         }
-        
-        EditMode SetHoverOn(EditMode editModeType, int target, int index = -1)
+
+        private EditMode SetHoverOn(EditMode editModeType, int target, int index = -1)
         {
-            hoverOnTarget	= target; 
-            if (target == -1)
+            _hoverOnTarget = target;
+
+            if(target == -1)
             {
-                hoverOnSurfaceIndex = -1;
+                _hoverOnSurfaceIndex = -1;
+
                 return EditMode.None;
             }
 
-            hoverOnBrushNodeID = brushTargets[target].brushNodeID;
-            hoverOnSurfaceIndex = index;
+            _hoverOnBrushNodeID  = brushTargets[target].brushNodeID;
+            _hoverOnSurfaceIndex = index;
+
             return editModeType;
         }
 
-		MouseCursor currentCursor = MouseCursor.Arrow;
-		void UpdateMouseCursor()
-		{
-			if (mouseIsDown)
-				return;
+        private MouseCursor _currentCursor = MouseCursor.Arrow;
 
-			currentCursor = CursorUtility.GetSelectionCursor(SelectionUtility.GetEventSelectionType());
-		}
-
-        bool UpdateGrid(Camera camera)
+        private void UpdateMouseCursor()
         {
-            var brush			= brushTargets[hoverOnTarget];
+            if(_mouseIsDown)
+            {
+                return;
+            }
 
-            var brush_shape		= brush.Shape;
+            _currentCursor = CursorUtility.GetSelectionCursor(SelectionUtility.GetEventSelectionType());
+        }
 
-            var hoverOnTexGenIndex	= brush_shape.Surfaces[hoverOnSurfaceIndex].TexGenIndex;
+        private bool UpdateGrid(Camera camera)
+        {
+            CSGBrush brush      = brushTargets[_hoverOnTarget];
+            Shape    brushShape = brush.shape;
 
-            var old_translation = brush_shape.TexGens[hoverOnTexGenIndex].Translation;
-            brush_shape.TexGens[hoverOnTexGenIndex].Translation = MathConstants.zeroVector2;
+            int hoverOnTexGenIndex = brushShape.surfaces[_hoverOnSurfaceIndex].TexGenIndex;
+
+            Vector2 oldTranslation = brushShape.texGens[hoverOnTexGenIndex].Translation;
+            brushShape.texGens[hoverOnTexGenIndex].Translation = MathConstants.zeroVector2;
             InternalCSGModelManager.SetBrushMeshSurfaces(brush);
-            var zero_point		= SurfaceUtility.ConvertTextureToModelSpace(brush, hoverOnSurfaceIndex, MathConstants.zeroVector2);
-            brush_shape.TexGens[hoverOnTexGenIndex].Translation = old_translation;
+
+            Vector3 zeroPoint = SurfaceUtility.ConvertTextureToModelSpace(brush, _hoverOnSurfaceIndex, MathConstants.zeroVector2);
+
+            brushShape.texGens[hoverOnTexGenIndex].Translation = oldTranslation;
             InternalCSGModelManager.SetBrushMeshSurfaces(brush);
 
-            var movePlane		= brush_shape.Surfaces[hoverOnSurfaceIndex].Plane;
-            var brush_transform	= brush.GetComponent<Transform>();
+            CSGPlane  movePlane      = brushShape.surfaces[_hoverOnSurfaceIndex].Plane;
+            Transform brushTransform = brush.GetComponent<Transform>();
 
-            movePlane = GeometryUtility.InverseTransformPlane(brush_transform.worldToLocalMatrix, movePlane);
-            movePlane = new CSGPlane(movePlane.normal, zero_point);
-            
-            RealtimeCSG.CSGGrid.SetForcedGrid(camera, movePlane);
+            movePlane = GeometryUtility.InverseTransformPlane(brushTransform.worldToLocalMatrix, movePlane);
+            movePlane = new CSGPlane(movePlane.Normal, zeroPoint);
+
+            CSGGrid.SetForcedGrid(camera, movePlane);
+
             return true;
         }
 
-        bool DragTextureCopy(SceneView sceneView)
+        private bool DragTextureCopy(SceneView sceneView)
         {
-            var camera = sceneView.camera;
-            LegacyBrushIntersection intersection;
-            if (SceneQueryUtility.FindWorldIntersection(camera, Event.current.mousePosition, out intersection))
+            Camera camera = sceneView.camera;
+
+            if(SceneQueryUtility.FindWorldIntersection(camera, Event.current.mousePosition, out LegacyBrushIntersection intersection))
             {
-                if (lastSelectedSurface != null && (lastSelectedSurface.brush != intersection.brush || lastSelectedSurface.surfaceIndex != intersection.surfaceIndex))
+                if(_lastSelectedSurface != null && (_lastSelectedSurface.brush != intersection.brush || _lastSelectedSurface.surfaceIndex != intersection.surfaceIndex))
                 {
-                    if (lastSelectedSurface.surfacePlane.HasValue)
-                    { 
-                        SurfaceUtility.CopyLastMaterial(intersection.brush,        intersection.surfaceIndex,			intersection.worldPlane,
-                                                        lastSelectedSurface.brush, lastSelectedSurface.surfaceIndex,	lastSelectedSurface.surfacePlane.Value);
+                    if(_lastSelectedSurface.surfacePlane.HasValue)
+                    {
+                        SurfaceUtility.CopyLastMaterial(intersection.brush, intersection.surfaceIndex, _lastSelectedSurface.brush, _lastSelectedSurface.surfaceIndex);
+
                         InternalCSGModelManager.RefreshMeshes();
                     }
-                    lastSelectedSurface = null; 
+
+                    _lastSelectedSurface = null;
                 }
-                if (lastSelectedSurface == null)
-                    lastSelectedSurface = new SelectedBrushSurface(intersection.brush, intersection.surfaceIndex, intersection.worldPlane);
+
+                if(_lastSelectedSurface == null)
+                {
+                    _lastSelectedSurface = new SelectedBrushSurface(intersection.brush, intersection.surfaceIndex, intersection.worldPlane);
+                }
             }
+
             return true;
         }
 
-        bool DragSurfaceSelect(SceneView sceneView)
+        private bool DragSurfaceSelect(SceneView sceneView)
         {
-            var camera = sceneView.camera;
-            LegacyBrushIntersection intersection;
-            if (SceneQueryUtility.FindWorldIntersection(camera, Event.current.mousePosition, out intersection))
-            {
-                if (IsSelected(intersection))
-                {
-                    if (dragMode == DragMode.SurfaceSelectToggle)
-                        dragMode = DragMode.SurfaceSelectRemove;
+            Camera camera = sceneView.camera;
 
-                    if (dragMode == DragMode.SurfaceSelectRemove)
+            if(SceneQueryUtility.FindWorldIntersection(camera, Event.current.mousePosition, out LegacyBrushIntersection intersection))
+            {
+                if(IsSelected(intersection))
+                {
+                    if(_dragMode == DragMode.SurfaceSelectToggle)
+                    {
+                        _dragMode = DragMode.SurfaceSelectRemove;
+                    }
+
+                    if(_dragMode == DragMode.SurfaceSelectRemove)
                     {
                         RemoveSurfaceSelection(intersection);
-                        CSG_EditorGUIUtility.RepaintAll();
+                        CSGEditorGUIUtility.RepaintAll();
                     }
-                } else
+                }
+                else
                 {
-                    if (dragMode == DragMode.SurfaceSelectToggle)
-                        dragMode = DragMode.SurfaceSelectAdd;
+                    if(_dragMode == DragMode.SurfaceSelectToggle)
+                    {
+                        _dragMode = DragMode.SurfaceSelectAdd;
+                    }
 
-                    if (dragMode == DragMode.SurfaceSelectAdd)
+                    if(_dragMode == DragMode.SurfaceSelectAdd)
                     {
                         AddSurfaceSelection(intersection);
-                        CSG_EditorGUIUtility.RepaintAll();
+                        CSGEditorGUIUtility.RepaintAll();
                     }
                 }
             }
-                
+
             return true;
         }
 
-        bool DragTranslateTextureCoordinates(SceneView sceneView)
+        private bool DragTranslateTextureCoordinates(SceneView sceneView)
         {
-            if (hoverOnTarget == -1 || hoverOnSurfaceIndex == -1)
+            if(_hoverOnTarget == -1 || _hoverOnSurfaceIndex == -1)
             {
                 return false;
             }
 
-            var brush = brushTargets[hoverOnTarget];				
-            if (brush.ChildData == null ||
-                brush.ChildData.ModelTransform == null)
+            CSGBrush brush = brushTargets[_hoverOnTarget];
+
+            if(brush.childData == null || brush.childData.modelTransform == null)
             {
                 return false;
             }
-            
-            var modelTransform		= brush.ChildData.ModelTransform;
-            var modelTransformation	= modelTransform.localToWorldMatrix;
-            
-            if (firstMove)
+
+            Transform modelTransform      = brush.childData.modelTransform;
+            Matrix4x4 modelTransformation = modelTransform.localToWorldMatrix;
+
+            if(_firstMove)
             {
-                UpdateSelection(allowSubstraction: false);
+                UpdateSelection(false);
                 CopyBackupTexgens();
-                var surfaceState		= surfaceStates[hoverOnTarget];
-                originalSurfacePoint	= surfaceState.rayIntersectionWorldPoint;
-                snappingOffset2			= surfaceState.rayIntersectionWorldPoint - snappingOffset;
-                firstMove = false;
+
+                TexGenState surfaceState = surfaceStates[_hoverOnTarget];
+                _originalSurfacePoint = surfaceState.rayIntersectionWorldPoint;
+                _snappingOffset2      = surfaceState.rayIntersectionWorldPoint - _snappingOffset;
+                _firstMove            = false;
             }
-            
-            var hoverOnShape		= this.brushTargets[this.hoverOnTarget].Shape;
-            var hoverOnTexGenIndex	= hoverOnShape.Surfaces[this.hoverOnSurfaceIndex].TexGenIndex;
-            var hoverSurfaceState	= this.surfaceStates[this.hoverOnTarget];
-            var backupTexGen		= hoverSurfaceState.backupTexGens[hoverOnTexGenIndex];
-            
-            LegacySurfaceIntersection surfaceIntersection;
-            var selectedSurfaces = GetSelectedSurfaces();
-            if (selectedSurfaces.Length == 0)
+
+            Shape       hoverOnShape       = brushTargets[_hoverOnTarget].shape;
+            int         hoverOnTexGenIndex = hoverOnShape.surfaces[_hoverOnSurfaceIndex].TexGenIndex;
+            TexGenState hoverSurfaceState  = surfaceStates[_hoverOnTarget];
+            TexGen      backupTexGen       = hoverSurfaceState.backupTexGens[hoverOnTexGenIndex];
+
+            SelectedBrushSurface[] selectedSurfaces = GetSelectedSurfaces();
+
+            if(selectedSurfaces.Length == 0)
             {
                 return true;
             }
 
-            var camera = sceneView.camera;
-            if (!SceneQueryUtility.FindSurfaceIntersection(camera, brush, modelTransformation, hoverOnSurfaceIndex, Event.current.mousePosition,
-                                                            out surfaceIntersection))
+            Camera camera = sceneView.camera;
+
+            if(!SceneQueryUtility.FindSurfaceIntersection(camera, brush, modelTransformation, _hoverOnSurfaceIndex, Event.current.mousePosition, out LegacySurfaceIntersection surfaceIntersection))
             {
                 return true;
             }
 
-            var old_world_position = originalSurfacePoint - snappingOffset2;
-            var new_world_position = surfaceIntersection.worldIntersection - snappingOffset2;
-
+            Vector3 oldWorldPosition = _originalSurfacePoint - _snappingOffset2;
+            Vector3 newWorldPosition = surfaceIntersection.worldIntersection - _snappingOffset2;
 
             // snap texture coordinates in world/local space
-            new_world_position = GridUtility.FixPosition(new_world_position, modelTransform, old_world_position);
+            newWorldPosition = GridUtility.FixPosition(newWorldPosition, modelTransform, oldWorldPosition);
 
-            using (new UndoGroup(selectedSurfaces, "Translating surface"))
+            using(new UndoGroup(selectedSurfaces, "Translating surface"))
             {
                 RestoreBackupTexgens();
-                if (SurfaceUtility.TranslateSurfaces(selectedSurfaces, modelTransform, old_world_position, new_world_position))
+
+                if(SurfaceUtility.TranslateSurfaces(selectedSurfaces, oldWorldPosition, newWorldPosition))
                 {
-                    deltaMovement = hoverOnShape.TexGens[hoverOnTexGenIndex].Translation - backupTexGen.Translation;
-                    //InternalCSGModelManager.Refresh();
-                    //InternalCSGModelManager.UpdateMeshes();
-                    //MeshInstanceManager.UpdateHelperSurfaceVisibility();
-                    //CSG_EditorGUIUtility.UpdateSceneViews();
+                    _deltaMovement = hoverOnShape.texGens[hoverOnTexGenIndex].Translation - backupTexGen.Translation;
                 }
             }
+
             return true;
         }
 
-        bool DragRotateTextureCoordinates(SceneView sceneView)
+        private bool DragRotateTextureCoordinates(SceneView sceneView)
         {
-            if (hoverOnTarget == -1 || hoverOnSurfaceIndex == -1)
-                return false;
-
-            var brush = brushTargets[hoverOnTarget];				
-            if (brush.ChildData == null ||
-                brush.ChildData.ModelTransform == null)
-                return false;
-            
-            var modelTransform		= brush.ChildData.ModelTransform;
-            var modelTransformation	= modelTransform.localToWorldMatrix;
-            
-            if (firstMove)
+            if(_hoverOnTarget == -1 || _hoverOnSurfaceIndex == -1)
             {
-                UpdateSelection(allowSubstraction: false);
-                CopyBackupTexgens();					
-                firstMove = false;
+                return false;
             }
-            
-            var hoverOnShape		= this.brushTargets[this.hoverOnTarget].Shape;
-            var hoverOnTexGenIndex	= hoverOnShape.Surfaces[this.hoverOnSurfaceIndex].TexGenIndex;
-            var hoverSurfaceState	= this.surfaceStates[this.hoverOnTarget];
-            var backupTexGen		= hoverSurfaceState.backupTexGens[hoverOnTexGenIndex];
 
-            var camera = sceneView.camera;
-            LegacySurfaceIntersection surfaceIntersection;
-            var selectedSurfaces = GetSelectedSurfaces();
-            if (selectedSurfaces.Length == 0 ||
-                !SceneQueryUtility.FindSurfaceIntersection(camera, brush, modelTransformation, hoverOnSurfaceIndex, Event.current.mousePosition, 
-                                                            out surfaceIntersection) ||
-                !rotationCircle.UpdateRadius(backupTexGen, surfaceIntersection.worldIntersection))
+            CSGBrush brush = brushTargets[_hoverOnTarget];
+
+            if(brush.childData == null || brush.childData.modelTransform == null)
+            {
+                return false;
+            }
+
+            Transform modelTransform      = brush.childData.modelTransform;
+            Matrix4x4 modelTransformation = modelTransform.localToWorldMatrix;
+
+            if(_firstMove)
+            {
+                UpdateSelection(false);
+                CopyBackupTexgens();
+
+                _firstMove = false;
+            }
+
+            Shape       hoverOnShape       = brushTargets[_hoverOnTarget].shape;
+            int         hoverOnTexGenIndex = hoverOnShape.surfaces[_hoverOnSurfaceIndex].TexGenIndex;
+            TexGenState hoverSurfaceState  = surfaceStates[_hoverOnTarget];
+            TexGen      backupTexGen       = hoverSurfaceState.backupTexGens[hoverOnTexGenIndex];
+
+            Camera                 camera           = sceneView.camera;
+            SelectedBrushSurface[] selectedSurfaces = GetSelectedSurfaces();
+
+            if(selectedSurfaces.Length == 0 || !SceneQueryUtility.FindSurfaceIntersection(camera, brush, modelTransformation, _hoverOnSurfaceIndex, Event.current.mousePosition, out LegacySurfaceIntersection surfaceIntersection) || !_rotationCircle.UpdateRadius(backupTexGen, surfaceIntersection.worldIntersection))
+            {
                 return true;
-                
-            using (new UndoGroup(selectedSurfaces, "Rotating surface"))
+            }
+
+            using(new UndoGroup(selectedSurfaces, "Rotating surface"))
             {
                 RestoreBackupTexgens();
-                SurfaceUtility.RotateSurfaces(selectedSurfaces, rotationCircle);
+                SurfaceUtility.RotateSurfaces(selectedSurfaces, _rotationCircle);
             }
+
             return true;
         }
 
+        [NonSerialized] private readonly LineMeshManager _selectedVisibleLineMeshManager = new LineMeshManager();
+        [NonSerialized] private readonly LineMeshManager _selectedInvisibleLineMeshManager = new LineMeshManager();
 
-        [NonSerialized] LineMeshManager		selectedVisibleLineMeshManager		= new LineMeshManager();
-        [NonSerialized] LineMeshManager		selectedInvisibleLineMeshManager	= new LineMeshManager();
+        [NonSerialized] private readonly LineMeshManager _hoverVisibleLineMeshManager = new LineMeshManager();
+        [NonSerialized] private readonly LineMeshManager _hoverInvisibleLineMeshManager = new LineMeshManager();
 
-        [NonSerialized] LineMeshManager		hoverVisibleLineMeshManager			= new LineMeshManager();
-        [NonSerialized] LineMeshManager		hoverInvisibleLineMeshManager		= new LineMeshManager();
+        [NonSerialized] private readonly PolygonMeshManager _hoverVisiblePolygonMeshManager = new PolygonMeshManager();
 
-        [NonSerialized] PolygonMeshManager	hoverVisiblePolygonMeshManager		= new PolygonMeshManager();
-        [NonSerialized] PolygonMeshManager	selectedVisiblePolygonMeshManager	= new PolygonMeshManager();
+        [NonSerialized]
+        private readonly PolygonMeshManager _selectedVisiblePolygonMeshManager = new PolygonMeshManager();
 
-        [NonSerialized] int outlineGeneration		= -1;
-        [NonSerialized] int prevHoverSurfaceIndex	= -1;
-        [NonSerialized] int prevHoverBrushNodeID	= CSGNode.InvalidNodeID;
+        [NonSerialized] private int _outlineGeneration = -1;
+        [NonSerialized] private int _prevHoverSurfaceIndex = -1;
+        [NonSerialized] private int _prevHoverBrushNodeID = CSGNode.INVALID_NODE_ID;
 
-        void OnDestroy()
+        private void OnDestroy()
         {
-            selectedVisibleLineMeshManager		.Destroy();
-            selectedInvisibleLineMeshManager	.Destroy();
-            selectedVisiblePolygonMeshManager	.Destroy();
+            _selectedVisibleLineMeshManager.Destroy();
+            _selectedInvisibleLineMeshManager.Destroy();
+            _selectedVisiblePolygonMeshManager.Destroy();
 
-            hoverVisibleLineMeshManager			.Destroy();
-            hoverInvisibleLineMeshManager		.Destroy();
-            hoverVisiblePolygonMeshManager		.Destroy();
+            _hoverVisibleLineMeshManager.Destroy();
+            _hoverInvisibleLineMeshManager.Destroy();
+            _hoverVisiblePolygonMeshManager.Destroy();
         }
 
-        
-        void DrawOutlines()
+        private void DrawOutlines()
         {
-            if (outlineGeneration != InternalCSGModelManager.MeshGeneration)
+            if(_outlineGeneration != InternalCSGModelManager.MeshGeneration)
             {
-                outlineGeneration = InternalCSGModelManager.MeshGeneration;
-                forceOutlineUpdate = true;
+                _outlineGeneration  = InternalCSGModelManager.MeshGeneration;
+                _forceOutlineUpdate = true;
             }
 
-
-            if (forceOutlineUpdate)
+            if(_forceOutlineUpdate)
             {
-                var visibleInnerColor	= ColorSettings.PointInnerStateColor[(int)SelectState.Selected];
-                var visibleOuterColor	= ColorSettings.SurfaceOuterStateColor[(int)SelectState.Selected];
-                var visibleOuterline	= ColorSettings.MeshEdgeOutline;
-                var invisibleInnerColor = ColorSettings.PointInnerStateColor[(int)SelectState.Selected];
-                var invisibleOuterColor = ColorSettings.SurfaceOuterStateColor[(int)SelectState.Selected];
-                var invisibleOuterline	= ColorSettings.MeshEdgeOutline;
-                var surfaceColor		= ColorSettings.SurfaceTriangleStateColor[(int)SelectState.Selected];
+                Color visibleInnerColor   = ColorSettings.PointInnerStateColor[(int)SelectState.Selected];
+                Color visibleOuterColor   = ColorSettings.SurfaceOuterStateColor[(int)SelectState.Selected];
+                Color visibleOuterline    = ColorSettings.MeshEdgeOutline;
+                Color invisibleInnerColor = ColorSettings.PointInnerStateColor[(int)SelectState.Selected];
+                Color invisibleOuterColor = ColorSettings.SurfaceOuterStateColor[(int)SelectState.Selected];
+                Color invisibleOuterline  = ColorSettings.MeshEdgeOutline;
+                Color surfaceColor        = ColorSettings.SurfaceTriangleStateColor[(int)SelectState.Selected];
 
                 invisibleOuterline.a = 0.5f;
                 visibleOuterline.a   = 0.5f;
 
                 invisibleInnerColor.a = 1.0f;
                 invisibleOuterColor.a = 1.0f;
-                visibleOuterColor.a = 1.0f;
-                visibleInnerColor.a = 1.0f;
-                
+                visibleOuterColor.a   = 1.0f;
+                visibleInnerColor.a   = 1.0f;
+
                 surfaceColor.a = 0.25f;
 
-                var foundSelectedSurfaces = new List<SelectedBrushSurface>();
-                var foundTransformations = new List<Matrix4x4>();
-                for (int t = 0; t < this.brushTargets.Length; t++)
-                {
-                    var brush			= brushTargets[t];
-                    var surfaceState	= surfaceStates[t];
-                    
-                    if (!brush.ChildData.ModelTransform)
-                        continue;
-                    
-                    var brush_transformation	= brush.compareTransformation.localToWorldMatrix;
-                    var brush_shape				= brush.Shape;
+                List<SelectedBrushSurface> foundSelectedSurfaces = new List<SelectedBrushSurface>();
+                List<Matrix4x4>            foundTransformations  = new List<Matrix4x4>();
 
-                    for (int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+                for(int t = 0; t < brushTargets.Length; t++)
+                {
+                    CSGBrush    brush        = brushTargets[t];
+                    TexGenState surfaceState = surfaceStates[t];
+
+                    if(!brush.childData.modelTransform)
                     {
-                        if (s < 0 || s >= brush_shape.Surfaces.Length)
+                        continue;
+                    }
+
+                    Matrix4x4 brushTransformation = brush.compareTransformation.localToWorldMatrix;
+                    Shape     brushShape          = brush.shape;
+
+                    for(int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+                    {
+                        if(s < 0 || s >= brushShape.surfaces.Length)
                         {
                             continue;
                         }
-                        var texGen_index = brush_shape.Surfaces[s].TexGenIndex;
-                        if (texGen_index < 0 || texGen_index >= surfaceState.surfaceSelectState.Length)
+
+                        int texGenIndex = brushShape.surfaces[s].TexGenIndex;
+
+                        if(texGenIndex < 0 || texGenIndex >= surfaceState.surfaceSelectState.Length)
                         {
                             continue;
                         }
-                        var selected_state = surfaceState.surfaceSelectState[texGen_index];
-                        if ((selected_state & SelectState.Selected) == SelectState.None)
+
+                        SelectState selectedState = surfaceState.surfaceSelectState[texGenIndex];
+
+                        if((selectedState & SelectState.Selected) == SelectState.None)
+                        {
                             continue;
+                        }
 
                         foundSelectedSurfaces.Add(new SelectedBrushSurface(brush, s));
-                        foundTransformations.Add(brush_transformation);
+                        foundTransformations.Add(brushTransformation);
                     }
                 }
 
                 GeometryWireframe[] outlines = null;
-                if (foundSelectedSurfaces.Count > 0)
+
+                if(foundSelectedSurfaces.Count > 0)
                 {
                     outlines = BrushOutlineManager.GetSurfaceOutlines(foundSelectedSurfaces.ToArray());
-                    for (int i = outlines.Length - 1; i >= 0; i--)
+
+                    for(int i = outlines.Length - 1; i >= 0; i--)
                     {
-                        if (outlines[i] != null &&
-                            outlines[i].vertices != null &&
-                            outlines[i].vertices.Length >= 0)
+                        if(outlines[i] != null && outlines[i].vertices != null && outlines[i].vertices.Length >= 0)
+                        {
                             continue;
+                        }
+
                         ArrayUtility.RemoveAt(ref outlines, i);
                     }
                 }
 
-                if (outlines != null && outlines.Length > 0)
+                if(outlines != null && outlines.Length > 0)
                 {
-                    selectedVisibleLineMeshManager.Begin();
-                    selectedInvisibleLineMeshManager.Begin();
-                    selectedVisiblePolygonMeshManager.Begin();
-                    CSGRenderer.DrawSurfaceOutlines(selectedVisibleLineMeshManager, selectedInvisibleLineMeshManager, 
-                                                    selectedVisiblePolygonMeshManager,
-                                                    outlines, foundTransformations.ToArray(),
-                                                    visibleInnerColor, visibleOuterColor, visibleOuterline, 
-                                                    invisibleInnerColor, invisibleOuterColor, invisibleOuterline,
-                                                    surfaceColor,
-                                                    GUIConstants.thickLineScale);
-                    selectedVisiblePolygonMeshManager.End();
-                    selectedInvisibleLineMeshManager.End();
-                    selectedVisibleLineMeshManager.End();
-                } else
+                    _selectedVisibleLineMeshManager.Begin();
+                    _selectedInvisibleLineMeshManager.Begin();
+                    _selectedVisiblePolygonMeshManager.Begin();
+
+                    CSGRenderer.DrawSurfaceOutlines(
+                        _selectedVisibleLineMeshManager, _selectedInvisibleLineMeshManager,
+                        _selectedVisiblePolygonMeshManager,
+                        outlines, foundTransformations.ToArray(),
+                        visibleInnerColor, visibleOuterColor, visibleOuterline,
+                        invisibleInnerColor, invisibleOuterColor, invisibleOuterline,
+                        surfaceColor
+                    );
+
+                    _selectedVisiblePolygonMeshManager.End();
+                    _selectedInvisibleLineMeshManager.End();
+                    _selectedVisibleLineMeshManager.End();
+                }
+                else
                 {
-                    selectedVisiblePolygonMeshManager.Clear();
-                    selectedInvisibleLineMeshManager.Clear();
-                    selectedVisibleLineMeshManager.Clear();
+                    _selectedVisiblePolygonMeshManager.Clear();
+                    _selectedInvisibleLineMeshManager.Clear();
+                    _selectedVisibleLineMeshManager.Clear();
                 }
             }
-            if (forceOutlineUpdate ||				
-                prevHoverSurfaceIndex != hoverOnSurfaceIndex ||
-                prevHoverBrushNodeID   != hoverOnBrushNodeID)
-            {
-                prevHoverSurfaceIndex	= hoverOnSurfaceIndex;
-                prevHoverBrushNodeID	= hoverOnBrushNodeID;
 
-                var visibleInnerColor	= ColorSettings.SurfaceInnerStateColor[(int)SelectState.Hovering];
-                var visibleOuterColor	= ColorSettings.SurfaceOuterStateColor[(int)SelectState.Hovering];
-                var visibleOuterline	= ColorSettings.MeshEdgeOutline;
-                var invisibleInnerColor = ColorSettings.SurfaceInnerStateColor[(int)SelectState.Hovering];
-                var invisibleOuterColor = ColorSettings.SurfaceOuterStateColor[(int)SelectState.Hovering];
-                var invisibleOuterline	= ColorSettings.MeshEdgeOutline;
-                var surfaceColor		= ColorSettings.SurfaceTriangleStateColor[(int)SelectState.Selected];
+            if(_forceOutlineUpdate || _prevHoverSurfaceIndex != _hoverOnSurfaceIndex || _prevHoverBrushNodeID != _hoverOnBrushNodeID)
+            {
+                _prevHoverSurfaceIndex = _hoverOnSurfaceIndex;
+                _prevHoverBrushNodeID  = _hoverOnBrushNodeID;
+
+                Color visibleInnerColor   = ColorSettings.SurfaceInnerStateColor[(int)SelectState.Hovering];
+                Color visibleOuterColor   = ColorSettings.SurfaceOuterStateColor[(int)SelectState.Hovering];
+                Color visibleOuterline    = ColorSettings.MeshEdgeOutline;
+                Color invisibleInnerColor = ColorSettings.SurfaceInnerStateColor[(int)SelectState.Hovering];
+                Color invisibleOuterColor = ColorSettings.SurfaceOuterStateColor[(int)SelectState.Hovering];
+                Color invisibleOuterline  = ColorSettings.MeshEdgeOutline;
+                Color surfaceColor        = ColorSettings.SurfaceTriangleStateColor[(int)SelectState.Selected];
 
                 invisibleOuterline.a = 0.5f;
                 visibleOuterline.a   = 0.5f;
 
                 invisibleInnerColor.a = 1.0f;
                 invisibleOuterColor.a = 1.0f;
-                visibleOuterColor.a = 1.0f;
-                visibleInnerColor.a = 1.0f;
-                
-                //surfaceColor.a = 1.0f;
+                visibleOuterColor.a   = 1.0f;
+                visibleInnerColor.a   = 1.0f;
 
-                var foundSelectedSurfaces = new List<SelectedBrushSurface>();
-                var foundTransformations = new List<Matrix4x4>();
-                for (int t = 0; t < this.brushTargets.Length; t++)
+                List<SelectedBrushSurface> foundSelectedSurfaces = new List<SelectedBrushSurface>();
+                List<Matrix4x4>            foundTransformations  = new List<Matrix4x4>();
+
+                for(int t = 0; t < brushTargets.Length; t++)
                 {
-                    var brush			= brushTargets[t];
-                    var surfaceState	= surfaceStates[t];
+                    CSGBrush    brush        = brushTargets[t];
+                    TexGenState surfaceState = surfaceStates[t];
 
-                    if (!brush.ChildData.ModelTransform)
-                        continue;
-                    
-                    var brush_translation	= brush.compareTransformation.localToWorldMatrix;
-                    var brush_shape			= brush.Shape;
-
-                    for (int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+                    if(!brush.childData.modelTransform)
                     {
-                        if (s >= brush_shape.Surfaces.Length)
+                        continue;
+                    }
+
+                    Matrix4x4 brushTranslation = brush.compareTransformation.localToWorldMatrix;
+                    Shape     brushShape       = brush.shape;
+
+                    for(int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+                    {
+                        if(s >= brushShape.surfaces.Length)
                         {
                             continue;
                         }
-                        var texGen_index = brush_shape.Surfaces[s].TexGenIndex;
-                        if (texGen_index >= surfaceState.surfaceSelectState.Length)
+
+                        int texGenIndex = brushShape.surfaces[s].TexGenIndex;
+
+                        if(texGenIndex >= surfaceState.surfaceSelectState.Length)
                         {
                             continue;
                         }
-                        var selected_state = surfaceState.surfaceSelectState[texGen_index];
-                        if ((selected_state & SelectState.Hovering) == SelectState.None)
+
+                        if((surfaceState.surfaceSelectState[texGenIndex] & SelectState.Hovering) == SelectState.None)
+                        {
                             continue;
+                        }
 
                         foundSelectedSurfaces.Add(new SelectedBrushSurface(brush, s));
-                        foundTransformations.Add(brush_translation);
+                        foundTransformations.Add(brushTranslation);
                     }
                 }
-                
+
                 GeometryWireframe[] outlines = null;
-                if (foundSelectedSurfaces.Count > 0)
+
+                if(foundSelectedSurfaces.Count > 0)
                 {
                     outlines = BrushOutlineManager.GetSurfaceOutlines(foundSelectedSurfaces.ToArray());
-                    for (int i = outlines.Length - 1; i >= 0; i--)
+
+                    for(int i = outlines.Length - 1; i >= 0; i--)
                     {
-                        if (outlines[i] != null &&
-                            outlines[i].vertices != null &&
-                            outlines[i].vertices.Length != 0)
+                        if(outlines[i] != null && outlines[i].vertices != null && outlines[i].vertices.Length != 0)
+                        {
                             continue;
+                        }
+
                         ArrayUtility.RemoveAt(ref outlines, i);
                     }
                 }
 
-                if (outlines != null && outlines.Length > 0)
+                if(outlines != null && outlines.Length > 0)
                 {
-                    hoverVisibleLineMeshManager.Begin();
-                    hoverInvisibleLineMeshManager.Begin();
-                    hoverVisiblePolygonMeshManager.Begin();
-                    CSGRenderer.DrawSurfaceOutlines(hoverVisibleLineMeshManager, hoverInvisibleLineMeshManager,
-                                                    hoverVisiblePolygonMeshManager,
-                                                    outlines, foundTransformations.ToArray(),
-                                                    visibleInnerColor, visibleOuterColor, visibleOuterline, 
-                                                    invisibleInnerColor, invisibleOuterColor, invisibleOuterline,
-                                                    surfaceColor,
-                                                    GUIConstants.lineScale);
-                    hoverVisiblePolygonMeshManager.End();
-                    hoverInvisibleLineMeshManager.End();
-                    hoverVisibleLineMeshManager.End();
-                } else
+                    _hoverVisibleLineMeshManager.Begin();
+                    _hoverInvisibleLineMeshManager.Begin();
+                    _hoverVisiblePolygonMeshManager.Begin();
+
+                    CSGRenderer.DrawSurfaceOutlines(
+                        _hoverVisibleLineMeshManager, _hoverInvisibleLineMeshManager,
+                        _hoverVisiblePolygonMeshManager,
+                        outlines, foundTransformations.ToArray(),
+                        visibleInnerColor, visibleOuterColor, visibleOuterline,
+                        invisibleInnerColor, invisibleOuterColor, invisibleOuterline,
+                        surfaceColor
+                    );
+
+                    _hoverVisiblePolygonMeshManager.End();
+                    _hoverInvisibleLineMeshManager.End();
+                    _hoverVisibleLineMeshManager.End();
+                }
+                else
                 {
-                    hoverVisiblePolygonMeshManager.Clear();
-                    hoverInvisibleLineMeshManager.Clear();
-                    hoverVisibleLineMeshManager.Clear();
+                    _hoverVisiblePolygonMeshManager.Clear();
+                    _hoverInvisibleLineMeshManager.Clear();
+                    _hoverVisibleLineMeshManager.Clear();
                 }
             }
 
-            var zTestGenericLineMaterial	= MaterialUtility.ZTestGenericLine;
-            var noZTestGenericLineMaterial	= MaterialUtility.NoZTestGenericLine;
-            var coloredPolygonMaterial		= MaterialUtility.ColoredPolygonMaterial;
+            Material zTestGenericLineMaterial   = MaterialUtility.ZTestGenericLine;
+            Material noZTestGenericLineMaterial = MaterialUtility.NoZTestGenericLine;
+            Material coloredPolygonMaterial     = MaterialUtility.ColoredPolygonMaterial;
 
-            selectedVisiblePolygonMeshManager.Render(coloredPolygonMaterial);
-            hoverVisiblePolygonMeshManager.Render(coloredPolygonMaterial);
+            _selectedVisiblePolygonMeshManager.Render(coloredPolygonMaterial);
+            _hoverVisiblePolygonMeshManager.Render(coloredPolygonMaterial);
 
-            MaterialUtility.LineDashMultiplier = 1.0f;
+            MaterialUtility.LineDashMultiplier      = 1.0f;
             MaterialUtility.LineThicknessMultiplier = 1.0f;
-            MaterialUtility.LineAlphaMultiplier = 1.0f;
-            selectedInvisibleLineMeshManager.Render(noZTestGenericLineMaterial);
-            selectedVisibleLineMeshManager  .Render(zTestGenericLineMaterial);
-            
-            MaterialUtility.LineDashMultiplier		= 1.0f;
-            MaterialUtility.LineThicknessMultiplier = 1.0f;
-            hoverInvisibleLineMeshManager.Render(noZTestGenericLineMaterial);
-            hoverVisibleLineMeshManager  .Render(zTestGenericLineMaterial);		
+            MaterialUtility.LineAlphaMultiplier     = 1.0f;
+            _selectedInvisibleLineMeshManager.Render(noZTestGenericLineMaterial);
+            _selectedVisibleLineMeshManager.Render(zTestGenericLineMaterial);
 
-            forceOutlineUpdate = false;
+            MaterialUtility.LineDashMultiplier      = 1.0f;
+            MaterialUtility.LineThicknessMultiplier = 1.0f;
+            _hoverInvisibleLineMeshManager.Render(noZTestGenericLineMaterial);
+            _hoverVisibleLineMeshManager.Render(zTestGenericLineMaterial);
+
+            _forceOutlineUpdate = false;
         }
 
-
-        void CreateControlIDs()
+        private void CreateControlIDs()
         {
-            //int surfaceEditBrushToolID = GUIUtility.GetControlID(surfaceEditBrushToolHash, FocusType.Keyboard);
-            //HandleUtility.AddDefaultControl(surfaceEditBrushToolID);
-            
-            surfaceSelectPaintControl	= GUIUtility.GetControlID(surfaceSelectPaintControlToolHash, FocusType.Keyboard); 
-            textureCopyDragControlID	= GUIUtility.GetControlID(textureCopyDragControlToolHash, FocusType.Keyboard);
-            
-            for (int t = 0; t < brushTargets.Length; t++)
+            _surfaceSelectPaintControl = GUIUtility.GetControlID(surfaceSelectPaintControlToolHash, FocusType.Keyboard);
+            _textureCopyDragControlID  = GUIUtility.GetControlID(textureCopyDragControlToolHash, FocusType.Keyboard);
+
+            for(int t = 0; t < brushTargets.Length; t++)
             {
-                var surfaceState = surfaceStates[t];
-                if (surfaceState == null)
+                TexGenState surfaceState = surfaceStates[t];
+
+                if(surfaceState == null)
+                {
                     return;
+                }
 
                 // assign IDs to every surface
-                for (int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+                for(int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
                 {
                     surfaceState.surfaceControlID[s] = GUIUtility.GetControlID(textureSurfaceControlToolHash + t, FocusType.Keyboard);
                 }
             }
-
         }
-        
-        [NonSerialized] bool mouseIsDown	 = false;
-        [NonSerialized] bool mouseIsDragging = false;
-        [NonSerialized] bool firstMove		 = false;
-        [NonSerialized] bool firstDrag		 = false;
-        
-        [NonSerialized] Vector2 prevMousePos;
 
-        bool clickedInScene = false;
+        [NonSerialized] private bool _mouseIsDown;
+        [NonSerialized] private bool _mouseIsDragging;
+        [NonSerialized] private bool _firstMove;
+        [NonSerialized] private bool _firstDrag;
+
+        [NonSerialized] private Vector2 _prevMousePos;
+
+        private bool _clickedInScene;
 
         public void HandleEvents(SceneView sceneView, Rect sceneRect)
         {
-            var camera = sceneView.camera;
+            Camera camera = sceneView.camera;
 
-            var originalEventType = Event.current.type;
-            if      (originalEventType == EventType.MouseMove) { mouseIsDragging = false; }
-            else if (originalEventType == EventType.MouseDown) { mouseIsDragging = false; mouseIsDown = true; prevMousePos = Event.current.mousePosition; }
-            else if (originalEventType == EventType.MouseDrag)
+            EventType originalEventType = Event.current.type;
+
+            if(originalEventType == EventType.MouseMove)
             {
-                mouseIsDown = true; 
-                if (!mouseIsDragging && (prevMousePos - Event.current.mousePosition).magnitude > 4.0f)
-                    mouseIsDragging = true;
+                _mouseIsDragging = false;
+            }
+            else if(originalEventType == EventType.MouseDown)
+            {
+                _mouseIsDragging = false;
+                _mouseIsDown     = true;
+                _prevMousePos    = Event.current.mousePosition;
+            }
+            else if(originalEventType == EventType.MouseDrag)
+            {
+                _mouseIsDown = true;
+
+                if(!_mouseIsDragging && (_prevMousePos - Event.current.mousePosition).magnitude > 4.0f)
+                {
+                    _mouseIsDragging = true;
+                }
             }
 
             try
             {
-                //if (Event.current.type == EventType.Layout)
-                    CreateControlIDs();
-            
-                switch (Event.current.type)
+                CreateControlIDs();
+
+                switch(Event.current.type)
                 {
                     case EventType.MouseDown:
                     {
-                        clickedInScene = false;
-                        if (!sceneRect.Contains(Event.current.mousePosition))
-                            break;
+                        _clickedInScene = false;
 
-                        var guiArea = GetLastSceneGUIRect();
-                        if (guiArea.Contains(Event.current.mousePosition))
+                        if(!sceneRect.Contains(Event.current.mousePosition))
+                        {
                             break;
+                        }
 
-                        clickedInScene = true;
+                        Rect guiArea = GetLastSceneGUIRect();
+
+                        if(guiArea.Contains(Event.current.mousePosition))
+                        {
+                            break;
+                        }
+
+                        _clickedInScene = true;
+
                         break;
                     }
                     case EventType.MouseUp:
                     case EventType.MouseDrag:
                     {
-                        if (!clickedInScene ||
-                            Event.current.button != 0 ||
-                            GUIUtility.hotControl != 0)
-                            break;
-
-                        if (!sceneRect.Contains(Event.current.mousePosition))
-                            break;
-
-                        var guiArea = GetLastSceneGUIRect();
-                        if (guiArea.Contains(Event.current.mousePosition))
-                            break;
-
-                        GameObject gameObject = null;
-                        if (SceneQueryUtility.FindUnityWorldIntersection(camera, Event.current.mousePosition, out gameObject))
+                        if(!_clickedInScene || Event.current.button != 0 || GUIUtility.hotControl != 0)
                         {
-                            if (gameObject == null &&
-                                Event.current.type == EventType.MouseUp)
-                            { 
-                                SelectionUtility.DeselectAll();
-                            } else
-                                SelectionUtility.DoSelectionClick(sceneView);
                             break;
                         }
 
-                        if (dragMode == DragMode.TextureCopy)
+                        if(!sceneRect.Contains(Event.current.mousePosition))
                         {
-                            if (Event.current.modifiers == EventModifiers.None)
-                            { 
-                                firstDrag = true;
-                                currentControl = textureCopyDragControlID;
-                                GUIUtility.hotControl				= textureCopyDragControlID;
-                                GUIUtility.keyboardControl			= textureCopyDragControlID;
-                                EditorGUIUtility.editingTextField	= false;
-                                if (Event.current.type != EventType.MouseUp)
-                                    Event.current.Use();
-                            }
-                            //if (Event.current.type != EventType.MouseUp)
-                                break;
-                        } else
+                            break;
+                        }
+
+                        Rect guiArea = GetLastSceneGUIRect();
+
+                        if(guiArea.Contains(Event.current.mousePosition))
                         {
-                            var selectionType = SelectionUtility.GetEventSelectionType();
-                            switch (selectionType)
+                            break;
+                        }
+
+                        if(SceneQueryUtility.FindUnityWorldIntersection(camera, Event.current.mousePosition, out GameObject gameObject))
+                        {
+                            if(gameObject == null && Event.current.type == EventType.MouseUp)
                             {
-                                case SelectionType.Additive:		dragMode = DragMode.SurfaceSelectAdd; break;
-                                case SelectionType.Subtractive:		dragMode = DragMode.SurfaceSelectRemove; break;
-                                case SelectionType.Toggle:			dragMode = DragMode.SurfaceSelectToggle; break;
-                                case SelectionType.Replace:			dragMode = DragMode.None; break;
+                                SelectionUtility.DeselectAll();
                             }
-                            if (dragMode != DragMode.None)
+                            else
                             {
-                                currentControl = surfaceSelectPaintControl;
-                                GUIUtility.hotControl				= surfaceSelectPaintControl;
-                                GUIUtility.keyboardControl			= surfaceSelectPaintControl;
-                                EditorGUIUtility.editingTextField	= false;
-                                if (Event.current.type != EventType.MouseUp)
+                                SelectionUtility.DoSelectionClick(sceneView);
+                            }
+
+                            break;
+                        }
+
+                        if(_dragMode == DragMode.TextureCopy)
+                        {
+                            if(Event.current.modifiers == EventModifiers.None)
+                            {
+                                _firstDrag                        = true;
+                                _currentControl                   = _textureCopyDragControlID;
+                                GUIUtility.hotControl             = _textureCopyDragControlID;
+                                GUIUtility.keyboardControl        = _textureCopyDragControlID;
+                                EditorGUIUtility.editingTextField = false;
+
+                                if(Event.current.type != EventType.MouseUp)
                                 {
                                     Event.current.Use();
-                                    break;
                                 }
+                            }
+
+                            break;
+                        }
+
+                        SelectionType selectionType = SelectionUtility.GetEventSelectionType();
+
+                        _dragMode = selectionType switch
+                        {
+                            SelectionType.Additive    => DragMode.SurfaceSelectAdd
+                          , SelectionType.Subtractive => DragMode.SurfaceSelectRemove
+                          , SelectionType.Toggle      => DragMode.SurfaceSelectToggle
+                          , SelectionType.Replace     => DragMode.None
+                          , var _                     => _dragMode
+                        };
+
+                        if(_dragMode != DragMode.None)
+                        {
+                            _currentControl                   = _surfaceSelectPaintControl;
+                            GUIUtility.hotControl             = _surfaceSelectPaintControl;
+                            GUIUtility.keyboardControl        = _surfaceSelectPaintControl;
+                            EditorGUIUtility.editingTextField = false;
+
+                            if(Event.current.type != EventType.MouseUp)
+                            {
+                                Event.current.Use();
+
+                                break;
                             }
                         }
 
-                        if (Event.current.type != EventType.MouseUp &&
-                            Event.current.modifiers != EventModifiers.None)
-                            break;
-
-                        if (hoverOnTarget == -1 || hoverOnSurfaceIndex == -1)
+                        if(Event.current.type != EventType.MouseUp && Event.current.modifiers != EventModifiers.None)
                         {
-                            if (Event.current.type == EventType.MouseUp &&
-                                !mouseIsDragging)
+                            break;
+                        }
+
+                        if(_hoverOnTarget == -1 || _hoverOnSurfaceIndex == -1)
+                        {
+                            if(Event.current.type == EventType.MouseUp && !_mouseIsDragging)
                             {
                                 // see if we clicked into empty space
-                                if (hoverOnTarget == -1 &&
-                                    hoverOnSurfaceIndex == -1)
+                                if(_hoverOnTarget == -1 && _hoverOnSurfaceIndex == -1)
                                 {
                                     SelectionUtility.DeselectAll();
                                 }
                             }
+
                             break;
                         }
 
-                        int newControlID = surfaceStates[hoverOnTarget].surfaceControlID[hoverOnSurfaceIndex];
-                        if (newControlID <= 0)
+                        int newControlID = surfaceStates[_hoverOnTarget].surfaceControlID[_hoverOnSurfaceIndex];
+
+                        if(newControlID <= 0)
                         {
                             break;
                         }
-                        
-                        currentControl = newControlID;
-                        GUIUtility.hotControl				= newControlID;
-                        GUIUtility.keyboardControl			= newControlID;
-                        EditorGUIUtility.editingTextField	= false; 
-                        
-                        if (Event.current.type != EventType.MouseUp)
+
+                        _currentControl                   = newControlID;
+                        GUIUtility.hotControl             = newControlID;
+                        GUIUtility.keyboardControl        = newControlID;
+                        EditorGUIUtility.editingTextField = false;
+
+                        if(Event.current.type != EventType.MouseUp)
+                        {
                             Event.current.Use();
-                        firstMove = true;
+                        }
+
+                        _firstMove = true;
 
                         Undo.IncrementCurrentGroup();
-                        undoGroupIndex = Undo.GetCurrentGroup();
+                        _undoGroupIndex = Undo.GetCurrentGroup();
 
-                        if (Tools.current == Tool.Rotate)
+                        if(Tools.current == Tool.Rotate)
                         {
-                            var brush				= brushTargets[hoverOnTarget];
-                            rotationCircle.Initialize(brush.GetComponent<Transform>(), brush.Shape.Surfaces[hoverOnSurfaceIndex], surfaceStates[hoverOnTarget].rayIntersectionWorldPoint);
-                        } else
-                        if (Tools.current == Tool.Move)
-                        {
-                            var brush				= brushTargets[hoverOnTarget];
-                            InternalCSGModelManager.SetBrushMeshSurfaces(brush);
-                            snappingOffset			= SurfaceUtility.ConvertTextureToModelSpace(brush, hoverOnSurfaceIndex, MathConstants.zeroVector2);
+                            CSGBrush brush = brushTargets[_hoverOnTarget];
+
+                            _rotationCircle.Initialize(brush.GetComponent<Transform>(), brush.shape.surfaces[_hoverOnSurfaceIndex], surfaceStates[_hoverOnTarget].rayIntersectionWorldPoint);
                         }
-             
+                        else if(Tools.current == Tool.Move)
+                        {
+                            CSGBrush brush = brushTargets[_hoverOnTarget];
+                            InternalCSGModelManager.SetBrushMeshSurfaces(brush);
+
+                            _snappingOffset = SurfaceUtility.ConvertTextureToModelSpace(brush, _hoverOnSurfaceIndex, MathConstants.zeroVector2);
+                        }
+
                         break;
                     }
-                    
+
                     case EventType.KeyDown:
                     {
                         SceneQueryUtility.ClearDeepClick();
-                        if (Keys.CancelActionKey.IsKeyPressed()) { Event.current.Use(); break; }
-                        if (Keys.CopyMaterialTexGen.IsKeyPressed()) { if (dragMode == DragMode.None) dragMode = DragMode.TextureCopy; Event.current.Use(); break; }
-                        if (Keys.HandleSceneKeyDown(EditModeManager.CurrentTool, false)) { Event.current.Use(); break; }
+
+                        if(Keys.cancelActionKey.IsKeyPressed())
+                        {
+                            Event.current.Use();
+
+                            break;
+                        }
+
+                        if(Keys.copyMaterialTexGen.IsKeyPressed())
+                        {
+                            if(_dragMode == DragMode.None)
+                            {
+                                _dragMode = DragMode.TextureCopy;
+                            }
+
+                            Event.current.Use();
+
+                            break;
+                        }
+
+                        if(Keys.HandleSceneKeyDown(EditModeManager.CurrentTool, false))
+                        {
+                            Event.current.Use();
+                        }
+
                         break;
                     }
 
                     case EventType.KeyUp:
                     {
-                        if (Keys.CancelActionKey.IsKeyPressed()) { SelectionUtility.DeselectAll(); Event.current.Use(); break; }
-                        if (Keys.CopyMaterialTexGen.IsKeyPressed()) { if (dragMode == DragMode.TextureCopy) dragMode = DragMode.None; Event.current.Use(); break; }
-                        if (Keys.HandleSceneKeyUp(EditModeManager.CurrentTool, false)) { Event.current.Use(); break; }
+                        if(Keys.cancelActionKey.IsKeyPressed())
+                        {
+                            SelectionUtility.DeselectAll();
+                            Event.current.Use();
+
+                            break;
+                        }
+
+                        if(Keys.copyMaterialTexGen.IsKeyPressed())
+                        {
+                            if(_dragMode == DragMode.TextureCopy)
+                            {
+                                _dragMode = DragMode.None;
+                            }
+
+                            Event.current.Use();
+
+                            break;
+                        }
+
+                        if(Keys.HandleSceneKeyUp(EditModeManager.CurrentTool, false))
+                        {
+                            Event.current.Use();
+                        }
+
                         break;
                     }
 
                     case EventType.ValidateCommand:
                     {
-                        if (Keys.CancelActionKey    .IsKeyPressed()) { Event.current.Use(); break; }
-                        if (Keys.CopyMaterialTexGen.IsKeyPressed()) { Event.current.Use(); break; }
-                        if (Keys.HandleSceneValidate(EditModeManager.CurrentTool, false)) { Event.current.Use(); break; }
+                        if(Keys.cancelActionKey.IsKeyPressed())
+                        {
+                            Event.current.Use();
+
+                            break;
+                        }
+
+                        if(Keys.copyMaterialTexGen.IsKeyPressed())
+                        {
+                            Event.current.Use();
+
+                            break;
+                        }
+
+                        if(Keys.HandleSceneValidate(EditModeManager.CurrentTool, false))
+                        {
+                            Event.current.Use();
+                        }
+
                         break;
                     }
 
                     case EventType.Repaint:
                     {
-                        if (SceneDragToolManager.IsDraggingObjectInScene)
+                        if(SceneDragToolManager.IsDraggingObjectInScene)
+                        {
                             break;
-                    
-                        if (sceneView != null)
-                        {
-#if UNITY_2020_2_OR_NEWER
-							if (!Tools.viewToolActive)
-#else
-							if (Tools.current != Tool.View && !Event.current.alt && Event.current.button != 1 && Event.current.button != 2)
-#endif
-							{
-								var windowRect = new Rect(0, 0, sceneView.position.width, sceneView.position.height - CSG_GUIStyleUtility.BottomToolBarHeight);
-								if (currentCursor != MouseCursor.Arrow) EditorGUIUtility.AddCursorRect(windowRect, currentCursor);
-							}
-						}
-                        
-                        if (currentControl == -1 ||
-                            currentControl == surfaceSelectPaintControl)
-                            DrawOutlines();
-                        break;
-                    }
-                    /*
-                    case EventType.MouseMove:
-                    {
-                        if (currentControl != -1 ||
-                            camera == null || !camera.pixelRect.Contains(Event.current.mousePosition))
-                            return;
-                         
-                        var world_ray		= HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        var ray_start		= world_ray.origin;
-                        var ray_vector		= world_ray.direction * camera.farClipPlane;
-                        var ray_end			= ray_start + ray_vector;
-                            
-                        var wireframeShown	= RealtimeCSG.CSGSettings.IsWireframeShown(sceneView);
+                        }
 
-                        BrushIntersection intersection = null;
-                        if (!mouseIsDragging &&
-                            SceneQueryUtility.FindWorldIntersection(ray_start, ray_end, out intersection, ignoreInvisible: true, ignoreUnrenderables: !wireframeShown))
+                        if(sceneView != null)
                         {
-                            //if (hoverOnSurfaceIndex != intersection.surfaceIndex || hoverOnTarget != intersection.brushNodeID)
+                            if(!Tools.viewToolActive)
                             {
-                                CSG_EditorGUIUtility.UpdateSceneViews();
+                                Rect windowRect = new Rect(0, 0, sceneView.position.width, sceneView.position.height - CsgguiStyleUtility.BOTTOM_TOOL_BAR_HEIGHT);
+
+                                if(_currentCursor != MouseCursor.Arrow)
+                                {
+                                    EditorGUIUtility.AddCursorRect(windowRect, _currentCursor);
+                                }
                             }
                         }
+
+                        if(_currentControl == -1 || _currentControl == _surfaceSelectPaintControl)
+                        {
+                            DrawOutlines();
+                        }
+
                         break;
                     }
-                    */
-                    case EventType.Layout: 
+                    case EventType.Layout:
                     {
                         UpdateMouseCursor();
 
-                        if (currentControl != -1 ||
-                            camera == null || !camera.pixelRect.Contains(Event.current.mousePosition))
-                            return;
-                        
-                        var repaint = false;
-                        if (brushTargets == null)
+                        if(_currentControl != -1 || camera == null || !camera.pixelRect.Contains(Event.current.mousePosition))
                         {
-                            brushTargets	= new CSGBrush[0];
-                            surfaceStates	= new TexGenState[0];
+                            return;
                         }
-                        
+
+                        bool repaint = false;
+
+                        if(brushTargets == null)
+                        {
+                            brushTargets  = Array.Empty<CSGBrush>();
+                            surfaceStates = Array.Empty<TexGenState>();
+                        }
+
                         Matrix4x4 origMatrix = Handles.matrix;
                         Handles.matrix = MathConstants.identityMatrix;
-            
-                        var hoverControl	= -1;
-                        var hotControl		= GUIUtility.hotControl;
-                        for (int t = 0; t < brushTargets.Length; t++)
+
+                        int hoverControl = -1;
+                        int hotControl   = GUIUtility.hotControl;
+
+                        for(int t = 0; t < brushTargets.Length; t++)
                         {
-                            var brush = brushTargets[t];
-                            var surfaceState = surfaceStates[t];
-                            surfaceState.UpdateLayout(brush);				
-                            for (int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+                            CSGBrush    brush        = brushTargets[t];
+                            TexGenState surfaceState = surfaceStates[t];
+                            surfaceState.UpdateLayout(brush);
+
+                            for(int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
                             {
                                 // see if this control ID is 'hot'
-                                if (hotControl == surfaceState.surfaceControlID[s])
+                                if(hotControl == surfaceState.surfaceControlID[s])
+                                {
                                     hoverControl = surfaceState.surfaceControlID[s];
+                                }
                             }
                         }
 
                         // check if we already have a controlID, otherwise try to see if we're hovering over a surface
-                        if (hoverControl == -1)
+                        if(hoverControl == -1)
                         {
-                            hoverOnSurfaceIndex = -1;
-                            hoverOnTarget		= -1;
-                            RealtimeCSG.CSGGrid.ForceGrid		= false;
+                            _hoverOnSurfaceIndex = -1;
+                            _hoverOnTarget       = -1;
+                            CSGGrid.ForceGrid    = false;
 
-                            int closest_brush	= -1;
-                            int closest_surface	= -1;
+                            int closestBrush   = -1;
+                            int closestSurface = -1;
 
-                            var world_ray		= HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                            var ray_start		= world_ray.origin;
-                            var ray_vector		= world_ray.direction * camera.farClipPlane;
-                            var ray_end			= ray_start + ray_vector;
-                            
-                            var guiArea			= GetLastSceneGUIRect();
-                            var wireframeShown	= RealtimeCSG.CSGSettings.IsWireframeShown(camera);
-                            LegacyBrushIntersection intersection = null;
-                            if (!mouseIsDragging &&
-                                !guiArea.Contains(Event.current.mousePosition) &&
-                                SceneQueryUtility.FindWorldIntersection(ray_start, ray_end, 
-                                                                        out intersection, ignoreInvisibleSurfaces: true, 
-                                                                        ignoreUnrenderables: !wireframeShown))
+                            Ray     worldRay  = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+                            Vector3 rayStart  = worldRay.origin;
+                            Vector3 rayVector = worldRay.direction * camera.farClipPlane;
+                            Vector3 rayEnd    = rayStart + rayVector;
+
+                            Rect                    guiArea        = GetLastSceneGUIRect();
+                            bool                    wireframeShown = CSGSettings.IsWireframeShown(camera);
+                            LegacyBrushIntersection intersection   = null;
+
+                            if(!_mouseIsDragging && !guiArea.Contains(Event.current.mousePosition) && SceneQueryUtility.FindWorldIntersection(rayStart, rayEnd, out intersection, true, !wireframeShown))
                             {
-                                var targets = brushTargets;
-                                var brush	= intersection.brush;
-                                if (!ArrayUtility.Contains(targets, brush))
+                                CSGBrush[] targets = brushTargets;
+                                CSGBrush   brush   = intersection.brush;
+
+                                if(!ArrayUtility.Contains(targets, brush))
                                 {
-                                    if (hoverOnlyTarget > 0 && hoverOnlyTarget < surfaceStates.Length)
+                                    if(_hoverOnlyTarget > 0 && _hoverOnlyTarget < surfaceStates.Length)
                                     {
-                                        var	surfaceState	= surfaceStates[hoverOnlyTarget];
-                                        bool have_selected	= false;
-                                        for (int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+                                        TexGenState surfaceState = surfaceStates[_hoverOnlyTarget];
+                                        bool        haveSelected = false;
+
+                                        for(int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
                                         {
-                                            if ((surfaceState.surfaceSelectState[s] & SelectState.Selected) == SelectState.Selected)
-                                                have_selected = true;
+                                            if((surfaceState.surfaceSelectState[s] & SelectState.Selected) == SelectState.Selected)
+                                            {
+                                                haveSelected = true;
+                                            }
                                         }
-                                        if (have_selected)
-                                            hoverOnlyTarget = -1;
+
+                                        if(haveSelected)
+                                        {
+                                            _hoverOnlyTarget = -1;
+                                        }
                                     }
-                                    if (hoverOnlyTarget > 0 && hoverOnlyTarget < surfaceStates.Length)
+
+                                    if(_hoverOnlyTarget > 0 && _hoverOnlyTarget < surfaceStates.Length)
                                     {
-                                        targets[hoverOnlyTarget] = brush;
-                                        surfaceStates[hoverOnlyTarget] = new TexGenState(brush);
-                                    }  else
+                                        targets[_hoverOnlyTarget]       = brush;
+                                        surfaceStates[_hoverOnlyTarget] = new TexGenState(brush);
+                                    }
+                                    else
                                     {
                                         ArrayUtility.Add(ref targets, brush);
                                         TexGenState newState = new TexGenState(brush);
                                         ArrayUtility.Add(ref surfaceStates, newState);
-                                        brushTargets = targets;
-                                        hoverOnlyTarget = targets.Length - 1;
+
+                                        brushTargets     = targets;
+                                        _hoverOnlyTarget = targets.Length - 1;
                                     }
                                 }
                             }
 
-                            float min_distance	= float.PositiveInfinity;
-                            for (int t = 0; t < brushTargets.Length; t++)
+                            float minDistance = float.PositiveInfinity;
+
+                            for(int t = 0; t < brushTargets.Length; t++)
                             {
-                                var	brush			= brushTargets[t];
-                                var	surfaceState	= surfaceStates[t];
-                
-                                if (brush.ChildData == null ||
-                                    brush.ChildData.ModelTransform == null)
+                                CSGBrush    brush        = brushTargets[t];
+                                TexGenState surfaceState = surfaceStates[t];
+
+                                if(brush.childData == null || brush.childData.modelTransform == null)
+                                {
                                     continue;
-                    
-                                if (intersection == null || intersection.brushNodeID != brush.brushNodeID)
+                                }
+
+                                if(intersection == null || intersection.brushNodeID != brush.brushNodeID)
                                 {
                                     surfaceState.rayIntersectionWorldPoint   = MathConstants.zeroVector3;
                                     surfaceState.rayIntersectionSurfacePoint = MathConstants.zeroVector3;
+
                                     continue;
                                 }
-                    
-                                var distance = (intersection.worldIntersection - ray_start).magnitude;
-                                if (distance < min_distance)
+
+                                float distance = (intersection.worldIntersection - rayStart).magnitude;
+
+                                if(distance < minDistance)
                                 {
-                                    min_distance = distance;
-                                    closest_brush = t;
-                                    closest_surface = intersection.surfaceIndex;
+                                    minDistance    = distance;
+                                    closestBrush   = t;
+                                    closestSurface = intersection.surfaceIndex;
                                 }
+
                                 surfaceState.rayIntersectionWorldPoint   = intersection.worldIntersection;
                                 surfaceState.rayIntersectionSurfacePoint = intersection.surfaceIntersection;
                             }
-                
-                            for (int t = 0; t < brushTargets.Length; t++)
-                            {
-                                var surfaceState = surfaceStates[t];
 
-                                for (int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+                            for(int t = 0; t < brushTargets.Length; t++)
+                            {
+                                TexGenState surfaceState = surfaceStates[t];
+
+                                for(int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
                                 {
-                                    var surfaceControlID = surfaceState.surfaceControlID[s];						
-                                    HandleUtility.AddControl(surfaceControlID, (closest_brush == t && closest_surface == s) ? 0.0f : float.PositiveInfinity);
+                                    HandleUtility.AddControl(surfaceState.surfaceControlID[s], closestBrush == t && closestSurface == s ? 0.0f : float.PositiveInfinity);
                                 }
                             }
                         }
 
-                        var nearestControl = HandleUtility.nearestControl;
-                        if (hoverControl != -1)
+                        int nearestControl = HandleUtility.nearestControl;
+
+                        if(hoverControl != -1)
                         {
                             nearestControl = hoverControl;
-                        } else
-                        if (hotControl != 0)
+                        }
+                        else if(hotControl != 0)
                         {
                             nearestControl = -1;
                         }
 
-                        var oldSurfaceStates = new SelectState[0];
-                        EditMode newEditMode = EditMode.None;
-                        for (int t = 0; t < brushTargets.Length; t++)
-                        {
-                            var surfaceState = surfaceStates[t];
+                        SelectState[] oldSurfaceStates = Array.Empty<SelectState>();
+                        EditMode      newEditMode      = EditMode.None;
 
-                            if (!repaint)
+                        for(int t = 0; t < brushTargets.Length; t++)
+                        {
+                            TexGenState surfaceState = surfaceStates[t];
+
+                            if(!repaint)
                             {
-                                if (oldSurfaceStates.Length < surfaceState.surfaceSelectState.Length)
+                                if(oldSurfaceStates.Length < surfaceState.surfaceSelectState.Length)
+                                {
                                     oldSurfaceStates = new SelectState[surfaceState.surfaceSelectState.Length];
+                                }
+
                                 Array.Copy(surfaceState.surfaceSelectState, oldSurfaceStates, surfaceState.surfaceSelectState.Length);
                             }
 
-                            if ( nearestControl != -1)
+                            if(nearestControl != -1)
                             {
                                 surfaceState.UnHoverAll();
 
-                                if (newEditMode == EditMode.None)
+                                if(newEditMode == EditMode.None)
                                 {
-                                    for (int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
+                                    for(int s = 0; s < surfaceState.surfaceSelectState.Length; s++)
                                     {
-                                        if (surfaceState.surfaceControlID[s] == nearestControl)
+                                        if(surfaceState.surfaceControlID[s] == nearestControl)
                                         {
-                                            newEditMode = SetHoverOn(EditMode.TranslateSurface, t, s);
+                                            newEditMode                        =  SetHoverOn(EditMode.TranslateSurface, t, s);
                                             surfaceState.surfaceSelectState[s] |= SelectState.Hovering;
-                                            if ((surfaceState.surfaceSelectState[s] & SelectState.Selected) == SelectState.Selected &&
-                                                currentCursor == MouseCursor.Arrow)
-                                                currentCursor = CursorUtility.GetToolCursor();
+
+                                            if((surfaceState.surfaceSelectState[s] & SelectState.Selected) == SelectState.Selected && _currentCursor == MouseCursor.Arrow)
+                                            {
+                                                _currentCursor = CursorUtility.GetToolCursor();
+                                            }
+
                                             break;
                                         }
                                     }
-                                }					
+                                }
                             }
-                            if (!repaint)
+
+                            if(!repaint)
                             {
-                                for (int p = 0; p < surfaceState.surfaceSelectState.Length; p++)
+                                for(int p = 0; p < surfaceState.surfaceSelectState.Length; p++)
                                 {
-                                    if (surfaceState.surfaceSelectState[p] != oldSurfaceStates[p] || oldSurfaceStates[p] == SelectState.None)
+                                    if(surfaceState.surfaceSelectState[p] != oldSurfaceStates[p] || oldSurfaceStates[p] == SelectState.None)
+                                    {
                                         repaint = true;
+                                    }
                                 }
                             }
                         }
-                        editMode = newEditMode;
+
+                        _editMode      = newEditMode;
                         Handles.matrix = origMatrix;
-            
-                        if (hoverOnTarget >= 0 && hoverOnSurfaceIndex >= 0 && surfaceStates.Length > hoverOnTarget &&
-                            surfaceStates[hoverOnTarget].surfaceSelectState.Length > hoverOnSurfaceIndex)
+
+                        if(_hoverOnTarget >= 0 && _hoverOnSurfaceIndex >= 0 && surfaceStates.Length > _hoverOnTarget && surfaceStates[_hoverOnTarget].surfaceSelectState.Length > _hoverOnSurfaceIndex)
                         {
-                            if ((surfaceStates[hoverOnTarget].surfaceSelectState[hoverOnSurfaceIndex] & SelectState.Selected) != SelectState.Selected)
+                            if((surfaceStates[_hoverOnTarget].surfaceSelectState[_hoverOnSurfaceIndex] & SelectState.Selected) != SelectState.Selected)
                             {
-                                if (currentCursor == MouseCursor.Arrow)
-                                    currentCursor = MouseCursor.ArrowPlus;
+                                if(_currentCursor == MouseCursor.Arrow)
+                                {
+                                    _currentCursor = MouseCursor.ArrowPlus;
+                                }
                             }
                         }
 
-                        if( repaint )
-                            CSG_EditorGUIUtility.RepaintAll();
-                        
+                        if(repaint)
+                        {
+                            CSGEditorGUIUtility.RepaintAll();
+                        }
+
                         break;
                     }
                 }
 
-                var currentHotControl = GUIUtility.hotControl;
+                int currentHotControl = GUIUtility.hotControl;
 
-                if (dragMode != DragMode.TextureCopy)
-                { 
-                    for (int t = 0; t < surfaceStates.Length; t++)
+                if(_dragMode != DragMode.TextureCopy)
+                {
+                    for(int t = 0; t < surfaceStates.Length; t++)
                     {
-                        var surfaceState	= surfaceStates[t];
-                        var surfaceControls = surfaceState.surfaceControlID;
-                        for (int s = 0; s < surfaceControls.Length; s++)
+                        TexGenState surfaceState    = surfaceStates[t];
+                        int[]       surfaceControls = surfaceState.surfaceControlID;
+
+                        for(int s = 0; s < surfaceControls.Length; s++)
                         {
                             int controlID = surfaceStates[t].surfaceControlID[s];
-                            if (currentHotControl != controlID)
+
+                            if(currentHotControl != controlID)
+                            {
                                 continue;
-                            var eventType = Event.current.GetTypeForControl(controlID);
-                            switch (eventType)
+                            }
+
+                            switch(Event.current.GetTypeForControl(controlID))
                             {
                                 case EventType.MouseDrag:
                                 {
-                                    if (Event.current.button != 0 ||
-                                        (Event.current.modifiers & ~EventModifiers.Control) != EventModifiers.None ||
-                                        GUIUtility.hotControl != controlID ||
-                                        controlID <= 0)
+                                    if(Event.current.button != 0 || (Event.current.modifiers & ~EventModifiers.Control) != EventModifiers.None || GUIUtility.hotControl != controlID || controlID <= 0 || CSGSettings.AllowTextureCoordinateDragging == false)
+                                    {
                                         break;
+                                    }
 
-                                    if (Tools.current == Tool.Move)
+                                    if(Tools.current == Tool.Move)
                                     {
                                         DragTranslateTextureCoordinates(sceneView);
-                                    } else
-                                    if (Tools.current == Tool.Rotate)
+                                    }
+                                    else if(Tools.current == Tool.Rotate)
                                     {
                                         DragRotateTextureCoordinates(sceneView);
-                                    } else
+                                    }
+                                    else
                                     {
                                         Debug.LogWarning("Please change the Unity Tool to Move or Rotate");
                                     }
+
                                     break;
                                 }
                                 case EventType.MouseUp:
                                 {
-                                    if (Event.current.button != 0 ||
-                                        GUIUtility.hotControl != controlID)
+                                    if(Event.current.button != 0 || GUIUtility.hotControl != controlID)
+                                    {
                                         break;
-                                
-                                    if (!mouseIsDragging)
+                                    }
+
+                                    if(!_mouseIsDragging)
                                     {
                                         // see if we clicked into empty space
-                                        if (hoverOnTarget == -1 &&
-                                            hoverOnSurfaceIndex == -1)
+                                        if(_hoverOnTarget == -1 && _hoverOnSurfaceIndex == -1)
                                         {
                                             SelectionUtility.DeselectAll();
-                                        } else
+                                        }
+                                        else
                                         {
                                             UpdateSelection();
                                         }
-                                    } else
+                                    }
+                                    else
                                     {
-                                        Undo.CollapseUndoOperations(undoGroupIndex);
+                                        Undo.CollapseUndoOperations(_undoGroupIndex);
                                         Undo.IncrementCurrentGroup();
                                         Undo.FlushUndoRecordObjects();
                                     }
-                            
-                                    GUIUtility.hotControl = 0;
-                                    GUIUtility.keyboardControl = 0;
+
+                                    GUIUtility.hotControl             = 0;
+                                    GUIUtility.keyboardControl        = 0;
                                     EditorGUIUtility.editingTextField = false;
-                                    currentControl = -1;
+                                    _currentControl                   = -1;
+
                                     Event.current.Use();
+
                                     break;
                                 }
                                 case EventType.Repaint:
                                 {
-                                    if (GUIUtility.hotControl != controlID)
-                                        break;
-                                    if (Tools.current == Tool.Rotate)
+                                    if(GUIUtility.hotControl != controlID)
                                     {
-                                        if (dragMode == DragMode.None)
+                                        break;
+                                    }
+
+                                    if(Tools.current == Tool.Rotate)
+                                    {
+                                        if(_dragMode == DragMode.None)
                                         {
-                                            if (mouseIsDown &&
-                                                hoverOnTarget != -1 &&
-                                                hoverOnSurfaceIndex != -1)
+                                            if(_mouseIsDown && _hoverOnTarget != -1 && _hoverOnSurfaceIndex != -1)
                                             {
-                                                rotationCircle.Render(camera);
+                                                _rotationCircle.Render(camera);
                                             }
                                         }
-                                    } else
-                                    if (Tools.current == Tool.Move)
+                                    }
+                                    else if(Tools.current == Tool.Move)
                                     {
-                                        if (editMode == EditMode.TranslateSurface &&
-                                            mouseIsDragging)
+                                        if(_editMode == EditMode.TranslateSurface && _mouseIsDragging)
                                         {
-                                            var textCenter2D = Event.current.mousePosition;
+                                            Vector2 textCenter2D = Event.current.mousePosition;
                                             textCenter2D.x += 25;
                                             textCenter2D.y += 60;
 
-                                            PaintUtility.DrawScreenText(textCenter2D, 
-                                                Units.ToRoundedPixelsString(deltaMovement));
+                                            PaintUtility.DrawScreenText(textCenter2D, Units.ToRoundedPixelsString(_deltaMovement));
                                         }
                                     }
+
                                     break;
                                 }
                             }
@@ -1471,132 +1728,146 @@ namespace RealtimeCSG
                     }
                 }
 
-                var type = Event.current.GetTypeForControl(textureCopyDragControlID);
-                switch (type)
+                EventType type = Event.current.GetTypeForControl(_textureCopyDragControlID);
+
+                switch(type)
                 {
                     case EventType.MouseDrag:
                     {
-                        if (Event.current.button != 0 ||
-                            Event.current.modifiers != EventModifiers.None ||
-                            GUIUtility.hotControl != textureCopyDragControlID ||
-                            textureCopyDragControlID <= 0)
-                            break;
-
-                        if (dragMode == DragMode.TextureCopy)
+                        if(Event.current.button != 0 || Event.current.modifiers != EventModifiers.None || GUIUtility.hotControl != _textureCopyDragControlID || _textureCopyDragControlID <= 0)
                         {
-                            if (firstDrag)
+                            break;
+                        }
+
+                        if(_dragMode == DragMode.TextureCopy)
+                        {
+                            if(_firstDrag)
                             {
-                                lastSelectedSurface = null;
-                                firstDrag = false;
+                                _lastSelectedSurface = null;
+                                _firstDrag           = false;
                             }
 
                             DragTextureCopy(sceneView);
                         }
+
                         Event.current.Use();
+
                         break;
                     }
                     case EventType.MouseUp:
                     {
-                        if (Event.current.button != 0 ||
-                            GUIUtility.hotControl != textureCopyDragControlID)
-                            break;
-
-                        if (dragMode == DragMode.TextureCopy)
+                        if(Event.current.button != 0 || GUIUtility.hotControl != _textureCopyDragControlID)
                         {
-                            if (mouseIsDragging)
-                            {							
-                                lastSelectedSurface = null;
-                            } else
-                                DragTextureCopy(sceneView);
+                            break;
                         }
-                    
-                        if (!mouseIsDragging)
+
+                        if(_dragMode == DragMode.TextureCopy)
+                        {
+                            if(_mouseIsDragging)
+                            {
+                                _lastSelectedSurface = null;
+                            }
+                            else
+                            {
+                                DragTextureCopy(sceneView);
+                            }
+                        }
+
+                        if(!_mouseIsDragging)
                         {
                             // see if we clicked into empty space
-                            if (hoverOnTarget == -1 &&
-                                hoverOnSurfaceIndex == -1)
+                            if(_hoverOnTarget == -1 && _hoverOnSurfaceIndex == -1)
                             {
                                 SelectionUtility.DeselectAll();
-                            } else
+                            }
+                            else
                             {
                                 UpdateSelection();
                             }
                         }
-                    
-                        GUIUtility.hotControl = 0;
-                        GUIUtility.keyboardControl = 0;
+
+                        GUIUtility.hotControl             = 0;
+                        GUIUtility.keyboardControl        = 0;
                         EditorGUIUtility.editingTextField = false;
-                        currentControl = -1;
+                        _currentControl                   = -1;
                         Event.current.Use();
-                        firstDrag = false;
+                        _firstDrag = false;
+
                         break;
                     }
                 }
-            
-                type = Event.current.GetTypeForControl(surfaceSelectPaintControl);
-                switch (type)
+
+                type = Event.current.GetTypeForControl(_surfaceSelectPaintControl);
+
+                switch(type)
                 {
                     case EventType.MouseDrag:
                     {
-                        if (Event.current.button != 0 ||
-                            GUIUtility.hotControl != surfaceSelectPaintControl ||
-                            surfaceSelectPaintControl <= 0)
+                        if(Event.current.button != 0 || GUIUtility.hotControl != _surfaceSelectPaintControl || _surfaceSelectPaintControl <= 0)
+                        {
                             break;
-                    
-                        if (dragMode == DragMode.SurfaceSelectAdd ||
-                            dragMode == DragMode.SurfaceSelectRemove ||
-                            dragMode == DragMode.SurfaceSelectToggle)
+                        }
+
+                        if(_dragMode == DragMode.SurfaceSelectAdd || _dragMode == DragMode.SurfaceSelectRemove || _dragMode == DragMode.SurfaceSelectToggle)
+                        {
                             DragSurfaceSelect(sceneView);
+                        }
+
                         Event.current.Use();
+
                         break;
                     }
                     case EventType.MouseUp:
                     {
-                        if (Event.current.button != 0 ||
-                            GUIUtility.hotControl != surfaceSelectPaintControl)
+                        if(Event.current.button != 0 || GUIUtility.hotControl != _surfaceSelectPaintControl)
+                        {
                             break;
-                    
-                        if (!mouseIsDragging)
+                        }
+
+                        if(!_mouseIsDragging)
                         {
                             // see if we clicked into empty space
-                            if (hoverOnTarget == -1 &&
-                                hoverOnSurfaceIndex == -1)
+                            if(_hoverOnTarget == -1 && _hoverOnSurfaceIndex == -1)
                             {
                                 SelectionUtility.DeselectAll();
-                            } else
+                            }
+                            else
                             {
                                 UpdateSelection();
                             }
                         }
-                    
-                        GUIUtility.hotControl = 0;
-                        GUIUtility.keyboardControl = 0;
+
+                        GUIUtility.hotControl             = 0;
+                        GUIUtility.keyboardControl        = 0;
                         EditorGUIUtility.editingTextField = false;
-                        currentControl = -1;
+                        _currentControl                   = -1;
+
                         Event.current.Use();
+
                         break;
                     }
                 }
             }
             finally
             {
-                if (originalEventType == EventType.MouseUp ||
-                    originalEventType == EventType.MouseMove) { mouseIsDragging = false; mouseIsDown = false; }
+                if(originalEventType == EventType.MouseUp || originalEventType == EventType.MouseMove)
+                {
+                    _mouseIsDragging = false;
+                    _mouseIsDown     = false;
+                }
             }
-            
         }
 
-        
-        static Vector2 scrollPos;
+        private static Vector2 m_ScrollPos;
+
         public void OnInspectorGUI(EditorWindow window, float height)
         {
-            scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
-            {
-                EditModeSurfaceGUI.OnInspectorGUI(window, height);
-            }
+            m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos);
+
+            EditModeSurfaceGUI.OnInspectorGUI(window, height);
             EditorGUILayout.EndScrollView();
         }
-        
+
         public Rect GetLastSceneGUIRect()
         {
             return EditModeSurfaceGUI.GetLastSceneGUIRect(this);
@@ -1604,12 +1875,14 @@ namespace RealtimeCSG
 
         public bool OnSceneGUI(Rect windowRect)
         {
-            if (brushTargets == null)
+            if(brushTargets == null)
+            {
                 return false;
-            
+            }
+
             EditModeSurfaceGUI.OnSceneGUI(windowRect, this);
+
             return true;
         }
     }
 }
-

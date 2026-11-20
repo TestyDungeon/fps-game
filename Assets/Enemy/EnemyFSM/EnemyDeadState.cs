@@ -7,7 +7,7 @@ public class EnemyDeadState : EnemyBaseState
         enemy.animator.Play("Death");
         Debug.Log("IM A DEAD ENEMY");
         enemy.StartCoroutine(enemy.ehr.SetHurtBoxToDead());
-        SoundManager.PlaySound(enemy.enemyConfig.deathSFX, enemy.transform.position, 0.6f, 0.5f);
+        SoundManager.PlaySound(enemy.enemyConfig.deathSFX, enemy.transform.position, 0.3f, 0.7f);
         //if(enemy.animator != null)
         //    enemy.animator.enabled = false;
         enemy.gameObject.layer = LayerMask.NameToLayer("Corpse");

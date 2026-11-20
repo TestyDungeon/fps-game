@@ -1,184 +1,230 @@
 ﻿using UnityEditor;
 using UnityEngine;
-using System.Collections.Generic;
-using System.Text;
 using System;
 using System.Linq;
 using InternalRealtimeCSG;
 
 namespace RealtimeCSG
 {
+    internal class SurfaceVisibilityPopup : PopupWindowContent
+    {
+        private class Flags
+        {
+            public readonly GUIContent mixedValueContent = new GUIContent("\u2014|Mixed Values");
+            public readonly GUIContent nothingContent = new GUIContent("Nothing");
+            public readonly GUIContent onlyVisibleContent = new GUIContent("Show Only Visible");
+            public readonly GUIContent allHelperContent = new GUIContent("Show All Helper Surfaces");
+            public readonly GUIContent mixedContent = new GUIContent("Mixed ...");
+            public readonly GUIContent[] helperSurfaceFlagContent;
+            public readonly int[] helperSurfaceFlagValues;
+            public readonly int allSurfaces;
 
-	internal class SurfaceVisibilityPopup : UnityEditor.PopupWindowContent
-	{
-		private class Flags
-		{
-			public readonly GUIContent		mixedValueContent	= new GUIContent("\u2014|Mixed Values");
-			public readonly GUIContent		nothingContent		= new GUIContent("Nothing");
-			public readonly GUIContent		onlyVisibleContent	= new GUIContent("Show Only Visible");
-			public readonly GUIContent		allHelperContent	= new GUIContent("Show All Helper Surfaces");
-			public readonly GUIContent		mixedContent		= new GUIContent("Mixed ...");
-			public readonly GUIContent[]	helperSurfaceFlagContent;
-			public readonly int[]			helperSurfaceFlagValues;
-			public readonly int				allSurfaces;
+            public Flags()
+            {
+                helperSurfaceFlagContent = Enum.GetNames(typeof(HelperSurfaceFlags)).Select(x => new GUIContent(ObjectNames.NicifyVariableName(x))).ToArray();
 
-			public Flags()
-			{
-				helperSurfaceFlagContent = Enum.GetNames (typeof(HelperSurfaceFlags)).Select(x => new GUIContent(ObjectNames.NicifyVariableName(x))).ToArray();
+                Array crappyArray = Enum.GetValues(typeof(HelperSurfaceFlags));
+                helperSurfaceFlagValues = new int[crappyArray.Length];
 
-				var crappyArray = Enum.GetValues(typeof(HelperSurfaceFlags));
-				helperSurfaceFlagValues = new int[crappyArray.Length];
-				for (int i = 0; i < crappyArray.Length; i++)
-					helperSurfaceFlagValues[i] = (int)crappyArray.GetValue(i);
+                for(int i = 0; i < crappyArray.Length; i++)
+                {
+                    helperSurfaceFlagValues[i] = (int)crappyArray.GetValue(i);
+                }
 
-				allSurfaces = 0;
-				for (int i = 0; i < helperSurfaceFlagValues.Length; i++)
-					allSurfaces |= helperSurfaceFlagValues[i];
-			}
-		}
-		
-		private static Flags s_Flags;
+                allSurfaces = 0;
 
-		private Camera m_Camera;
+                for(int i = 0; i < helperSurfaceFlagValues.Length; i++)
+                {
+                    allSurfaces |= helperSurfaceFlagValues[i];
+                }
+            }
+        }
 
-		const float kFrameWidth = 1f;
-		const float kLineHeight = 20f;
+        private static Flags m_Flags;
 
-		SurfaceVisibilityPopup(Camera camera)
-		{
-            m_Camera = camera;
-		}
+        private readonly Camera _camera;
 
-		
-		public override Vector2 GetWindowSize()
-		{
-			if (s_Flags == null)
-				s_Flags = new Flags();
-			
-			var windowHeight = 2f * kFrameWidth + kLineHeight * (s_Flags.helperSurfaceFlagContent.Length + 2) + 4;
-			var windowSize = new Vector2(210, windowHeight);
-			return windowSize;
-		}
+        private const float FRAME_WIDTH = 1f;
+        private const float LINE_HEIGHT = 20f;
 
+        private SurfaceVisibilityPopup(Camera camera)
+        {
+            _camera = camera;
+        }
 
-		public override void OnGUI(Rect rect)
-		{
-			if (!m_Camera)
-				return;
+        public override Vector2 GetWindowSize()
+        {
+            if(m_Flags == null)
+            {
+                m_Flags = new Flags();
+            }
 
-			if (s_Flags == null)
-				s_Flags = new Flags();
-			
-			// We do not use the layout event
-			if (Event.current.type == EventType.Layout)
-				return;
+            float   windowHeight = 2f * FRAME_WIDTH + LINE_HEIGHT * (m_Flags.helperSurfaceFlagContent.Length + 2) + 4;
+            Vector2 windowSize   = new Vector2(210, windowHeight);
 
-			// Content
-			Draw(rect);
+            return windowSize;
+        }
 
-			// Use mouse move so we get hover state correctly in the menu item rows
-			if (Event.current.type == EventType.MouseMove)
-				Event.current.Use();
+        public override void OnGUI(Rect rect)
+        {
+            if(!_camera)
+            {
+                return;
+            }
 
-			// Escape closes the window
-			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
-			{
-				editorWindow.Close();
-				GUIUtility.ExitGUI();
-			}
-		}
+            if(m_Flags == null)
+            {
+                m_Flags = new Flags();
+            }
 
-		private void Draw(Rect rect)
-		{ 
-			var allVisibleSurfaces	= (int)HelperSurfaceFlags.ShowVisibleSurfaces;
-			var allHelperSurfaces	= s_Flags.allSurfaces & ~allVisibleSurfaces;
+            // We do not use the layout event
+            if(Event.current.type == EventType.Layout)
+            {
+                return;
+            }
 
-			var drawPos = new Rect(kFrameWidth, kFrameWidth, rect.width - 2 * kFrameWidth, kLineHeight);
-			
-			var helperSurfaces = (int)RealtimeCSG.CSGSettings.VisibleHelperSurfaces;
-			EditorGUI.BeginChangeCheck();
-			GUI.Toggle(drawPos, helperSurfaces == allVisibleSurfaces, s_Flags.onlyVisibleContent, CSG_GUIStyleUtility.Skin.menuItem);
-			if (EditorGUI.EndChangeCheck())
-			{
-				RealtimeCSG.CSGSettings.VisibleHelperSurfaces = (HelperSurfaceFlags)allVisibleSurfaces;
-				MeshInstanceManager.UpdateHelperSurfaceVisibility();
-				RealtimeCSG.CSGSettings.Save();
-				CSG_EditorGUIUtility.RepaintAll();
-			}
-			drawPos.y += kLineHeight;
-		
-			EditorGUI.BeginChangeCheck();
-			GUI.Toggle(drawPos, helperSurfaces == allHelperSurfaces, s_Flags.allHelperContent, CSG_GUIStyleUtility.Skin.menuItem);
-			if (EditorGUI.EndChangeCheck())
-			{
-				RealtimeCSG.CSGSettings.VisibleHelperSurfaces = (HelperSurfaceFlags)allHelperSurfaces;
-				MeshInstanceManager.UpdateHelperSurfaceVisibility();
-				RealtimeCSG.CSGSettings.Save();
-				CSG_EditorGUIUtility.RepaintAll();
-			}
-			drawPos.y += kLineHeight;
-			
-			drawPos.y += 4;
-			
-			for (int i = 0; i < s_Flags.helperSurfaceFlagContent.Length; i++)
-			{
-				var flag = s_Flags.helperSurfaceFlagValues[i];
-				DrawListElement(drawPos, s_Flags.helperSurfaceFlagContent[i], helperSurfaces, flag);
-				drawPos.y += kLineHeight;
-			}
-		}
+            // Content
+            Draw(rect);
 
-		void DrawListElement(Rect rect, GUIContent toggleName, int helperSurfaces, int flag)
-		{
-			EditorGUI.BeginChangeCheck();
-			bool result = GUI.Toggle(rect, ((helperSurfaces & flag) != 0), toggleName, CSG_GUIStyleUtility.Skin.menuItem);
-			if (EditorGUI.EndChangeCheck())
-			{
-				if (result) RealtimeCSG.CSGSettings.VisibleHelperSurfaces = (HelperSurfaceFlags)(helperSurfaces | flag);
-				else        RealtimeCSG.CSGSettings.VisibleHelperSurfaces = (HelperSurfaceFlags)(helperSurfaces & ~flag);
-				MeshInstanceManager.UpdateHelperSurfaceVisibility();
-				RealtimeCSG.CSGSettings.Save();
-				CSG_EditorGUIUtility.RepaintAll();
-			}
-		}
+            // Use mouse move so we get hover state correctly in the menu item rows
+            if(Event.current.type == EventType.MouseMove)
+            {
+                Event.current.Use();
+            }
 
-		public static void Button(SceneView sceneView, Rect currentRect)
-		{
-			if (s_Flags == null)
-				s_Flags = new Flags();
-			
-			var helperSurfaces	= (int)RealtimeCSG.CSGSettings.VisibleHelperSurfaces;
-			var style			= EditorStyles.toolbarDropDown;
-			GUIContent buttonContent = s_Flags.mixedValueContent;
-			if (!EditorGUI.showMixedValue)
-			{
-				var allVisibleSurfaces	= (int)HelperSurfaceFlags.ShowVisibleSurfaces;
-				var allHelperSurfaces	= s_Flags.allSurfaces & ~allVisibleSurfaces;
+            // Escape closes the window
+            if(Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+            {
+                editorWindow.Close();
+                GUIUtility.ExitGUI();
+            }
+        }
 
-				if (helperSurfaces == 0) { buttonContent = s_Flags.nothingContent; style = CSG_GUIStyleUtility.Skin.redToolbarDropDown; } else
-				if (helperSurfaces == allVisibleSurfaces) buttonContent = s_Flags.onlyVisibleContent; else
-				if (helperSurfaces == allHelperSurfaces) buttonContent = s_Flags.allHelperContent; else
-				{
-					int count = 0;
-					for (int i = 0; i < s_Flags.helperSurfaceFlagContent.Length; i++)
-					{
-						var flag = s_Flags.helperSurfaceFlagValues[i];
-						if ((helperSurfaces & flag) != 0)
-						{
-							count++;
-							buttonContent = s_Flags.helperSurfaceFlagContent[i];
-							if (count > 1) 
-								break;
-						}
-					} 
-					buttonContent = s_Flags.mixedContent;
-				}
-			}
-			 
-			if (GUI.Button(currentRect, buttonContent, style))
-			{
-				PopupWindow.Show(currentRect, new SurfaceVisibilityPopup(sceneView.camera));
-			}
-		}
-	}
+        private void Draw(Rect rect)
+        {
+            const int allVisibleSurfaces = (int)HelperSurfaceFlags.ShowVisibleSurfaces;
+
+            int allHelperSurfaces = m_Flags.allSurfaces & ~allVisibleSurfaces;
+
+            Rect drawPos = new Rect(FRAME_WIDTH, FRAME_WIDTH, rect.width - 2 * FRAME_WIDTH, LINE_HEIGHT);
+
+            int helperSurfaces = (int)CSGSettings.VisibleHelperSurfaces;
+            EditorGUI.BeginChangeCheck();
+
+            GUI.Toggle(drawPos, helperSurfaces == allVisibleSurfaces, m_Flags.onlyVisibleContent, CsgguiStyleUtility.Skin.menuItem);
+
+            if(EditorGUI.EndChangeCheck())
+            {
+                CSGSettings.VisibleHelperSurfaces = (HelperSurfaceFlags)allVisibleSurfaces;
+                MeshInstanceManager.UpdateHelperSurfaceVisibility();
+                CSGSettings.Save();
+                CSGEditorGUIUtility.RepaintAll();
+            }
+
+            drawPos.y += LINE_HEIGHT;
+
+            EditorGUI.BeginChangeCheck();
+
+            GUI.Toggle(drawPos, helperSurfaces == allHelperSurfaces, m_Flags.allHelperContent, CsgguiStyleUtility.Skin.menuItem);
+
+            if(EditorGUI.EndChangeCheck())
+            {
+                CSGSettings.VisibleHelperSurfaces = (HelperSurfaceFlags)allHelperSurfaces;
+                MeshInstanceManager.UpdateHelperSurfaceVisibility();
+                CSGSettings.Save();
+                CSGEditorGUIUtility.RepaintAll();
+            }
+
+            drawPos.y += LINE_HEIGHT;
+            drawPos.y += 4;
+
+            for(int i = 0; i < m_Flags.helperSurfaceFlagContent.Length; i++)
+            {
+                int flag = m_Flags.helperSurfaceFlagValues[i];
+                DrawListElement(drawPos, m_Flags.helperSurfaceFlagContent[i], helperSurfaces, flag);
+                drawPos.y += LINE_HEIGHT;
+            }
+        }
+
+        private void DrawListElement(Rect rect, GUIContent toggleName, int helperSurfaces, int flag)
+        {
+            EditorGUI.BeginChangeCheck();
+            bool result = GUI.Toggle(rect, (helperSurfaces & flag) != 0, toggleName, CsgguiStyleUtility.Skin.menuItem);
+
+            if(EditorGUI.EndChangeCheck())
+            {
+                if(result)
+                {
+                    CSGSettings.VisibleHelperSurfaces = (HelperSurfaceFlags)(helperSurfaces | flag);
+                }
+                else
+                {
+                    CSGSettings.VisibleHelperSurfaces = (HelperSurfaceFlags)(helperSurfaces & ~flag);
+                }
+
+                MeshInstanceManager.UpdateHelperSurfaceVisibility();
+                CSGSettings.Save();
+                CSGEditorGUIUtility.RepaintAll();
+            }
+        }
+
+        public static void Button(SceneView sceneView, Rect currentRect)
+        {
+            if(m_Flags == null)
+            {
+                m_Flags = new Flags();
+            }
+
+            int        helperSurfaces = (int)CSGSettings.VisibleHelperSurfaces;
+            GUIStyle   style          = EditorStyles.toolbarDropDown;
+            GUIContent buttonContent  = m_Flags.mixedValueContent;
+
+            if(!EditorGUI.showMixedValue)
+            {
+                const int allVisibleSurfaces = (int)HelperSurfaceFlags.ShowVisibleSurfaces;
+
+                int allHelperSurfaces = m_Flags.allSurfaces & ~allVisibleSurfaces;
+
+                if(helperSurfaces == 0)
+                {
+                    buttonContent = m_Flags.nothingContent;
+                    style         = CsgguiStyleUtility.Skin.redToolbarDropDown;
+                }
+                else if(helperSurfaces == allVisibleSurfaces)
+                {
+                    buttonContent = m_Flags.onlyVisibleContent;
+                }
+                else if(helperSurfaces == allHelperSurfaces)
+                {
+                    buttonContent = m_Flags.allHelperContent;
+                }
+                else
+                {
+                    int count = 0;
+
+                    for(int i = 0; i < m_Flags.helperSurfaceFlagContent.Length; i++)
+                    {
+                        int flag = m_Flags.helperSurfaceFlagValues[i];
+
+                        if((helperSurfaces & flag) != 0)
+                        {
+                            count++;
+
+                            if(count > 1)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    buttonContent = m_Flags.mixedContent;
+                }
+            }
+
+            if(GUI.Button(currentRect, buttonContent, style))
+            {
+                PopupWindow.Show(currentRect, new SurfaceVisibilityPopup(sceneView.camera));
+            }
+        }
+    }
 }

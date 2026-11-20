@@ -1,203 +1,149 @@
-using System;
 using RealtimeCSG.Components;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace RealtimeCSG
 {
     public sealed class CSGPrefabUtility
     {
-	    public static UnityEngine.Object GetCorrespondingObjectFromSource(UnityEngine.Object source)
-	    {
-    #if UNITY_2018_2_OR_NEWER
-		    return PrefabUtility.GetCorrespondingObjectFromSource(source);
-    #else
-		    return PrefabUtility.GetPrefabParent(source);
-    #endif
+        public static Object GetCorrespondingObjectFromSource(Object source)
+        {
+            return PrefabUtility.GetCorrespondingObjectFromSource(source);
         }
 
         public static bool IsPrefab(CSGModel model)
         {
-            if (!model)
+            if(!model)
+            {
                 return false;
+            }
 
-            var parent = CSGPrefabUtility.GetPrefabAsset(model.gameObject);
-            if (parent)
-                return true;
+            GameObject parent = GetPrefabAsset(model.gameObject);
 
-            return false;
+            return parent;
         }
 
         public static bool AreInPrefabMode()
         {
-    #if UNITY_2018_3_OR_NEWER && UNITY_EDITOR
-            var mainStage = StageUtility.GetMainStageHandle();
-            var currentStageHandle = StageUtility.GetCurrentStageHandle();
-            if (mainStage != currentStageHandle)
-                return true;
-    #endif
-            return false;
+            StageHandle mainStage          = StageUtility.GetMainStageHandle();
+            StageHandle currentStageHandle = StageUtility.GetCurrentStageHandle();
+
+            return mainStage != currentStageHandle;
         }
 
         public static bool IsEditedInPrefabMode(CSGModel model)
         {
-    #if UNITY_2018_3_OR_NEWER && UNITY_EDITOR
-            if (!model)
+            if(!model)
+            {
                 return false;
+            }
 
-            if (!AreInPrefabMode())
+            if(!AreInPrefabMode())
+            {
                 return false;
+            }
 
-            var currentStageHandle = StageUtility.GetCurrentStageHandle();
-            if (currentStageHandle.Contains(model.gameObject))
-                return true;
-    #endif
-            return false;
+            StageHandle currentStageHandle = StageUtility.GetCurrentStageHandle();
+
+            return currentStageHandle.Contains(model.gameObject);
         }
 
         public static CSGNode[] GetNodesInPrefabMode()
         {
-    #if UNITY_2018_3_OR_NEWER && UNITY_EDITOR
-            var mainStage = StageUtility.GetMainStageHandle();
-            var currentStageHandle = StageUtility.GetCurrentStageHandle();
-            if (mainStage != currentStageHandle)
-                return currentStageHandle.FindComponentsOfType<CSGNode>();
-    #endif
-            return null;
+            StageHandle mainStage          = StageUtility.GetMainStageHandle();
+            StageHandle currentStageHandle = StageUtility.GetCurrentStageHandle();
+
+            return mainStage != currentStageHandle ? currentStageHandle.FindComponentsOfType<CSGNode>() : null;
         }
 
         public static bool IsPrefabAssetOrInstance(GameObject gameObject)
-	    {
-    #if UNITY_2018_3_OR_NEWER
-		    var prefabAssetType		= PrefabUtility.GetPrefabAssetType(gameObject);
-		    var prefabInstanceType	= PrefabUtility.GetPrefabInstanceStatus(gameObject);
-		    if (prefabAssetType == PrefabAssetType.NotAPrefab &&
-			    prefabInstanceType == PrefabInstanceStatus.NotAPrefab)
-			    return false;
-		    return true;
-    #else
-		    var prefabType = PrefabUtility.GetPrefabType(gameObject);
-		    if (prefabType == PrefabType.None)
-			    return false;
+        {
+            PrefabAssetType      prefabAssetType    = PrefabUtility.GetPrefabAssetType(gameObject);
+            PrefabInstanceStatus prefabInstanceType = PrefabUtility.GetPrefabInstanceStatus(gameObject);
 
-		    return true;
-    #endif
-	    }
-	
-	    public static bool IsPrefabAsset(GameObject gameObject)
-	    {
-    #if UNITY_2018_3_OR_NEWER
-		    var prefabInstanceType = PrefabUtility.GetPrefabInstanceStatus(gameObject);
-		    if (prefabInstanceType != PrefabInstanceStatus.NotAPrefab) 
-			    return false;
-		     
-		    var prefabType = PrefabUtility.GetPrefabAssetType(gameObject);
-		    return	prefabType != PrefabAssetType.NotAPrefab &&
-				    prefabType != PrefabAssetType.Model;
-    #else
-		    var prefabType = PrefabUtility.GetPrefabType(gameObject);
-		    if (prefabType == PrefabType.None)
-			    return false;
+            return prefabAssetType != PrefabAssetType.NotAPrefab || prefabInstanceType != PrefabInstanceStatus.NotAPrefab;
+        }
 
-		    return (prefabType == PrefabType.Prefab ||
-				    prefabType == PrefabType.ModelPrefab);
-    #endif
-	    }
-	
-	    public static bool IsPrefabInstance(GameObject gameObject)
-	    {
-    #if UNITY_2018_3_OR_NEWER
-            if (!PrefabUtility.IsPartOfAnyPrefab(gameObject))
+        public static bool IsPrefabAsset(GameObject gameObject)
+        {
+            PrefabInstanceStatus prefabInstanceType = PrefabUtility.GetPrefabInstanceStatus(gameObject);
+
+            if(prefabInstanceType != PrefabInstanceStatus.NotAPrefab)
+            {
                 return false;
-            var prefabType = PrefabUtility.GetPrefabInstanceStatus(gameObject);
-		    return prefabType != PrefabInstanceStatus.NotAPrefab;
-    #else
-		    var prefabType = PrefabUtility.GetPrefabType(gameObject);
-		    if (prefabType == PrefabType.None)
-			    return false;
+            }
 
-		    return (prefabType != PrefabType.Prefab &&
-				    prefabType != PrefabType.ModelPrefab);
-    #endif
-	    }
+            PrefabAssetType prefabType = PrefabUtility.GetPrefabAssetType(gameObject);
+
+            return prefabType != PrefabAssetType.NotAPrefab && prefabType != PrefabAssetType.Model;
+        }
+
+        public static bool IsPrefabInstance(GameObject gameObject)
+        {
+            if(!PrefabUtility.IsPartOfAnyPrefab(gameObject))
+            {
+                return false;
+            }
+
+            PrefabInstanceStatus prefabType = PrefabUtility.GetPrefabInstanceStatus(gameObject);
+
+            return prefabType != PrefabInstanceStatus.NotAPrefab;
+        }
 
         public static GameObject GetPrefabAsset(GameObject gameObject)
         {
-    #if UNITY_2018_3_OR_NEWER
-            if (AreInPrefabMode())
+            if(AreInPrefabMode())
             {
-    #if !UNITY_2021_2_OR_NEWER
-                var prefabStage = UnityEditor.Experimental.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage();
-    #else
-                var prefabStage = UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage();
-    #endif
-                if (prefabStage.IsPartOfPrefabContents(gameObject))
-        #if UNITY_2020_1_OR_NEWER
+                PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+
+                if(prefabStage.IsPartOfPrefabContents(gameObject))
+                {
                     return (GameObject)AssetDatabase.LoadMainAssetAtPath(prefabStage.assetPath);
-        #else
-                    return (GameObject)AssetDatabase.LoadMainAssetAtPath(prefabStage.prefabAssetPath);
-        #endif
+                }
             }
-    #endif
 
-            if (!IsPrefabInstance(gameObject))
+            if(!IsPrefabInstance(gameObject))
+            {
                 return null;
+            }
 
-    #if UNITY_2018_3_OR_NEWER
             return (GameObject)AssetDatabase.LoadMainAssetAtPath(PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject));
-    #else
-		    return (GameObject)PrefabUtility.GetPrefabParent(gameObject);
-    #endif
         }
 
         public static GameObject GetOutermostPrefabInstanceRoot(GameObject gameObject)
-	    {
-		    if (!IsPrefabInstance(gameObject))
-			    return null;
-    #if UNITY_2018_3_OR_NEWER
-		    return PrefabUtility.GetOutermostPrefabInstanceRoot(gameObject);
-    #else
-		    return PrefabUtility.FindPrefabRoot(gameObject);
-    #endif
-	    }
+        {
+            return !IsPrefabInstance(gameObject) ? null : PrefabUtility.GetOutermostPrefabInstanceRoot(gameObject);
+        }
 
-	    public static GameObject Instantiate(GameObject originalGameObject, bool copy = false)
-	    {
-    #if UNITY_2018_3_OR_NEWER
-		    var prefabInstanceType	= PrefabUtility.GetPrefabInstanceStatus(originalGameObject);
-		    if (prefabInstanceType != PrefabInstanceStatus.NotAPrefab && !copy)
-		    {
-			    var corrObj = GetCorrespondingObjectFromSource(originalGameObject);
-			    var obj = PrefabUtility.InstantiatePrefab(corrObj);
-			    var result = obj as GameObject;
-			    return result;
-		    }
+        public static GameObject Instantiate(GameObject originalGameObject, bool copy = false)
+        {
+            PrefabInstanceStatus prefabInstanceType = PrefabUtility.GetPrefabInstanceStatus(originalGameObject);
 
-		    var prefabAssetType		= PrefabUtility.GetPrefabAssetType(originalGameObject);
-		    if (prefabAssetType != PrefabAssetType.NotAPrefab && !copy)
-		    {
-			    var obj = PrefabUtility.InstantiatePrefab(originalGameObject);
-			    var result = obj as GameObject;
-			    return result;
-		    }
+            if(prefabInstanceType != PrefabInstanceStatus.NotAPrefab && !copy)
+            {
+                Object     corrObj = GetCorrespondingObjectFromSource(originalGameObject);
+                Object     obj     = PrefabUtility.InstantiatePrefab(corrObj);
+                GameObject result  = obj as GameObject;
 
-		    var inst = UnityEngine.Object.Instantiate<GameObject>(originalGameObject);
-		    return inst;
-    #else
-		    var prefabType = PrefabUtility.GetPrefabType(originalGameObject);
-		    if (prefabType == PrefabType.None || copy)
-			    return UnityEngine.Object.Instantiate<GameObject>(originalGameObject);
-		    else
-		    if (prefabType == PrefabType.Prefab ||
-			    prefabType == PrefabType.ModelPrefab)
-			    // PrefabAsset
-			    return PrefabUtility.InstantiatePrefab(originalGameObject) as GameObject;
-		    else
-			    // PrefabInstance
-			    return PrefabUtility.InstantiatePrefab(GetCorrespondingObjectFromSource(originalGameObject)) as GameObject;
-    #endif
-	    }
+                return result;
+            }
+
+            PrefabAssetType prefabAssetType = PrefabUtility.GetPrefabAssetType(originalGameObject);
+
+            if(prefabAssetType != PrefabAssetType.NotAPrefab && !copy)
+            {
+                Object     obj    = PrefabUtility.InstantiatePrefab(originalGameObject);
+                GameObject result = obj as GameObject;
+
+                return result;
+            }
+
+            GameObject inst = Object.Instantiate(originalGameObject);
+
+            return inst;
+        }
 
         internal static bool IsPartOfAsset(Mesh sharedMesh)
         {

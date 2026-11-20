@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3619043604595287390}
   - component: {fileID: 7221138225310492974}
-  - component: {fileID: 1191094715036466894}
   - component: {fileID: 5267450951545591205}
   m_Layer: 10
   m_Name: ShotgunPickup
@@ -56,27 +55,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1191094715036466894
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5723703381734710400}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 05cc6b0ca6ad7e5459ae9da9a0fd3f09, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lootType: 8
-  amount: 0
-  item: {fileID: 3203451213272398821, guid: 750392c3ba9c0974b98b609d0712f4dc, type: 3}
-  rotationSpeed: 200
-  amplitude: 0.1
-  frequency: 1
-  playSound: 1
-  soundType: 10
-  volume: 0.4
 --- !u!114 &5267450951545591205
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,15 +67,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05cc6b0ca6ad7e5459ae9da9a0fd3f09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lootType: 1
-  amount: 6
-  item: {fileID: 0}
   rotationSpeed: 0
   amplitude: 0
   frequency: 0
   playSound: 0
   soundType: 0
   volume: 0
+  magnetic: 0
+  effects:
+  - type: 3
+    amount: 0
+    ammoType: 0
+    itemName: shotgun
+  - type: 2
+    amount: 4
+    ammoType: 1
+    itemName: 
 --- !u!1001 &1381911150328490628
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -1,389 +1,441 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using InternalRealtimeCSG;
+using RealtimeCSG.Components;
+using RealtimeCSG.Foundation;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using InternalRealtimeCSG;
-using RealtimeCSG.Foundation;
 
 namespace RealtimeCSG
 {
-	internal sealed partial class EditModeMeshModeGUI
-	{
-		static int SceneViewMeshOverlayHash = "SceneViewMeshOverlay".GetHashCode();
+    internal sealed partial class EditModeMeshModeGUI
+    {
+        private static readonly int sceneViewMeshOverlayHash = "SceneViewMeshOverlay".GetHashCode();
 
-		static Rect lastGuiRect;
-		public static Rect GetLastSceneGUIRect(EditModeMeshEdit tool)
-		{
-			return lastGuiRect;
-		}
+        private static Rect m_LastGuiRect;
 
-		public static void OnSceneGUI(Rect windowRect, EditModeMeshEdit tool)
-		{
-			CSG_GUIStyleUtility.InitStyles();
-			InitLocalStyles();
-			GUILayout.BeginHorizontal(CSG_GUIStyleUtility.ContentEmpty);
-			{
-				GUILayout.BeginVertical(CSG_GUIStyleUtility.ContentEmpty);
-				{
-					GUILayout.BeginVertical(CSG_GUIStyleUtility.ContentEmpty);
-					{
-						GUILayout.FlexibleSpace();
+        public static Rect GetLastSceneGUIRect()
+        {
+            return m_LastGuiRect;
+        }
 
-						CSG_GUIStyleUtility.ResetGUIState();
+        public static void OnSceneGUI(EditModeMeshEdit tool)
+        {
+            InitLocalStyles();
+            GUILayout.BeginHorizontal(CsgguiStyleUtility.contentEmpty);
 
-						GUILayout.BeginVertical(ContentMeshLabel, CSG_GUIStyleUtility.unpaddedWindow, CSG_GUIStyleUtility.ContentEmpty);
-						{
-							OnGUIContents(true, tool);
-						}
-						GUILayout.EndVertical();
+            GUILayout.BeginVertical(CsgguiStyleUtility.contentEmpty);
 
-						var currentArea = GUILayoutUtility.GetLastRect();
-						lastGuiRect = currentArea;
+            GUILayout.BeginVertical(CsgguiStyleUtility.contentEmpty);
 
-						var buttonArea = currentArea;
-						buttonArea.x += buttonArea.width - 17;
-						buttonArea.y += 2;
-						buttonArea.height = 13;
-						buttonArea.width = 13;
-						if (GUI.Button(buttonArea, GUIContent.none, "WinBtnClose"))
-							EditModeToolWindowSceneGUI.GetWindow();
-						TooltipUtility.SetToolTip(CSG_GUIStyleUtility.PopOutTooltip, buttonArea);
+            GUILayout.FlexibleSpace();
 
-						int controlID = GUIUtility.GetControlID(SceneViewMeshOverlayHash, FocusType.Keyboard, currentArea);
-						switch (Event.current.GetTypeForControl(controlID))
-						{
-							case EventType.MouseDown: { if (currentArea.Contains(Event.current.mousePosition)) { GUIUtility.hotControl = controlID; GUIUtility.keyboardControl = controlID; Event.current.Use(); } break; }
-							case EventType.MouseMove: { if (currentArea.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
-							case EventType.MouseUp: { if (GUIUtility.hotControl == controlID) { GUIUtility.hotControl = 0; GUIUtility.keyboardControl = 0; Event.current.Use(); } break; }
-							case EventType.MouseDrag: { if (GUIUtility.hotControl == controlID) { Event.current.Use(); } break; }
-							case EventType.ScrollWheel: { if (currentArea.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
-						}
-					}
-					GUILayout.EndVertical();
-				}
-				GUILayout.EndVertical();
-				GUILayout.FlexibleSpace();
-			}
-			GUILayout.EndHorizontal();
-		}
+            CsgguiStyleUtility.ResetGUIState();
 
-		public static void OnInspectorGUI(EditorWindow window, float height)
-		{
-			lastGuiRect = Rect.MinMaxRect(-1, -1, -1, -1);
-			var tool = EditModeManager.ActiveTool as EditModeMeshEdit;
-			CSG_GUIStyleUtility.InitStyles();
-			InitLocalStyles();
-			OnGUIContents(false, tool);
-		}
+            GUILayout.BeginVertical(m_ContentMeshLabel, CsgguiStyleUtility.UnpaddedWindow, CsgguiStyleUtility.contentEmpty);
 
-		static void ShowCSGOperations(bool isSceneGUI, EditModeMeshEdit tool, FilteredSelection filteredSelection)
-		{
-			bool operations_enabled = tool != null &&
-									(filteredSelection.NodeTargets.Length > 0 && filteredSelection.ModelTargets.Length == 0);
+            OnGUIContents(true, tool);
 
-			EditorGUI.BeginDisabledGroup(!operations_enabled);
-			{
-				bool mixedValues = tool == null || ((filteredSelection.BrushTargets.Length == 0) && (filteredSelection.OperationTargets.Length == 0));
-				CSGOperationType operationType = CSGOperationType.Additive;
-				if (tool != null)
-				{
-					if (filteredSelection.BrushTargets.Length > 0)
-					{
-						operationType = filteredSelection.BrushTargets[0].OperationType;
-						for (int i = 1; i < filteredSelection.BrushTargets.Length; i++)
-						{
-							if (filteredSelection.BrushTargets[i].OperationType != operationType)
-							{
-								mixedValues = true;
-							}
-						}
-					}
-					else
-					if (filteredSelection.OperationTargets.Length > 0)
-					{
-						operationType = filteredSelection.OperationTargets[0].OperationType;
-					}
+            GUILayout.EndVertical();
 
-					if (filteredSelection.OperationTargets.Length > 0)
-					{
-						for (int i = 0; i < filteredSelection.OperationTargets.Length; i++)
-						{
-							if (filteredSelection.OperationTargets[i].OperationType != operationType)
-							{
-								mixedValues = true;
-							}
-						}
-					}
-				}
+            Rect currentArea = GUILayoutUtility.GetLastRect();
+            m_LastGuiRect = currentArea;
 
-				GUILayout.BeginVertical(isSceneGUI ? GUI.skin.box : GUIStyle.none);
-				{
-					bool passThroughValue = false;
-					if (tool != null &&
-						//filteredSelection.BrushTargets.Length == 0 && 
-						filteredSelection.OperationTargets.Length > 0 &&
-						filteredSelection.OperationTargets.Length == filteredSelection.NodeTargets.Length) // only operations
-					{
-						bool? passThrough = filteredSelection.OperationTargets[0].PassThrough;
-						for (int i = 1; i < filteredSelection.OperationTargets.Length; i++)
-						{
-							if (passThrough.HasValue && passThrough.Value != filteredSelection.OperationTargets[i].PassThrough)
-							{
-								passThrough = null;
-								break;
-							}
-						}
+            Rect buttonArea = currentArea;
+            buttonArea.x      += buttonArea.width - 17;
+            buttonArea.y      += 2;
+            buttonArea.height =  13;
+            buttonArea.width  =  13;
 
-						mixedValues = !passThrough.HasValue || passThrough.Value;
+            /*
+            if(GUI.Button(buttonArea, GUIContent.none, "SearchCancelButton"))
+            {
+                EditModeToolWindowSceneGUI.GetWindow();
+            }
+            */
 
-						var ptMixedValues = !passThrough.HasValue;
-						passThroughValue = passThrough.HasValue ? passThrough.Value : false;
-						if (CSG_EditorGUIUtility.PassThroughButton(passThroughValue, ptMixedValues))
-						{
-							Undo.RecordObjects(filteredSelection.OperationTargets, "Changed CSG operation of nodes");
-							foreach (var operation in filteredSelection.OperationTargets)
-							{
-								operation.PassThrough = true;
-							}
-							InternalCSGModelManager.CheckForChanges();
-							EditorApplication.RepaintHierarchyWindow();
-						}
+            TooltipUtility.SetToolTip(CsgguiStyleUtility.popOutTooltip, buttonArea);
 
-						if (passThroughValue)
-							operationType = (CSGOperationType)255;
-					}
-					EditorGUI.BeginChangeCheck();
-					{
-						operationType = CSG_EditorGUIUtility.ChooseOperation(operationType, mixedValues);
-					}
-					if (EditorGUI.EndChangeCheck() && tool != null)
-					{
-						Undo.RecordObjects(filteredSelection.NodeTargets, "Changed CSG operation of nodes");
-						for (int i = 0; i < filteredSelection.BrushTargets.Length; i++)
-						{
-							filteredSelection.BrushTargets[i].OperationType = operationType;
-						}
-						for (int i = 0; i < filteredSelection.OperationTargets.Length; i++)
-						{
-							filteredSelection.OperationTargets[i].PassThrough = false;
-							filteredSelection.OperationTargets[i].OperationType = operationType;
-						}
-						InternalCSGModelManager.CheckForChanges();
-						EditorApplication.RepaintHierarchyWindow();
-					}
-				}
-				GUILayout.EndVertical();
-			}
-			EditorGUI.EndDisabledGroup();
-		}
-		/*
-				GUILayout.BeginHorizontal(GUIStyleUtility.ContentEmpty);
-				{
-					
-					GUILayout.BeginVertical(isSceneGUI ? GUI.skin.box : GUIStyle.none);
-					{
-						//GUILayout.Label(Keys.VerticalMoveMode.ToString() + " to dragging brush up/down", EditorStyles.miniLabel);
-						GUILayout.Label("Control (hold) to drag polygon on it's plane", EditorStyles.miniLabel);
-						GUILayout.Label("Shift (hold) to drag extrude polygon", EditorStyles.miniLabel);
-						GUILayout.Label("Shift (hold) to chamfer edges and vertices", EditorStyles.miniLabel);
-					}
-					GUILayout.EndVertical();
-				}
-				GUILayout.EndHorizontal();*/
-		static void OnGUIContents(bool isSceneGUI, EditModeMeshEdit tool)
-		{
-			EditModeCommonGUI.StartToolGUI();
+            int controlID = GUIUtility.GetControlID(sceneViewMeshOverlayHash, FocusType.Keyboard, currentArea);
 
-			var filteredSelection = EditModeManager.FilteredSelection;
-			
-			var left	= EditorStyles.miniButtonLeft;
-			var middle	= EditorStyles.miniButtonMid;
-			var right	= EditorStyles.miniButtonRight;
-			var button	= GUI.skin.button;
-								   
+            switch(Event.current.GetTypeForControl(controlID))
+            {
+                case EventType.MouseDown:
+                {
+                    if(currentArea.Contains(Event.current.mousePosition))
+                    {
+                        GUIUtility.hotControl      = controlID;
+                        GUIUtility.keyboardControl = controlID;
+                        Event.current.Use();
+                    }
 
-			var defaultMaterial = CSGSettings.DefaultMaterial;
-			GUILayout.BeginVertical(isSceneGUI ? InSceneWidth : CSG_GUIStyleUtility.ContentEmpty);
-			{
-				ShowCSGOperations(isSceneGUI, tool, filteredSelection);
-				GUILayout.BeginVertical(isSceneGUI ? GUI.skin.box : GUIStyle.none);
-				{
-					var selectionIgnoreBackfaced = CSGSettings.HiddenSurfacesNotSelectable;
-					var selectionVertex			 = CSGSettings.SelectionVertex;
-					var selectionEdge			 = CSGSettings.SelectionEdge;
-					var selectionSurface		 = CSGSettings.SelectionSurface;
+                    break;
+                }
+                case EventType.MouseMove:
+                {
+                    if(currentArea.Contains(Event.current.mousePosition))
+                    {
+                        Event.current.Use();
+                    }
 
-					EditorGUILayout.LabelField(ContentSelection);
-					EditorGUI.BeginChangeCheck();
-					{ 
-						GUILayout.BeginHorizontal(CSG_GUIStyleUtility.ContentEmpty);
-						{
-							selectionIgnoreBackfaced = GUILayout.Toggle(selectionIgnoreBackfaced, ContentIgnoreHidden, button);
-							TooltipUtility.SetToolTip(TooltipIgnoreHidden);
-						}
-						GUILayout.EndHorizontal();
-						if (!selectionVertex && !selectionEdge && !selectionSurface)
-						{
-							GUILayout.Label("No selection mode has been selected and nothing can be selected", CSG_GUIStyleUtility.redTextArea);
-						}
-						GUILayout.BeginHorizontal(CSG_GUIStyleUtility.ContentEmpty);
-						{
-							selectionVertex		= GUILayout.Toggle(selectionVertex,		ContentVertex,	button);
-							TooltipUtility.SetToolTip(TooltipVertex);
+                    break;
+                }
+                case EventType.MouseUp:
+                {
+                    if(GUIUtility.hotControl == controlID)
+                    {
+                        GUIUtility.hotControl      = 0;
+                        GUIUtility.keyboardControl = 0;
+                        Event.current.Use();
+                    }
 
-							selectionEdge		= GUILayout.Toggle(selectionEdge,		ContentEdge,	button);
-							TooltipUtility.SetToolTip(TooltipEdge);
+                    break;
+                }
+                case EventType.MouseDrag:
+                {
+                    if(GUIUtility.hotControl == controlID)
+                    {
+                        Event.current.Use();
+                    }
 
-							selectionSurface	= GUILayout.Toggle(selectionSurface,	ContentSurface,	button);
-							TooltipUtility.SetToolTip(TooltipSurface);
-						}
-						GUILayout.EndHorizontal();
-					}
-					if (EditorGUI.EndChangeCheck())
-					{
-						CSGSettings.HiddenSurfacesNotSelectable = selectionIgnoreBackfaced;
-						CSGSettings.SelectionVertex		= selectionVertex;
-						CSGSettings.SelectionEdge		= selectionEdge;
-						CSGSettings.SelectionSurface	= selectionSurface;
-						CSGSettings.Save();
-					}
-					GUILayout.Space(3);
-				}
-				GUILayout.EndVertical();
-				GUILayout.BeginVertical(isSceneGUI ? GUI.skin.box : GUIStyle.none);
-				{
-					var autoCommitExtrusion = CSGSettings.AutoCommitExtrusion;
-					EditorGUI.BeginChangeCheck();
-					{ 
-						autoCommitExtrusion = GUILayout.Toggle(autoCommitExtrusion, ContentAutoCommitExtrusion, button);
-						TooltipUtility.SetToolTip(TooltipAutoCommitExtrusion);
-					}
-					if (EditorGUI.EndChangeCheck())
-					{
-						CSGSettings.AutoCommitExtrusion = autoCommitExtrusion;
-						CSGSettings.Save();
-					}
-				}
-				GUILayout.EndVertical();
-				GUILayout.BeginHorizontal(CSG_GUIStyleUtility.ContentEmpty);
-				{
-					if (isSceneGUI)
-					{
-						GUILayout.Space(4);
-						GUILayout.BeginVertical(CSG_GUIStyleUtility.ContentEmpty);
-						{
-							EditorGUI.BeginChangeCheck();
-							{
-								defaultMaterial = CSG_EditorGUIUtility.MaterialImage(defaultMaterial, small: true);
-							}
-							if (EditorGUI.EndChangeCheck() && defaultMaterial)
-							{
-								CSGSettings.DefaultMaterial = defaultMaterial;
-								CSGSettings.Save();
-							}
-						}
-						GUILayout.EndVertical();
-					}
-					bool have_nodes = tool != null && (filteredSelection.NodeTargets.Length > 0);
+                    break;
+                }
+                case EventType.ScrollWheel:
+                {
+                    if(currentArea.Contains(Event.current.mousePosition))
+                    {
+                        Event.current.Use();
+                    }
 
-					GUILayout.BeginVertical(CSG_GUIStyleUtility.ContentEmpty);
-					{
-						EditorGUI.BeginDisabledGroup(!have_nodes);
-						{
-							GUILayout.BeginHorizontal(CSG_GUIStyleUtility.ContentEmpty);
-							{
-								if (isSceneGUI)
-									EditorGUILayout.LabelField(ContentFlip, labelWidth);
-								else
-									EditorGUILayout.LabelField(ContentFlip, largeLabelWidth);
+                    break;
+                }
+            }
 
-								if (GUILayout.Button(ContentFlipX, left))	{ tool.FlipX(); }
-								TooltipUtility.SetToolTip(TooltipFlipX);
-								if (GUILayout.Button(ContentFlipY, middle)) { tool.FlipY(); }
-								TooltipUtility.SetToolTip(TooltipFlipY);
-								if (GUILayout.Button(ContentFlipZ, right))	{ tool.FlipZ(); }
-								TooltipUtility.SetToolTip(TooltipFlipZ);
-							}
-							GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
 
-							/*
-							EditorGUILayout.LabelField(ContentEdgesLabel);
-							GUILayout.BeginHorizontal(GUIStyleUtility.ContentEmpty);
-							{
-								EditorGUI.BeginDisabledGroup(!tool.CanSmooth());
-								{ 
-									if (GUILayout.Button("Smooth"))		{ tool.Smooth(); }
-								}
-								EditorGUI.EndDisabledGroup();
-								EditorGUI.BeginDisabledGroup(!tool.CanUnSmooth());
-								{
-									if (GUILayout.Button("Un-smooth"))	{ tool.UnSmooth(); }
-								}
-								EditorGUI.EndDisabledGroup();
-							}
-							GUILayout.EndHorizontal();
-							*/
-						
-							if (GUILayout.Button(ContentSnapToGrid)) { tool.SnapToGrid(Camera.current); }
-							TooltipUtility.SetToolTip(TooltipSnapToGrid);
-						}
-						EditorGUI.EndDisabledGroup();
-					}
-					GUILayout.EndVertical();
-				}
-				GUILayout.EndHorizontal();
-				GUILayout.Space(2);
-				if (!isSceneGUI)
-				{
-					EditorGUILayout.Space();
-					GUILayout.BeginHorizontal(CSG_GUIStyleUtility.ContentEmpty);
-					{
-						EditorGUILayout.LabelField(ContentDefaultMaterial, largeLabelWidth);
-						GUILayout.BeginVertical(CSG_GUIStyleUtility.ContentEmpty);
-						{
-							EditorGUI.BeginChangeCheck();
-							{
-								defaultMaterial = EditorGUILayout.ObjectField(defaultMaterial, typeof(Material), true) as Material;
-							}
-							if (EditorGUI.EndChangeCheck() && defaultMaterial)
-							{
-								CSGSettings.DefaultMaterial = defaultMaterial;
-								CSGSettings.Save();
-							}
-						}
-						GUILayout.Space(2);
-						GUILayout.BeginHorizontal(CSG_GUIStyleUtility.ContentEmpty);
-						{
-							GUILayout.Space(5);
-							defaultMaterial = CSG_EditorGUIUtility.MaterialImage(defaultMaterial, small: false);
-						}
-						GUILayout.EndHorizontal();
-						GUILayout.EndVertical();
-					}
-					GUILayout.EndHorizontal();
-					/*
-					// Unity won't let us do this
-					GUILayout.BeginVertical(GUIStyleUtility.ContentEmpty);
-					OnGUIContentsMaterialInspector(first_material, multiple_materials);
-					GUILayout.EndVertical();
-					*/
-				} else
-				{ 
-					EditorGUI.BeginChangeCheck();
-					{
-						defaultMaterial = EditorGUILayout.ObjectField(defaultMaterial, typeof(Material), true) as Material;
-					}
-					if (EditorGUI.EndChangeCheck() && defaultMaterial)
-					{
-						CSGSettings.DefaultMaterial = defaultMaterial;
-						CSGSettings.Save();
-					}
-				}
-			}
-			GUILayout.EndVertical();
-			EditorGUI.showMixedValue = false;
-		}
-	}
+            GUILayout.EndVertical();
+            GUILayout.FlexibleSpace();
+
+            GUILayout.EndHorizontal();
+        }
+
+        public static void OnInspectorGUI()
+        {
+            m_LastGuiRect = Rect.MinMaxRect(-1, -1, -1, -1);
+            EditModeMeshEdit tool = EditModeManager.ActiveTool as EditModeMeshEdit;
+            InitLocalStyles();
+            OnGUIContents(false, tool);
+        }
+
+        private static void ShowCSGOperations(bool isSceneGUI, EditModeMeshEdit tool, FilteredSelection filteredSelection)
+        {
+            bool operationsEnabled = tool != null && filteredSelection.nodeTargets.Length > 0 && filteredSelection.modelTargets.Length == 0;
+
+            EditorGUI.BeginDisabledGroup(!operationsEnabled);
+
+            bool mixedValues = tool == null || (filteredSelection.brushTargets.Length == 0 && filteredSelection.operationTargets.Length == 0);
+
+            CSGOperationType operationType = CSGOperationType.Additive;
+
+            if(tool != null)
+            {
+                if(filteredSelection.brushTargets.Length > 0)
+                {
+                    operationType = filteredSelection.brushTargets[0].operationType;
+
+                    for(int i = 1; i < filteredSelection.brushTargets.Length; i++)
+                    {
+                        if(filteredSelection.brushTargets[i].operationType != operationType)
+                        {
+                            mixedValues = true;
+                        }
+                    }
+                }
+                else if(filteredSelection.operationTargets.Length > 0)
+                {
+                    operationType = filteredSelection.operationTargets[0].operationType;
+                }
+
+                if(filteredSelection.operationTargets.Length > 0)
+                {
+                    for(int i = 0; i < filteredSelection.operationTargets.Length; i++)
+                    {
+                        if(filteredSelection.operationTargets[i].operationType != operationType)
+                        {
+                            mixedValues = true;
+                        }
+                    }
+                }
+            }
+
+            GUILayout.BeginVertical(isSceneGUI ? GUI.skin.box : GUIStyle.none);
+
+            {
+                if(tool != null && filteredSelection.operationTargets.Length > 0 && filteredSelection.operationTargets.Length == filteredSelection.nodeTargets.Length) // only operations
+                {
+                    bool? passThrough = filteredSelection.operationTargets[0].PassThrough;
+
+                    for(int i = 1; i < filteredSelection.operationTargets.Length; i++)
+                    {
+                        if(passThrough.HasValue && passThrough.Value != filteredSelection.operationTargets[i].PassThrough)
+                        {
+                            passThrough = null;
+
+                            break;
+                        }
+                    }
+
+                    mixedValues = !passThrough.HasValue || passThrough.Value;
+
+                    bool ptMixedValues    = !passThrough.HasValue;
+                    bool passThroughValue = passThrough.HasValue && passThrough.Value;
+
+                    if(CSGEditorGUIUtility.PassThroughButton(passThroughValue, ptMixedValues))
+                    {
+                        Undo.RecordObjects(filteredSelection.operationTargets, "Changed CSG operation of nodes");
+
+                        foreach(CSGOperation operation in filteredSelection.operationTargets)
+                        {
+                            operation.PassThrough = true;
+                        }
+
+                        InternalCSGModelManager.CheckForChanges();
+                        EditorApplication.RepaintHierarchyWindow();
+#if UNITY_6000_5_OR_NEWER
+                        HierarchyWindowItemGUI.RepaintHierarchy();
+#endif
+                    }
+
+                    if (passThroughValue)
+                    {
+                        operationType = (CSGOperationType)255;
+                    }
+                }
+
+                EditorGUI.BeginChangeCheck();
+
+                {
+                    operationType = CSGEditorGUIUtility.ChooseOperation(operationType, mixedValues);
+                }
+
+                if(EditorGUI.EndChangeCheck() && tool != null)
+                {
+                    Undo.RecordObjects(filteredSelection.nodeTargets, "Changed CSG operation of nodes");
+
+                    for(int i = 0; i < filteredSelection.brushTargets.Length; i++)
+                    {
+                        filteredSelection.brushTargets[i].operationType = operationType;
+                    }
+
+                    for(int i = 0; i < filteredSelection.operationTargets.Length; i++)
+                    {
+                        filteredSelection.operationTargets[i].PassThrough   = false;
+                        filteredSelection.operationTargets[i].operationType = operationType;
+                    }
+
+                    InternalCSGModelManager.CheckForChanges();
+                    EditorApplication.RepaintHierarchyWindow();
+#if UNITY_6000_5_OR_NEWER
+                    HierarchyWindowItemGUI.RepaintHierarchy();
+#endif
+                }
+            }
+
+            GUILayout.EndVertical();
+
+            EditorGUI.EndDisabledGroup();
+        }
+
+        private static void OnGUIContents(bool isSceneGUI, EditModeMeshEdit tool)
+        {
+            EditModeCommonGUI.StartToolGUI();
+
+            FilteredSelection filteredSelection = EditModeManager.FilteredSelection;
+
+            GUIStyle left   = EditorStyles.miniButtonLeft;
+            GUIStyle middle = EditorStyles.miniButtonMid;
+            GUIStyle right  = EditorStyles.miniButtonRight;
+            GUIStyle button = GUI.skin.button;
+
+            Material defaultMaterial = CSGSettings.DefaultMaterial;
+            GUILayout.BeginVertical(isSceneGUI ? inSceneWidth : CsgguiStyleUtility.contentEmpty);
+
+            ShowCSGOperations(isSceneGUI, tool, filteredSelection);
+            GUILayout.BeginVertical(isSceneGUI ? GUI.skin.box : GUIStyle.none);
+
+            bool selectionIgnoreBackfaced = CSGSettings.HiddenSurfacesNotSelectable;
+            bool selectionVertex          = CSGSettings.SelectionVertex;
+            bool selectionEdge            = CSGSettings.SelectionEdge;
+            bool selectionSurface         = CSGSettings.SelectionSurface;
+
+            EditorGUILayout.LabelField(contentSelection);
+            EditorGUI.BeginChangeCheck();
+
+            GUILayout.BeginHorizontal(CsgguiStyleUtility.contentEmpty);
+
+            selectionIgnoreBackfaced = GUILayout.Toggle(selectionIgnoreBackfaced, contentIgnoreHidden, button);
+
+            TooltipUtility.SetToolTip(tooltipIgnoreHidden);
+
+            GUILayout.EndHorizontal();
+
+            if(!selectionVertex && !selectionEdge && !selectionSurface)
+            {
+                GUILayout.Label(
+                    "No selection mode has been selected and nothing can be selected"
+                  , CsgguiStyleUtility.RedTextArea
+                );
+            }
+
+            GUILayout.BeginHorizontal(CsgguiStyleUtility.contentEmpty);
+
+            selectionVertex = GUILayout.Toggle(selectionVertex, contentVertex, button);
+            TooltipUtility.SetToolTip(tooltipVertex);
+
+            selectionEdge = GUILayout.Toggle(selectionEdge, contentEdge, button);
+            TooltipUtility.SetToolTip(tooltipEdge);
+
+            selectionSurface = GUILayout.Toggle(selectionSurface, contentSurface, button);
+            TooltipUtility.SetToolTip(tooltipSurface);
+
+            GUILayout.EndHorizontal();
+
+            if(EditorGUI.EndChangeCheck())
+            {
+                CSGSettings.HiddenSurfacesNotSelectable = selectionIgnoreBackfaced;
+                CSGSettings.SelectionVertex             = selectionVertex;
+                CSGSettings.SelectionEdge               = selectionEdge;
+                CSGSettings.SelectionSurface            = selectionSurface;
+                CSGSettings.Save();
+            }
+
+            GUILayout.Space(3);
+
+            GUILayout.EndVertical();
+            GUILayout.BeginVertical(isSceneGUI ? GUI.skin.box : GUIStyle.none);
+
+            bool autoCommitExtrusion = CSGSettings.AutoCommitExtrusion;
+            EditorGUI.BeginChangeCheck();
+
+            autoCommitExtrusion = GUILayout.Toggle(autoCommitExtrusion, contentAutoCommitExtrusion, button);
+            TooltipUtility.SetToolTip(tooltipAutoCommitExtrusion);
+
+            if(EditorGUI.EndChangeCheck())
+            {
+                CSGSettings.AutoCommitExtrusion = autoCommitExtrusion;
+                CSGSettings.Save();
+            }
+
+            GUILayout.EndVertical();
+            GUILayout.BeginHorizontal(CsgguiStyleUtility.contentEmpty);
+
+            if(isSceneGUI)
+            {
+                GUILayout.Space(4);
+                GUILayout.BeginVertical(CsgguiStyleUtility.contentEmpty);
+
+                EditorGUI.BeginChangeCheck();
+
+                defaultMaterial = CSGEditorGUIUtility.MaterialImage(defaultMaterial);
+
+                if(EditorGUI.EndChangeCheck() && defaultMaterial)
+                {
+                    CSGSettings.DefaultMaterial = defaultMaterial;
+                    CSGSettings.Save();
+                }
+
+                GUILayout.EndVertical();
+            }
+
+            bool haveNodes = tool != null && filteredSelection.nodeTargets.Length > 0;
+
+            GUILayout.BeginVertical(CsgguiStyleUtility.contentEmpty);
+
+            EditorGUI.BeginDisabledGroup(!haveNodes);
+
+            GUILayout.BeginHorizontal(CsgguiStyleUtility.contentEmpty);
+
+            EditorGUILayout.LabelField(contentFlip, isSceneGUI ? labelWidth : largeLabelWidth);
+
+            if(GUILayout.Button(contentFlipX, left))
+            {
+                tool.FlipX();
+            }
+
+            TooltipUtility.SetToolTip(tooltipFlipX);
+
+            if(GUILayout.Button(contentFlipY, middle))
+            {
+                tool.FlipY();
+            }
+
+            TooltipUtility.SetToolTip(tooltipFlipY);
+
+            if(GUILayout.Button(contentFlipZ, right))
+            {
+                tool.FlipZ();
+            }
+
+            TooltipUtility.SetToolTip(tooltipFlipZ);
+
+            GUILayout.EndHorizontal();
+
+            if(GUILayout.Button(contentSnapToGrid))
+            {
+                tool.SnapToGrid(Camera.current);
+            }
+
+            TooltipUtility.SetToolTip(tooltipSnapToGrid);
+
+            EditorGUI.EndDisabledGroup();
+
+            GUILayout.EndVertical();
+
+            GUILayout.EndHorizontal();
+            GUILayout.Space(2);
+
+            if(!isSceneGUI)
+            {
+                EditorGUILayout.Space();
+                GUILayout.BeginHorizontal(CsgguiStyleUtility.contentEmpty);
+
+                EditorGUILayout.LabelField(contentDefaultMaterial, largeLabelWidth);
+                GUILayout.BeginVertical(CsgguiStyleUtility.contentEmpty);
+
+                EditorGUI.BeginChangeCheck();
+
+                defaultMaterial = EditorGUILayout.ObjectField(defaultMaterial, typeof(Material), true) as Material;
+
+                if(EditorGUI.EndChangeCheck() && defaultMaterial)
+                {
+                    CSGSettings.DefaultMaterial = defaultMaterial;
+                    CSGSettings.Save();
+                }
+
+                GUILayout.Space(2);
+                GUILayout.BeginHorizontal(CsgguiStyleUtility.contentEmpty);
+
+                GUILayout.Space(5);
+                defaultMaterial = CSGEditorGUIUtility.MaterialImage(defaultMaterial, false);
+
+                GUILayout.EndHorizontal();
+                GUILayout.EndVertical();
+
+                GUILayout.EndHorizontal();
+            }
+            else
+            {
+                EditorGUI.BeginChangeCheck();
+
+                defaultMaterial = EditorGUILayout.ObjectField(defaultMaterial, typeof(Material), true) as Material;
+
+                if(EditorGUI.EndChangeCheck() && defaultMaterial)
+                {
+                    CSGSettings.DefaultMaterial = defaultMaterial;
+                    CSGSettings.Save();
+                }
+            }
+
+            GUILayout.EndVertical();
+            EditorGUI.showMixedValue = false;
+        }
+    }
 }

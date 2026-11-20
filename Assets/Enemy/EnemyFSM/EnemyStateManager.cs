@@ -53,7 +53,7 @@ public class EnemyStateManager : MonoBehaviour
 
     private Health enemyHealth;
     [HideInInspector] public EnemyHitResponder ehr;
-
+    NavMeshPath wanderPath;
 
     private TextMeshProUGUI text;
     private Image healthFill;
@@ -71,7 +71,7 @@ public class EnemyStateManager : MonoBehaviour
 
     [HideInInspector] public float lastDamage = 0;
     [HideInInspector] public Vector3 lastDamageVector = Vector3.zero;
-
+    NavMeshPath path;
     private readonly Collider[] alertBuffer = new Collider[5];
 
     void Awake()
@@ -93,7 +93,7 @@ public class EnemyStateManager : MonoBehaviour
         enemyHealth.SetHealth(enemyConfig.maxHealth);
         enemyHealth.SetMaxArmor(enemyConfig.maxHealth);
         enemyHealth.SetArmor(enemyConfig.maxHealth);
-
+        wanderPath = new NavMeshPath();
         animator = GetComponentInChildren<Animator>();
 
         weaveSign = Random.value < 0.5f ? 1f : -1f;
@@ -205,15 +205,15 @@ public class EnemyStateManager : MonoBehaviour
 
 
     [Header("Zigzag Steering")]
-    float zigzagAmplitude = 0.3f;
-    float zigzagMinDuration = 0.4f; // seconds per side before flipping
-    float zigzagMaxDuration = 0.8f;
+    float zigzagAmplitude = 0.4f;
+    float zigzagMinDuration = 0.5f; // seconds per side before flipping
+    float zigzagMaxDuration = 0.9f;
     float zigzagLookAhead = 1.5f;
 
     private float weaveSign;
     private float weaveTimer;
 
-    private float targetSampleRadius = 4f; // must be >= max jump apex height + margin
+    private float targetSampleRadius = 6f; // must be >= max jump apex height + margin
 
     // Projects the target's (possibly airborne) position onto the NavMesh so path
     // queries don't fail just because the target jumped above the walkable surface.
@@ -443,25 +443,36 @@ public class EnemyStateManager : MonoBehaviour
 
 
 
-    public Vector3 GetRandomReachablePointOnNavMesh(float range = 10, int maxAttempts = 10)
+    public bool TryGetRandomReachablePoint(float minDistance, float maxDistance,
+                                       out Vector3 result, int maxAttempts = 10)
     {
+        result = transform.position;
+
+        // CalculatePath errors out if the agent isn't active and placed on the NavMesh
+        if (!agent.isActiveAndEnabled || !agent.isOnNavMesh)
+            return false;
 
         for (int i = 0; i < maxAttempts; i++)
         {
-            Vector2 randomCircle = Random.insideUnitCircle * range;
-            Vector3 randomPoint_ = transform.position + new Vector3(randomCircle.x, 0, randomCircle.y);
+            float angle = Random.value * Mathf.PI * 2f;
+            float distance = Random.Range(minDistance, maxDistance);
+            Vector3 candidate = transform.position +
+                                new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * distance;
 
-            
-            if (NavMesh.SamplePosition(randomPoint_, out NavMeshHit hit, range, NavMesh.AllAreas))
+            // Small radius so bad candidates (inside walls, other floors) fail instead of snapping far away
+            if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+                continue;
+
+            // Real reachability check: a complete path must exist from the agent to this point
+            if (agent.CalculatePath(hit.position, wanderPath) &&
+                wanderPath.status == NavMeshPathStatus.PathComplete)
             {
-                if (!NavMesh.Raycast(transform.position, hit.position, out NavMeshHit pathHit, NavMesh.AllAreas))
-                {
-                    return hit.position;
-                }
+                result = hit.position;
+                return true;
             }
         }
 
-        return transform.position;
+        return false;
     }
 
     public bool IsTargetReachable()
@@ -557,8 +568,10 @@ public class EnemyStateManager : MonoBehaviour
                 continue;
             if (col.gameObject == gameObject)
                 continue;
-            if(Physics.Raycast(transform.position, col.transform.position - transform.position, radius, 1 << 0 | 1 << 8) 
+            if(Physics.Raycast(transform.position, col.transform.position - transform.position, out RaycastHit hit, radius, 1 << 0 | 1 << 8) 
             && col.TryGetComponent<EnemyStateManager>(out EnemyStateManager esm)
+            && hit.transform.TryGetComponent<EnemyStateManager>(out EnemyStateManager esmHit)
+            && esm == esmHit
             && esm.GetCurrentState() is EnemyIdleState)
             {
                 esm.SwitchState(esm.ChaseState);

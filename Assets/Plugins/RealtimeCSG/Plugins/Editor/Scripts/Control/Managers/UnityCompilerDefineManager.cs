@@ -1,116 +1,135 @@
-﻿using UnityEngine;
-using UnityEditor;
-using InternalRealtimeCSG;
+﻿using UnityEditor;
 using System;
 using System.Collections.Generic;
-using System.Collections;
 using System.Reflection;
 using System.Linq;
-using UnityEngine.SceneManagement;
+using System.Text;
+using RealtimeCSG.Foundation;
+using UnityEditor.Build;
+using Version = RealtimeCSG.Foundation.Version;
 
 namespace RealtimeCSG
 {
-	internal sealed class UnityCompilerDefineManager
-	{
-		const string RealTimeCSGDefine			= "RealtimeCSG";
+    internal sealed class UnityCompilerDefineManager
+    {
+        private const string REAL_TIME_CSG_DEFINE = "RealtimeCSG";
 
-        static bool IsObsolete(Enum value)
+        private static bool IsObsolete(Enum value)
         {
-            var fi = value.GetType().GetField(value.ToString());
-            var attributes = (ObsoleteAttribute[])
-                fi.GetCustomAttributes(typeof(ObsoleteAttribute), false);
-            return (attributes != null && attributes.Length > 0);
+            FieldInfo           fi         = value.GetType().GetField(value.ToString());
+            ObsoleteAttribute[] attributes = (ObsoleteAttribute[])fi.GetCustomAttributes(typeof(ObsoleteAttribute), false);
+
+            return attributes.Length > 0;
         }
 
         public static void UpdateUnityDefines()
-		{
-            var requiredDefines = new List<string>();
+        {
+            List<string> requiredDefines = new List<string>();
 
-			requiredDefines.Add(RealTimeCSGDefine);
+            requiredDefines.Add(REAL_TIME_CSG_DEFINE);
 
-			string	v						= RealtimeCSG.Foundation.Versioning.PluginVersion;
-			int		index					= v.IndexOfAny(new char[] { '_', '.' });
-			string	release_version_part	= v.Remove(index);
-			string	lower_part				= v.Substring(index + 1);
-			string	major_version_part		= lower_part.Remove(1);
-			var		minor_version_part		= lower_part.Substring(1);
+            Version v = VersionManager.Version;
 
-			var release_version = RealTimeCSGDefine + "_" + release_version_part;
-			var major_version	= release_version + "_" + major_version_part;
-			var minor_version	= major_version + "_" + minor_version_part;
+            string releaseVersion = $"{REAL_TIME_CSG_DEFINE}_{v.Major}";
+            string majorVersion   = $"{releaseVersion}_{v.Minor}";
+            string minorVersion   = $"{majorVersion}_{v.Revision}";
 
-			requiredDefines.Add(release_version);
-			requiredDefines.Add(major_version);
-			requiredDefines.Add(minor_version);
+            requiredDefines.Add(releaseVersion);
+            requiredDefines.Add(majorVersion);
+            requiredDefines.Add(minorVersion);
 
-			var targetGroups = Enum.GetValues(typeof(BuildTargetGroup)).Cast<BuildTargetGroup>().ToArray();
-			foreach (var targetGroup in targetGroups)
-			{
-				if (IsObsolete(targetGroup))
-					continue;
-				if (targetGroup == BuildTargetGroup.Unknown
-#if UNITY_5_6_OR_NEWER
-					|| targetGroup == (BuildTargetGroup)27
-#endif
-					)
-					continue;
-				
-				var symbol_string = PlayerSettings.GetScriptingDefineSymbolsForGroup(targetGroup);
-				if (symbol_string == null)
-					continue;
+            BuildTargetGroup[] targetGroups = Enum.GetValues(typeof(BuildTargetGroup)).Cast<BuildTargetGroup>().ToArray();
 
-				bool modified = false;
-				var symbols = symbol_string.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-				for (int i = symbols.Length - 1; i >= 0; i--)
-				{
-					symbols[i] = symbols[i].Trim();
-					if (symbols[i].Length == 0)
-					{
-						ArrayUtility.RemoveAt(ref symbols, i);
-						continue;
-					}
-					if (symbols[i].StartsWith(RealTimeCSGDefine))
-					{
-						bool keepSymbol = false;
-						for (int j = 0; j < requiredDefines.Count; j++)
-						{
-							if (symbols[i] == requiredDefines[j])
-							{
-								keepSymbol = true;
-								break;
-							}
-						}
-						if (keepSymbol)
-							continue;
-						modified = true;
-						ArrayUtility.RemoveAt(ref symbols, i);
-					}
-				}
+            foreach(BuildTargetGroup targetGroup in targetGroups)
+            {
+                if(IsObsolete(targetGroup))
+                {
+                    continue;
+                }
 
-				for (int i = 0; i < requiredDefines.Count; i++)
-				{
-					if (!symbols.Contains(requiredDefines[i]))
-					{
-						modified = true;
-						ArrayUtility.Add(ref symbols, requiredDefines[i]);
-					}
-				}
+                if(targetGroup == BuildTargetGroup.Unknown || targetGroup == (BuildTargetGroup)27)
+                {
+                    continue;
+                }
 
-				if (!modified)
-					continue;
+                string symbolString = PlayerSettings.GetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(targetGroup));
 
-				var stringBuilder = new System.Text.StringBuilder();
-				for (int i = 0; i < symbols.Length; i++)
-				{
-					if (stringBuilder.Length != 0)
-						stringBuilder.Append(';');
-					stringBuilder.Append(symbols[i]);
-				}
+                if(symbolString == null)
+                {
+                    continue;
+                }
 
-				var newSymbolString = stringBuilder.ToString();
-				if (newSymbolString != symbol_string)
-					PlayerSettings.SetScriptingDefineSymbolsForGroup(targetGroup, newSymbolString);
-			}
-		}
-	}
+                bool     modified = false;
+                string[] symbols  = symbolString.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                for(int i = symbols.Length - 1; i >= 0; i--)
+                {
+                    symbols[i] = symbols[i].Trim();
+
+                    if(symbols[i].Length == 0)
+                    {
+                        ArrayUtility.RemoveAt(ref symbols, i);
+
+                        continue;
+                    }
+
+                    if(symbols[i].StartsWith(REAL_TIME_CSG_DEFINE))
+                    {
+                        bool keepSymbol = false;
+
+                        for(int j = 0; j < requiredDefines.Count; j++)
+                        {
+                            if(symbols[i] == requiredDefines[j])
+                            {
+                                keepSymbol = true;
+
+                                break;
+                            }
+                        }
+
+                        if(keepSymbol)
+                        {
+                            continue;
+                        }
+
+                        modified = true;
+                        ArrayUtility.RemoveAt(ref symbols, i);
+                    }
+                }
+
+                for(int i = 0; i < requiredDefines.Count; i++)
+                {
+                    if(!symbols.Contains(requiredDefines[i]))
+                    {
+                        modified = true;
+                        ArrayUtility.Add(ref symbols, requiredDefines[i]);
+                    }
+                }
+
+                if(!modified)
+                {
+                    continue;
+                }
+
+                StringBuilder stringBuilder = new StringBuilder();
+
+                for(int i = 0; i < symbols.Length; i++)
+                {
+                    if(stringBuilder.Length != 0)
+                    {
+                        stringBuilder.Append(';');
+                    }
+
+                    stringBuilder.Append(symbols[i]);
+                }
+
+                string newSymbolString = stringBuilder.ToString();
+
+                if(newSymbolString != symbolString)
+                {
+                    PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(targetGroup), newSymbolString);
+                }
+            }
+        }
+    }
 }

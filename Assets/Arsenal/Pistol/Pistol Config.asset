@@ -29,30 +29,24 @@ MonoBehaviour:
   - {fileID: 8300000, guid: f747cbf78ac0a8c4ca14feb6cc14b1e0, type: 3}
   - {fileID: 8300000, guid: 399a15b3a6486394d8d2bdd9b2a62d31, type: 3}
   caseFallVolume: 0.05
+  hitSFX: {fileID: 0}
   recoilAmountCamera: 1
   recoilSpeedCamera: 14
   returnSpeedCamera: 15
   allowButtonHold: 1
-  damage: 30
+  damage: 50
   ammoType: 0
   range: 300
   force: 20
   knockbackForce: 0
-  spread: 0.05
+  spread: 0.01
   timeBetweenShooting: 0.35
   bulletsPerShot: 1
   ammoPerShot: 1
   timeBetweenShots: 0
   inputDelay: 0
   ricochet: 0
+  sphereCast: 0
   projectilePrefab: {fileID: 0}
   explosionPrefab: {fileID: 0}
-  projectileSpeed: 1
-  projectileRicoshet: 0
-  gravityMult: 0
-  explosionRadius: 10
-  explosionForceRB: 5
-  explosionDelay: 0
-  ricoshetSpeedLoss: 0
-  mass: 1
   altConfig: {fileID: 11400000, guid: 47ad83526b4f7074cbe47fb8dc6da2a1, type: 2}

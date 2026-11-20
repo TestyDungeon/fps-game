@@ -14,144 +14,161 @@ namespace RealtimeCSG.Legacy
     public sealed class Shape
     {
         /// <value>Version of the Shape</value>
-        [SerializeField] public float           Version         = 1.0f;
-        
+        [SerializeField, FormerlySerializedAs("Version")] public float version = 1.0f;
+
         /// <value>An array of <see cref="RealtimeCSG.Legacy.Surface"/>s, one for each polygon.</value>
         /// <remarks><see cref="RealtimeCSG.Legacy.Surface"/> are used to store information about the orientation of the polygons that are associated with this surface.</remarks>
-        [SerializeField] public Surface[]		Surfaces		= new Surface[0];
-        
+        [SerializeField, FormerlySerializedAs("Surfaces")]
+        public Surface[] surfaces = Array.Empty<Surface>();
+
         /// <value>An array of <see cref="RealtimeCSG.Legacy.TexGen"/>s, one for each polygon.</value>
         /// <remarks><see cref="RealtimeCSG.Legacy.TexGen"/> are used to generate texture coordinates for the polygons that are associated with this surface.</remarks>
-        [SerializeField] public TexGen[]		TexGens			= new TexGen[0];
-        
+        [SerializeField, FormerlySerializedAs("TexGens")]
+        public TexGen[] texGens = Array.Empty<TexGen>();
+
         /// <value>An array of <see cref="RealtimeCSG.Legacy.TexGenFlags"/>s, one for each polygon.</value>
         /// <remarks><see cref="RealtimeCSG.Legacy.TexGenFlags"/> are used to define if a polygon is visible, part of a collision mesh etc.</remarks>
-        [SerializeField] public TexGenFlags[]	TexGenFlags		= new TexGenFlags[0];
+        [SerializeField, FormerlySerializedAs("TexGenFlags")]
+        public TexGenFlags[] texGenFlags = Array.Empty<TexGenFlags>();
 
         // Do not use this anymore, it's deprecated
-        [FormerlySerializedAs("LegacyMaterials")]
-        [Obsolete("Materials are now stored in TexGens")]
-        [HideInInspector]
-        [SerializeField] internal Material[]	Materials		= new Material[0];
+        [Obsolete("Materials are now stored in TexGens"), HideInInspector, SerializeField]
+        internal Material[] materials = Array.Empty<Material>();
 
 #if UNITY_EDITOR
         /// <summary>Constructor for an unintialized <see cref="RealtimeCSG.Legacy.Shape"/></summary>
-        public Shape() { }
-        
+        public Shape()
+        {
+        }
+
         /// <summary>Constructor that takes a <see cref="RealtimeCSG.Legacy.Shape"/> to copy from</summary>
         public Shape(Shape other)
         {
             CopyFrom(other);
         }
-        
+
         /// <summary>Creates a <see cref="RealtimeCSG.Legacy.Shape"/> and initializes it with <paramref name="polygonCount"/> number of surfaces</summary>
         /// <param name="polygonCount">The number of surfaces to create for this <see cref="RealtimeCSG.Legacy.Shape"/></param>
         public Shape(int polygonCount)
         {
-            Surfaces	= new Surface[polygonCount];
-            TexGenFlags = new TexGenFlags[polygonCount];
-            TexGens		= new TexGen[polygonCount];
+            surfaces    = new Surface[polygonCount];
+            texGenFlags = new TexGenFlags[polygonCount];
+            texGens     = new TexGen[polygonCount];
         }
 
         /// <summary>Clear all surfaces in this <see cref="RealtimeCSG.Legacy.Shape"/></summary>
         public void Reset()
         {
-            Surfaces		= new Surface[0];
-            TexGens			= new TexGen[0];
-            TexGenFlags		= new TexGenFlags[0];
-        } 
-        
+            surfaces    = Array.Empty<Surface>();
+            texGens     = Array.Empty<TexGen>();
+            texGenFlags = Array.Empty<TexGenFlags>();
+        }
+
         /// <summary>Copy all contents from another <see cref="RealtimeCSG.Legacy.Shape"/> into this <see cref="RealtimeCSG.Legacy.Shape"/></summary>
         /// <param name="other">The <see cref="RealtimeCSG.Legacy.Shape"/> to copy the contents from.</param>
         public void CopyFrom(Shape other)
         {
-            if (other == null)
+            if(other == null)
             {
                 Reset();
+
                 return;
             }
 
-            if (this.Surfaces != null)
+            if(surfaces != null)
             {
-                if (this.Surfaces == null || this.Surfaces.Length != other.Surfaces.Length)
-                    this.Surfaces = new Surface[other.Surfaces.Length];
-                Array.Copy(other.Surfaces, this.Surfaces, other.Surfaces.Length);
-            } else
-                this.Surfaces = null;
-            
-            if (this.TexGens != null)
-            {
-                if (this.TexGens == null || this.TexGens.Length != other.TexGens.Length)
-                    this.TexGens = new TexGen[other.TexGens.Length];
-                Array.Copy(other.TexGens, this.TexGens, other.TexGens.Length);
-            } else
-                this.TexGens = null;
+                if(surfaces == null || surfaces.Length != other.surfaces.Length)
+                {
+                    surfaces = new Surface[other.surfaces.Length];
+                }
 
-            if (this.TexGenFlags != null)
+                Array.Copy(other.surfaces, surfaces, other.surfaces.Length);
+            }
+            else
             {
-                if (this.TexGenFlags == null || this.TexGenFlags.Length != other.TexGenFlags.Length)
-                    this.TexGenFlags = new TexGenFlags[other.TexGenFlags.Length];
-                Array.Copy(other.TexGenFlags, this.TexGenFlags, other.TexGenFlags.Length);
-            } else
-                this.TexGenFlags = null;
+                surfaces = null;
+            }
+
+            if(texGens != null)
+            {
+                if(texGens == null || texGens.Length != other.texGens.Length)
+                {
+                    texGens = new TexGen[other.texGens.Length];
+                }
+
+                Array.Copy(other.texGens, texGens, other.texGens.Length);
+            }
+            else
+            {
+                texGens = null;
+            }
+
+            if(texGenFlags != null)
+            {
+                if(texGenFlags == null || texGenFlags.Length != other.texGenFlags.Length)
+                {
+                    texGenFlags = new TexGenFlags[other.texGenFlags.Length];
+                }
+
+                Array.Copy(other.texGenFlags, texGenFlags, other.texGenFlags.Length);
+            }
+            else
+            {
+                texGenFlags = null;
+            }
         }
-        
+
         /// <summary>Creates a copy of this <see cref="RealtimeCSG.Legacy.Shape"/>.</summary>
         /// <returns>The copy of this <see cref="RealtimeCSG.Legacy.Shape"/></returns>
-        public Shape Clone() { return new Shape(this); }
+        public Shape Clone()
+        {
+            return new Shape(this);
+        }
 
         /// <summary>Validates if the materials are correct on this <see cref="RealtimeCSG.Legacy.Shape"/>, and fixes them if they are not.</summary>
         /// <returns>*true* if the shape has been modified, *false* if nothing changed</returns>
         public bool CheckMaterials()
         {
             bool dirty = false;
-            if (Surfaces == null ||
-                Surfaces.Length == 0)
+
+            if(surfaces == null || surfaces.Length == 0)
             {
                 Debug.LogWarning("Surfaces == null || Surfaces.Length == 0");
+
                 return true;
             }
-            
+
             int maxTexGenIndex = 0;
-            for (int i = 0; i < Surfaces.Length; i++)
+
+            for(int i = 0; i < surfaces.Length; i++)
             {
-                maxTexGenIndex = Mathf.Max(maxTexGenIndex, Surfaces[i].TexGenIndex);
+                maxTexGenIndex = Mathf.Max(maxTexGenIndex, surfaces[i].TexGenIndex);
             }
+
             maxTexGenIndex++;
 
-            if (TexGens == null ||
-                TexGens.Length < maxTexGenIndex)
+            if(texGens == null || texGens.Length < maxTexGenIndex)
             {
                 dirty = true;
-                var newTexGens = new TexGen[maxTexGenIndex];
-                var newTexGenFlags = new TexGenFlags[maxTexGenIndex];
-                if (TexGens != null &&
-                    TexGens.Length > 0)
+                TexGen[]      newTexGens     = new TexGen[maxTexGenIndex];
+                TexGenFlags[] newTexGenFlags = new TexGenFlags[maxTexGenIndex];
+
+                if(texGens != null && texGens.Length > 0)
                 {
-                    for (int i = 0; i < TexGens.Length; i++)
+                    for(int i = 0; i < texGens.Length; i++)
                     {
-                        newTexGens[i] = TexGens[i];
-                        newTexGenFlags[i] = TexGenFlags[i];
-                    }/*
-                    for (int i = TexGens.Length; i < newTexGens.Length; i++)
-                    {
-                        newTexGens[i].Color = Color.white;
-                    }*/
+                        newTexGens[i]     = texGens[i];
+                        newTexGenFlags[i] = texGenFlags[i];
+                    }
                 }
-                TexGens = newTexGens;
-                TexGenFlags = newTexGenFlags;
+
+                texGens     = newTexGens;
+                texGenFlags = newTexGenFlags;
             }
-            /*
-            for (int i = 0; i < TexGens.Length; i++)
-            {
-                if (TexGens[i].Color == Color.clear)
-                    TexGens[i].Color = Color.white;
-            }*/
 
             return dirty;
         }
 
 #endif
-    } 
+    }
 }
- 

@@ -1,72 +1,169 @@
-﻿#pragma warning disable 0619
-using UnityEngine;
-using UnityEditor;
+﻿using RealtimeCSG.Components;
 using RealtimeCSG.Foundation;
-using RealtimeCSG.Components;
+using Unity.Hierarchy;
+using Unity.Hierarchy.Editor;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace RealtimeCSG
 {
-	internal sealed class HierarchyWindowItemGUI
-	{
-		internal static void OnHierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
-		{
-			if (EditorApplication.isPlayingOrWillChangePlaymode)
-				return;
+    internal sealed class HierarchyWindowItemGUI
+    {
+        private static Texture2D ModelIcon
+        {
+            get
+            {
+                if (m_ModelIcon == null)
+                {
+                    m_ModelIcon = (Texture2D)EditorGUIUtility.IconContent("prematcube@2x").image;
+                }
 
-			var o = UnityObjectCompatibility.InstanceIDToObjectCompat(instanceID) as GameObject;
+                return m_ModelIcon;
+            }
+        }
 
-			if (selectionRect.Contains(Event.current.mousePosition))
-			{
-				Transform t = (o == null) ? null : o.transform;
-				SceneDragToolManager.OnHandleDragAndDrop(sceneView: null, transformInInspector: t, selectionRect: selectionRect);
-			}
+        private static Texture2D m_ModelIcon = null;
 
-				if (o == null)
-				return;
+#if !UNITY_6000_4_OR_NEWER
+        internal static void OnHierarchyWindowItemOnGUI(int instanceID, Rect selectionRect)
+        {
+            if (EditorUtility.InstanceIDToObject(instanceID) == null)
+            {
+                return;
+            }
 
-			CSG_GUIStyleUtility.InitStyles();
-
-			var node = o.GetComponent<CSGNode>();
-			if (node == null ||
-				!node.enabled || (node.hideFlags & (HideFlags.HideInHierarchy | HideFlags.HideInInspector)) != 0)
-				return;
-
-			CSGOperationType operationType = CSGOperationType.Additive;
-
-			var brush = node as CSGBrush;
-			if (brush != null)
-			{
-				operationType = brush.OperationType;
-				var skin = CSG_GUIStyleUtility.Skin;
-				GUI.Label(selectionRect, skin.hierarchyOperations[(int)operationType], CSG_GUIStyleUtility.rightAlignedLabel);
-				return;
-			}
-			var operation = node as CSGOperation;
-			if (operation != null)
-			{
-				var skin = CSG_GUIStyleUtility.Skin;
-				if (!operation.PassThrough)
-				{
-					operationType = operation.OperationType;
-					var operationTypeIndex = (int)operationType;
-					if (operationTypeIndex >= 0 && operationTypeIndex < skin.hierarchyOperations.Length)
-						GUI.Label(selectionRect, skin.hierarchyOperations[operationTypeIndex], CSG_GUIStyleUtility.rightAlignedLabel);
-				} else
-				{
-					GUI.Label(selectionRect, skin.hierarchyPassThrough, CSG_GUIStyleUtility.rightAlignedLabel);
-				}
-				return;
-			}
-		}
-
-#if UNITY_6000_0_OR_NEWER
-		internal static void OnHierarchyWindowItemByEntityIdOnGUI(UnityEngine.EntityId entityId, Rect selectionRect)
-		{
-			var target = Resources.EntityIdToObject(entityId);
-			OnHierarchyWindowItemOnGUI(target != null ? target.GetInstanceIDCompat() : 0, selectionRect);
-		}
+            OnHierarchyWindowItemByEntityIdOnGUI(EditorUtility.InstanceIDToObject(instanceID).GetEntityId(), selectionRect);
+        }
 #endif
 
-	}
-}
+        //Legacy Hierarchy
+        internal static void OnHierarchyWindowItemByEntityIdOnGUI(EntityId entityID, Rect selectionRect)
+        {
+            GameObject o = EditorUtility.EntityIdToObject(entityID) as GameObject;
 
+            if (selectionRect.Contains(Event.current.mousePosition))
+            {
+                Transform t = o == null ? null : o.transform;
+                SceneDragToolManager.OnHandleDragAndDrop(null, t, selectionRect);
+            }
+
+            if (o == null)
+            {
+                return;
+            }
+
+            CSGNode node = o.GetComponent<CSGNode>();
+
+            if (node == null || !node.enabled || (node.hideFlags & (HideFlags.HideInHierarchy | HideFlags.HideInInspector)) != 0)
+            {
+                return;
+            }
+
+            CSGOperationType operationType;
+
+            CSGBrush brush = node as CSGBrush;
+
+            if (brush != null)
+            {
+                operationType = brush.operationType;
+                CSGSkin skin = CsgguiStyleUtility.Skin;
+
+                GUI.Label(selectionRect, skin.hierarchyOperations[(int)operationType], CsgguiStyleUtility.RightAlignedLabel);
+
+                return;
+            }
+
+            CSGOperation operation = node as CSGOperation;
+
+            if (operation != null)
+            {
+                CSGSkin skin = CsgguiStyleUtility.Skin;
+
+                if (!operation.PassThrough)
+                {
+                    operationType = operation.operationType;
+                    int operationTypeIndex = (int)operationType;
+
+                    if (operationTypeIndex >= 0 && operationTypeIndex < skin.hierarchyOperations.Length)
+                    {
+                        GUI.Label(selectionRect, skin.hierarchyOperations[operationTypeIndex], CsgguiStyleUtility.RightAlignedLabel);
+                    }
+                }
+                else
+                {
+                    GUI.Label(selectionRect, skin.hierarchyPassThrough, CsgguiStyleUtility.RightAlignedLabel);
+                }
+            }
+
+            CSGModel model = node as CSGModel;
+
+            if (model != null)
+            {
+                GUI.Label(selectionRect, ModelIcon, CsgguiStyleUtility.RightAlignedLabel);
+            }
+        }
+
+#if UNITY_6000_5_OR_NEWER
+        //New Hierarchy
+        internal static Unity.Hierarchy.Hierarchy TargetHierarchy;
+
+        internal static void OnBindView(HierarchyWindow window, HierarchyView view)
+        {
+            TargetHierarchy = view.Source;
+        }
+
+        internal static void OnBindViewItem(Unity.Hierarchy.Editor.HierarchyWindow window, Unity.Hierarchy.HierarchyView view, Unity.Hierarchy.HierarchyViewItem item)
+        {
+            if (item.Handler is not Unity.Hierarchy.Editor.HierarchyGameObjectHandler handler)
+            {
+                return;
+            }
+
+            GameObject hierarchyGameObject = handler.GetGameObject(item.Node);
+            if (hierarchyGameObject == null)
+            {
+                return;
+            }
+
+            CSGNode node = hierarchyGameObject.GetComponent<CSGNode>();
+
+            if (node != null)
+            {
+                StyleBackground newStyleBackground = new StyleBackground();
+
+                if (node is CSGModel _model)
+                {
+                    newStyleBackground.value = Background.FromTexture2D(ModelIcon);
+                }
+                else if(node is CSGBrush _brush)
+                {
+                    newStyleBackground.value = Background.FromTexture2D((Texture2D)CsgguiStyleUtility.Skin.hierarchyOperations[(int)_brush.operationType]?.image);
+                }
+                else if(node is CSGOperation _operation)
+                {
+                    Texture2D OperationIcon = null;
+
+                    if (!_operation.PassThrough)
+                    {
+                        OperationIcon = (Texture2D)CsgguiStyleUtility.Skin.hierarchyOperations[(int)_operation.operationType]?.image;
+                    }
+                    else
+                    {
+                        OperationIcon = (Texture2D)CsgguiStyleUtility.Skin.hierarchyPassThrough?.image;
+                    }
+
+                    newStyleBackground.value = Background.FromTexture2D(OperationIcon);
+                }
+
+                item.Icon.style.backgroundImage = newStyleBackground;
+            }
+        }
+
+        public static void RepaintHierarchy()
+        {
+            TargetHierarchy.SetDirty();
+        }
+#endif
+    }
+}

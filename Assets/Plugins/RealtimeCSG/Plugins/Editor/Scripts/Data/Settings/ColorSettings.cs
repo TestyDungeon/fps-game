@@ -1,494 +1,608 @@
-﻿#pragma warning disable 0619
-using System.Globalization;
+﻿using System.Globalization;
+using RealtimeCSG.Components;
 using UnityEditor;
 using UnityEngine;
-using RealtimeCSG.Components;
 
 namespace RealtimeCSG
 {
-	internal static class ColorSettings
-	{
-		static readonly float state0 = (float)Mathf.Pow(1.00f, 2.2f);
-		static readonly float state1 = (float)Mathf.Pow(0.90f, 2.2f);
-		static readonly float state2 = (float)Mathf.Pow(0.60f, 2.2f);
-		static readonly float state3 = (float)Mathf.Pow(0.70f, 2.2f);
-
-		static Color[] pointInnerStateColor =
-		{
-			new Color(0.80f,  state3, 0.00f),	// None
-			new Color(1.00f,  state2, 0.00f),	// Hovering
-			new Color(1.0f,   state1, 0.00f),	// Selected
-			new Color(state0, state0, 0.00f)	// Selected | Hovering
-		};
-		public static Color[] PointInnerStateColor { get { return pointInnerStateColor; } }
-
-		static Color[] alignedCurveStateColor =
-		{
-			new Color(0.80f,  state3, 0.00f),	// None
-			new Color(1.00f,  state2, 0.00f),	// Hovering
-			new Color(1.0f,   state1, 0.00f),	// Selected
-			new Color(state0, state0, 0.00f)	// Selected | Hovering
-		};
-		public static Color[] AlignedCurveStateColor { get { return alignedCurveStateColor; } }
-
-		static Color[] brokenCurveStateColor =
-		{
-			new Color(0.80f,  state3, 0.00f),	// None
-			new Color(1.00f,  state2, 0.00f),	// Hovering
-			new Color(1.0f,   state1, 0.00f),	// Selected
-			new Color(state0, state0, 0.00f)	// Selected | Hovering
-		};
-		public static Color[] BrokenCurveStateColor { get { return brokenCurveStateColor; } }
-
-
-		static Color[] polygonInnerStateColor =
-		{
-			new Color(state3, 0.80f, state3),	// None
-			new Color(state1, 1.00f, state1),	// Hovering
-			new Color(state1, state1, 0.0f),	// Selected
-			new Color(state0, state0, 0.0f),	// Selected | Hovering
-		};
-		public static Color[] PolygonInnerStateColor { get { return polygonInnerStateColor; } }
-
-		public static Color[] surfaceInnerStateColor =
-		{
-			new Color(state3, state3, 0.80f),	// None
-			new Color(state2, state2, 1.00f),	// Hovering
-			new Color(state1, state1, 1.00f),	// Selected
-			new Color(state0, state0, 1.00f)	// Selected | Hovering
-		};
-		public static Color[] SurfaceInnerStateColor { get { return surfaceInnerStateColor; } }
-
-		public static Color[] surfaceOuterStateColor =
-		{
-			new Color(state3, state3, 0.80f),	// None
-			new Color(state2, state2, 1.00f),	// Hovering
-			new Color(state1, state1, 1.00f),	// Selected
-			new Color(state0, state0, 1.00f)	// Selected | Hovering
-		};
-		public static Color[] SurfaceOuterStateColor { get { return surfaceOuterStateColor; } }
-
-		public static Color[] surfaceTriangleStateColor =
-		{
-			new Color(state3, state3, 0.80f, 0.125f),	// None
-			new Color(state2, state2, 1.00f, 0.125f),	// Hovering
-			new Color(state1, state1, 1.00f, 0.125f),	// Selected
-			new Color(state0, state0, 1.00f, 0.125f)	// Selected | Hovering
-		};
-		public static Color[] SurfaceTriangleStateColor { get { return surfaceTriangleStateColor; } }
-
-		static Color[] invalidInnerStateColor =
-		{
-			new Color(state3, 0.0f, 0.0f),		// None
-			new Color(state2, 0.0f, 0.0f),		// Hovering
-			new Color(state1, 0.0f, 0.0f),		// Selected
-			new Color(state0, 0.0f, 0.0f)		// Selected | Hovering
-		};
-		public static Color[] InvalidInnerStateColor { get { return invalidInnerStateColor; } }
-
-
-//		public static readonly Color backgroundColor = new Color(19.0f / 255.0f, 22.0f / 255.0f, 28.0f / 255.0f, 1.0f);
-
-		public static Color gridColorW = new Color(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f);
-
-		const float large = 0.95f;
-		const float small = 0.35f;
-
-		public static Color gridColor1W = new Color(large * gridColorW.r, large * gridColorW.g, large * gridColorW.b, 1.00f * gridColorW.a);
-		public static Color gridColor2W = new Color(small * gridColorW.r, small * gridColorW.g, small * gridColorW.b, 0.65f * gridColorW.a);
-
-
-		public static readonly Color outerInvalidColor = Color.black;
-		public static readonly Color innerInvalidColor = Color.red;
-
-		static Color			selectedOutlines		= new Color(1.0f, 0.4f, 0, 1.0f);
-		public static Color		SelectedOutlines		{  get { return selectedOutlines; } }
-
-		static Color			hoverOutlines			= new Color(1.0f, 1.0f, 0, 1.0f);
-		public static Color		HoverOutlines			{  get { return hoverOutlines; } }
-
-		static Color			wireframeOutline		= new Color(0.0f, 0.0f, 0.0f, 64.0f / 255.0f);
-		public static Color		WireframeOutline		{  get { return wireframeOutline; } }
-
-		static Color			meshEdgeOutline			= new Color(0.0f, 0.0f, 0.0f, 1.0f);
-		public static Color		MeshEdgeOutline			{  get { return meshEdgeOutline; } }
-
-		static Color			boundsOutlines			= new Color(1.0f, 1.0f, 1.0f, 1.0f);
-		public static Color		BoundsOutlines			{  get { return boundsOutlines; } }
-
-		static Color			boundsEdgeHover			= new Color(1.0f, 1.0f, 1.0f, 1.0f);
-		public static Color		BoundsEdgeHover			{  get { return boundsEdgeHover; } }
-
-		static Color			shapeDrawingFill		= new Color(0.0f, 0.8f, 1, 1.00f);
-		public static Color		ShapeDrawingFill		{  get { return shapeDrawingFill; } }
-
-		static Color			rotateCirclePieOutline	= new Color(0.0f, 0.2f, 1, 1.00f);
-		public static Color		RotateCirclePieOutline	{  get { return rotateCirclePieOutline; } }
-		static Color			rotateCirclePieFill		= new Color(0.0f, 0.2f, 1, 0.1f);
-		public static Color		RotateCirclePieFill		{  get { return rotateCirclePieFill; } }
-		static Color			rotateCircleOutline		= new Color(0.0f, 0.8f, 1, 1.00f);
-
-		public static Color		RotateCircleOutline		{  get { return rotateCircleOutline; } }
-		static Color			rotateCircleHatches		= new Color(1.0f, 1.0f, 1, 1.00f);
-		public static Color		RotateCircleHatches		{  get { return rotateCircleHatches; } }
-
-		static Color			clipPlaneOutline		= new Color(0.0f, 0.2f, 1, 1.00f);
-		public static Color		ClipPlaneOutline		{  get { return clipPlaneOutline; } }
-		static Color			clipPlaneFill			= new Color(0.0f, 0.2f, 1, 0.1f);
-		public static Color		ClipPlaneFill			{  get { return clipPlaneFill; } }
-		static Color			clipLeftOverOutlines	= new Color(0.0f, 0.2f, 1, 1.0f);
-		public static Color		ClipLeftOverOutlines	{  get { return clipLeftOverOutlines; } }
-
-		static Color			shadowColor				= new Color(0.0f, 0.0f, 0.0f, 0.1f);
-		public static Color		ShadowColor				{  get { return shadowColor; } }
-
-		static Color			shadowOutlineColor		= new Color(0.0f, 0.0f, 0.0f, 0.5f);
-		public static Color		ShadowOutlineColor		{  get { return shadowOutlineColor; } }
-
-		static Color			snappedEdges			= new Color(125.0f/255.0f, 176.0f/255.0f, 250.0f/255.0f, 95.0f/255.0f);
-		public static Color		SnappedEdges			{  get { return snappedEdges; } }
-
-		static Color			guideLine				= new Color(125.0f/255.0f, 176.0f/255.0f, 250.0f/255.0f, 95.0f/255.0f);
-		public static Color		GuideLine				{  get { return guideLine; } }
-
-		static Color			background				= new Color(0.278431f, 0.278431f, 0.278431f, 0);
-		public static Color		Background				{  get { return background; } }
-
-		public static Color		XAxis					= Color.black;
-		public static Color		YAxis					= Color.black;
-		public static Color		ZAxis					= Color.black;
-
-		static Color			minOutlines2D			= new Color(0.3f, 0.00f, 0.55f, 1.0f);
-		static Color			maxOutlines2D			= new Color(0.0f, 0.80f, 0.60f, 1.0f);
-		static Color[]			outlines2D;
-
-
-		public static Color GetBrushOutlineColor(CSGBrush brush)
-		{
-			if (outlines2D == null)
-				Update();
-
-			var instanceID = Mathf.Abs(brush.GetInstanceIDCompat());
-			return outlines2D[instanceID % outlines2D.Length];
-		}
-
-		static bool ParseColor(string name, ref string prevname, Color defaultColor, ref Color resultColor)
-		{
-			var prefString	= EditorPrefs.GetString(name);
-			if (prevname == prefString)
-				return false;
-
-			prevname = prefString;
-			var split		= prefString.Split(';');
-			if (split.Length != 5)
-			{
-				resultColor = defaultColor;
-				return false;
-			}
+    internal static class ColorSettings
+    {
+        private static readonly float state0 = Mathf.Pow(1.00f, 2.2f);
+        private static readonly float state1 = Mathf.Pow(0.90f, 2.2f);
+        private static readonly float state2 = Mathf.Pow(0.60f, 2.2f);
+        private static readonly float state3 = Mathf.Pow(0.70f, 2.2f);
+
+        private static readonly Color[] pointInnerStateColor =
+        {
+            new Color(0.80f, state3, 0.00f), // None
+            new Color(1.00f, state2, 0.00f)  // Hovering
+          , new Color(1.0f, state1, 0.00f)   // Selected
+          , new Color(state0, state0, 0.00f) // Selected | Hovering
+        };
+
+        public static Color[] PointInnerStateColor
+        {
+            get => pointInnerStateColor;
+        }
+
+        private static readonly Color[] alignedCurveStateColor =
+        {
+            new Color(0.80f, state3, 0.00f), // None
+            new Color(1.00f, state2, 0.00f)  // Hovering
+          , new Color(1.0f, state1, 0.00f)   // Selected
+          , new Color(state0, state0, 0.00f) // Selected | Hovering
+        };
+
+        public static Color[] AlignedCurveStateColor
+        {
+            get => alignedCurveStateColor;
+        }
+
+        private static readonly Color[] brokenCurveStateColor =
+        {
+            new Color(0.80f, state3, 0.00f), // None
+            new Color(1.00f, state2, 0.00f)  // Hovering
+          , new Color(1.0f, state1, 0.00f)   // Selected
+          , new Color(state0, state0, 0.00f) // Selected | Hovering
+        };
+
+        public static Color[] BrokenCurveStateColor
+        {
+            get => brokenCurveStateColor;
+        }
+
+        private static readonly Color[] polygonInnerStateColor =
+        {
+            new Color(state3, 0.80f, state3), // None
+            new Color(state1, 1.00f, state1)  // Hovering
+          , new Color(state1, state1, 0.0f)   // Selected
+          , new Color(state0, state0, 0.0f)   // Selected | Hovering
+        };
+
+        public static Color[] PolygonInnerStateColor
+        {
+            get => polygonInnerStateColor;
+        }
+
+        public static readonly Color[] surfaceInnerStateColor =
+        {
+            new Color(state3, state3, 0.80f), // None
+            new Color(state2, state2, 1.00f)  // Hovering
+          , new Color(state1, state1, 1.00f)  // Selected
+          , new Color(state0, state0, 1.00f)  // Selected | Hovering
+        };
+
+        public static Color[] SurfaceInnerStateColor
+        {
+            get => surfaceInnerStateColor;
+        }
+
+        public static readonly Color[] surfaceOuterStateColor =
+        {
+            new Color(state3, state3, 0.80f), // None
+            new Color(state2, state2, 1.00f)  // Hovering// Hovering
+          , new Color(state1, state1, 1.00f)  // Selected
+          , new Color(state0, state0, 1.00f)  // Selected | Hovering
+        };
+
+        public static Color[] SurfaceOuterStateColor
+        {
+            get => surfaceOuterStateColor;
+        }
+
+        public static readonly Color[] surfaceTriangleStateColor =
+        {
+            new Color(state3, state3, 0.80f, 0.125f), // None
+            new Color(state2, state2, 1.00f, 0.125f)  // Hovering
+          , new Color(state1, state1, 1.00f, 0.125f)  // Selected
+          , new Color(state0, state0, 1.00f, 0.125f)  // Selected | Hovering
+        };
+
+        public static Color[] SurfaceTriangleStateColor
+        {
+            get => surfaceTriangleStateColor;
+        }
+
+        private static readonly Color[] invalidInnerStateColor =
+        {
+            new Color(state3, 0.0f, 0.0f), // None
+            new Color(state2, 0.0f, 0.0f)  // Hovering
+          , new Color(state1, 0.0f, 0.0f)  // Selected
+          , new Color(state0, 0.0f, 0.0f)  // Selected | Hovering
+        };
 
-			split[1] = split[1].Replace(',', '.');
-			split[2] = split[2].Replace(',', '.');
-			split[3] = split[3].Replace(',', '.');
-			split[4] = split[4].Replace(',', '.');
+        public static Color[] InvalidInnerStateColor
+        {
+            get => invalidInnerStateColor;
+        }
 
-			bool success;
-			float r, g, b, a;
-			success =  float.TryParse(split[1], NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture.NumberFormat, out r);
-			success &= float.TryParse(split[2], NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture.NumberFormat, out g);
-			success &= float.TryParse(split[3], NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture.NumberFormat, out b);
-			success &= float.TryParse(split[4], NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture.NumberFormat, out a);
+        public static Color GridColorW = new Color(255.0f / 255.0f, 255.0f / 255.0f, 255.0f / 255.0f);
 
-			if (success)
-			{
-				var newColor = new Color(r, g, b, a);
-				if (newColor == resultColor)
-					return false;
-				resultColor = newColor;
-				return true;
-			}
+        private const float LARGE = 0.95f;
+        private const float SMALL = 0.35f;
 
-			resultColor = defaultColor;
-			return false;
-		}
-
-
-		static readonly Color defaultGrid				= new Color(.5f, .5f, .5f, .4f);
-		static readonly Color defaultGuideline			= new Color(.5f, .5f, .5f, .2f);
-		static readonly Color defaultCenterAxis			= new Color(.8f, .8f, .8f, .93f);
-		static readonly Color defaultSelectedAxis		= new Color(246f / 255f, 242f / 255f, 50f / 255f, .89f);
-		static readonly Color defaultSelectionOutline   = new Color(255f / 255f, 102f / 255f, 0f / 255f, 0.0f);
-		static readonly Color defaultBackground			= new Color(0.278431f, 0.278431f, 0.278431f, 0);
-		static readonly Color defaultWireframe			= new Color(0.0f, 0.0f, 0.0f, 0.5f);
-		static readonly Color defaultWireframeOverlay	= new Color(0.0f, 0.0f, 0.0f, 0.25f);
-		static readonly Color defaultWireframeActive	= new Color(125.0f/255.0f, 176.0f/255.0f, 250.0f/255.0f, 95.0f/255.0f);
-		static readonly Color defaultWireframeSelected	= new Color(94.0f/255.0f, 119.0f/255.0f, 155.0f/255.0f, 0.25f);
-		static readonly Color defaultXAxis				= new Color(154f / 255, 243f / 255, 72f / 255, .93f);
-		static readonly Color defaultYAxis				= new Color(154f / 255, 243f / 255, 72f / 255, .93f);
-		static readonly Color defaultZAxis				= new Color(154f / 255, 243f / 255, 72f / 255, .93f);
+        public static Color GridColor1W = new Color(LARGE * GridColorW.r, LARGE * GridColorW.g, LARGE * GridColorW.b, 1.00f * GridColorW.a);
+        public static Color GridColor2W = new Color(SMALL * GridColorW.r, SMALL * GridColorW.g, SMALL * GridColorW.b, 0.65f * GridColorW.a);
 
-		static Color CopyHueSaturation(Color src1, Color src2)
-		{
-			float h1, s1, v1;
-			Color.RGBToHSV(src1, out h1, out s1, out v1);
+        public static readonly Color outerInvalidColor = Color.black;
+        public static readonly Color innerInvalidColor = Color.red;
 
-			float h2, s2, v2;
-			Color.RGBToHSV(src2, out h2, out s2, out v2);
-
-			var dstColor = Color.HSVToRGB(h2, (s1 + s2) * 0.5f, v2);
-			dstColor.a = src1.a;// (src1.a + src2.a) * 0.5f;
-
-			return dstColor;
-		}
-
-		static Color CopyValue(Color src1, Color src2)
-		{
-			float h1, s1, v1;
-			Color.RGBToHSV(src1, out h1, out s1, out v1);
+        private static Color m_SelectedOutlines = new Color(1.0f, 0.4f, 0, 1.0f);
 
-			float h2, s2, v2;
-			Color.RGBToHSV(src2, out h2, out s2, out v2);
-
-			var dstColor = Color.HSVToRGB(h2, s2, v1);
-			dstColor.a = src2.a;// (src1.a + src2.a) * 0.5f;
+        public static Color SelectedOutlines
+        {
+            get => m_SelectedOutlines;
+        }
 
-			return dstColor;
-		}
+        private static readonly Color hoverOutlines = new Color(1.0f, 1.0f, 0, 1.0f);
 
-		static Color InvertHue(Color src)
-		{
-			float h1, s1, v1;
-			Color.RGBToHSV(src, out h1, out s1, out v1);
+        public static Color HoverOutlines
+        {
+            get => hoverOutlines;
+        }
 
-			var dstColor = Color.HSVToRGB(1-h1, s1, v1);
-			dstColor.a = src.a;
+        private static Color m_WireframeOutline = new Color(0.0f, 0.0f, 0.0f, 64.0f / 255.0f);
 
-			return dstColor;
-		}
+        public static Color WireframeOutline
+        {
+            get => m_WireframeOutline;
+        }
 
+        private static Color m_MeshEdgeOutline = new Color(0.0f, 0.0f, 0.0f, 1.0f);
 
-		static string textBackground;
+        public static Color MeshEdgeOutline
+        {
+            get => m_MeshEdgeOutline;
+        }
 
-		static string textGuideline;
-		static string textGrid;
+        private static Color m_BoundsOutlines = new Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-		static string textCenterAxis;
-		static string textSelectedAxis;
-		static string textSelectionOutline;
+        public static Color BoundsOutlines
+        {
+            get => m_BoundsOutlines;
+        }
 
-		static string textWireframe;
-		static string textWireframeOverlay;
-		static string textWireframeActive;
-		static string textWireframeSelected;
+        private static Color m_BoundsEdgeHover = new Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-		static string textXAxis;
-		static string textYAxis;
-		static string textZAxis;
+        public static Color BoundsEdgeHover
+        {
+            get => m_BoundsEdgeHover;
+        }
 
+        private static Color m_ShapeDrawingFill = new Color(0.0f, 0.8f, 1, 1.00f);
 
-		static Color parsedBackground = Color.black;
+        public static Color ShapeDrawingFill
+        {
+            get => m_ShapeDrawingFill;
+        }
 
-		static Color parsedGuideline = Color.black;
-		static Color parsedGrid = Color.black;
+        private static Color m_RotateCirclePieOutline = new Color(0.0f, 0.2f, 1, 1.00f);
 
-		static Color parsedCenterAxis = Color.black;
-		static Color parsedSelectedAxis = Color.black;
-		static Color parsedSelectionOutline = Color.black;
+        public static Color RotateCirclePieOutline
+        {
+            get => m_RotateCirclePieOutline;
+        }
 
-		static Color parsedWireframe = Color.black;
-		static Color parsedWireframeOverlay = Color.black;
-		static Color parsedWireframeActive = Color.black;
-		static Color parsedWireframeSelected = Color.black;
+        private static Color m_RotateCirclePieFill = new Color(0.0f, 0.2f, 1, 0.1f);
 
-		static Color parsedXAxis = Color.black;
-		static Color parsedYAxis = Color.black;
-		static Color parsedZAxis = Color.black;
+        public static Color RotateCirclePieFill
+        {
+            get => m_RotateCirclePieFill;
+        }
 
-		static Shader sceneViewShader;
-		public static Shader GetWireframeShader()
-		{
-			if (!sceneViewShader)
-				Update();
-			return sceneViewShader;
-		}
+        private static Color m_RotateCircleOutline = new Color(0.0f, 0.8f, 1, 1.00f);
 
-		public static Color Brighten(Color color, float brightScale)
-		{
-			float h, s, v;
-			Color.RGBToHSV(color, out h, out s, out v);
+        public static Color RotateCircleOutline
+        {
+            get => m_RotateCircleOutline;
+        }
 
-			v *= brightScale;
+        private static Color m_RotateCircleHatches = new Color(1.0f, 1.0f, 1, 1.00f);
 
-			var outColor = Color.HSVToRGB(h, s, v);
-			outColor.a = color.a;
-			return outColor;
-		}
+        public static Color RotateCircleHatches
+        {
+            get => m_RotateCircleHatches;
+        }
 
+        private static Color m_ClipPlaneOutline = new Color(0.0f, 0.2f, 1, 1.00f);
 
-		public static bool isInitialized = false;
+        public static Color ClipPlaneOutline
+        {
+            get => m_ClipPlaneOutline;
+        }
 
-		public static void Update()
-		{
-			isInitialized = true;
-			if (!sceneViewShader)
-			{
-				sceneViewShader		= Shader.Find("Hidden/CSG/internal/Background");
-			}
+        private static Color m_ClipPlaneFill = new Color(0.0f, 0.2f, 1, 0.1f);
 
-			var modified = false;
-			modified = ParseColor("Scene/Background",			ref textBackground,			defaultBackground,			ref parsedBackground		) || modified;
+        public static Color ClipPlaneFill
+        {
+            get => m_ClipPlaneFill;
+        }
 
-			modified = ParseColor("Scene/Guide Line",			ref textGuideline,			defaultGuideline,			ref parsedGuideline			) || modified;
-			modified = ParseColor("Scene/Grid",					ref textGrid,				defaultGrid,				ref parsedGrid				) || modified;
-
-			modified = ParseColor("Scene/Center Axis",			ref textCenterAxis,			defaultCenterAxis,			ref parsedCenterAxis		) || modified;
-			modified = ParseColor("Scene/Selected Axis",		ref textSelectedAxis,		defaultSelectedAxis,		ref parsedSelectedAxis		) || modified;
-			modified = ParseColor("Scene/Selection Outline",	ref textSelectionOutline,	defaultSelectionOutline,	ref parsedSelectionOutline	) || modified;
-
-			modified = ParseColor("Scene/Wireframe",			ref textWireframe,			defaultWireframe,			ref parsedWireframe			) || modified;
-			modified = ParseColor("Scene/Wireframe Overlay",	ref textWireframeOverlay,	defaultWireframeOverlay,	ref parsedWireframeOverlay	) || modified;
-			modified = ParseColor("Scene/Wireframe Active",		ref textWireframeActive,	defaultWireframeActive,		ref parsedWireframeActive	) || modified;
-			modified = ParseColor("Scene/Wireframe Selected",	ref textWireframeSelected,	defaultWireframeSelected,	ref parsedWireframeSelected	) || modified;
+        private static Color m_ClipLeftOverOutlines = new Color(0.0f, 0.2f, 1, 1.0f);
 
-			modified = ParseColor("Scene/X Axis",				ref textXAxis,				defaultXAxis,				ref parsedXAxis				) || modified;
-			modified = ParseColor("Scene/Z Axis",				ref textZAxis,				defaultZAxis,				ref parsedZAxis				) || modified;
-			modified = ParseColor("Scene/Y Axis",				ref textYAxis,				defaultYAxis,				ref parsedYAxis				) || modified;
+        public static Color ClipLeftOverOutlines
+        {
+            get => m_ClipLeftOverOutlines;
+        }
 
-			if (!modified)
-			{
-				return;
-			}
+        private static readonly Color shadowColor = new Color(0.0f, 0.0f, 0.0f, 0.1f);
 
-			background				= parsedBackground;
-			background.a			= 1.0f;
+        public static Color ShadowColor
+        {
+            get => shadowColor;
+        }
 
-			wireframeOutline		= parsedWireframeActive;
+        private static readonly Color shadowOutlineColor = new Color(0.0f, 0.0f, 0.0f, 0.5f);
 
-			clipPlaneOutline		= parsedWireframe;
-			clipPlaneFill			= parsedWireframeOverlay;		clipPlaneFill.a *= 0.5f;
-			clipLeftOverOutlines	= parsedWireframe;
+        public static Color ShadowOutlineColor
+        {
+            get => shadowOutlineColor;
+        }
 
-			rotateCirclePieOutline	= parsedWireframe;
-			rotateCirclePieFill		= parsedWireframeOverlay;
-			rotateCircleOutline		= parsedWireframeActive;		rotateCircleOutline.a = Mathf.Clamp01(rotateCircleOutline.a * 2.0f);
-			rotateCircleHatches		= parsedCenterAxis;				rotateCircleHatches.a = Mathf.Clamp01(rotateCircleHatches.a * 2.0f);
+        private static Color m_SnappedEdges = new Color(125.0f / 255.0f, 176.0f / 255.0f, 250.0f / 255.0f, 95.0f / 255.0f);
 
-			shapeDrawingFill		= parsedWireframeOverlay;
+        public static Color SnappedEdges
+        {
+            get => m_SnappedEdges;
+        }
 
+        private static Color m_GuideLine = new Color(125.0f / 255.0f, 176.0f / 255.0f, 250.0f / 255.0f, 95.0f / 255.0f);
 
-			var preSelectionColor = new Color(201f / 255, 200f / 255f, 144f / 255f, 0.89f);// Handles.preselectionColor;
+        public static Color GuideLine
+        {
+            get => m_GuideLine;
+        }
 
-			selectedOutlines		= parsedSelectionOutline;		selectedOutlines.a = Mathf.Max(0.5f, Mathf.Clamp01(selectedOutlines.a * 3.0f));
-			boundsOutlines			= parsedWireframeActive;		boundsOutlines.a = Mathf.Clamp01(boundsOutlines.a * 2.5f);
-			boundsEdgeHover			= parsedSelectedAxis;			boundsEdgeHover.a = Mathf.Clamp01(boundsEdgeHover.a * 2.5f);
-			snappedEdges			= parsedCenterAxis;				snappedEdges.a = Mathf.Clamp01(snappedEdges.a * 2.5f);
+        private static Color m_Background = new Color(0.278431f, 0.278431f, 0.278431f, 0);
 
-			meshEdgeOutline			= parsedBackground;				meshEdgeOutline.a = Mathf.Max(0.9f, meshEdgeOutline.a);
+        public static Color Background
+        {
+            get => m_Background;
+        }
 
-			guideLine				= parsedGuideline;
+        private static Color m_MinOutlines2D = new Color(0.3f, 0.00f, 0.55f, 1.0f);
+        private static Color m_MaxOutlines2D = new Color(0.0f, 0.80f, 0.60f, 1.0f);
+        private static Color[] m_Outlines2D;
 
-			XAxis = parsedXAxis;
-			YAxis = parsedYAxis;
-			ZAxis = parsedZAxis;
+        public static Color GetBrushOutlineColor(CSGBrush brush)
+        {
+            if(m_Outlines2D == null)
+            {
+                Update();
+            }
 
-			pointInnerStateColor[0] = parsedWireframeSelected;		// None
-			pointInnerStateColor[1] = preSelectionColor;			// Hovering
-			pointInnerStateColor[2] = selectedOutlines;				// Selected
-			pointInnerStateColor[3] = boundsEdgeHover;				// Hovering + Selected
+            int instanceID = Mathf.Abs(brush.GetIntegerID());
 
-			alignedCurveStateColor[0] = pointInnerStateColor[0];
-			alignedCurveStateColor[1] = pointInnerStateColor[1];
-			alignedCurveStateColor[2] = pointInnerStateColor[2];
-			alignedCurveStateColor[3] = pointInnerStateColor[3];
+            return m_Outlines2D[instanceID % m_Outlines2D.Length];
+        }
 
-			brokenCurveStateColor[0] = pointInnerStateColor[0];
-			brokenCurveStateColor[1] = pointInnerStateColor[1];
-			brokenCurveStateColor[2] = pointInnerStateColor[2];
-			brokenCurveStateColor[3] = pointInnerStateColor[3];
+        private static bool ParseColor(string name, ref string prevname, Color defaultColor, ref Color resultColor)
+        {
+            string prefString = EditorPrefs.GetString(name);
 
-			for (int i = 0; i < 4; i++)
-			{
-				alignedCurveStateColor[i].a = 1.0f;
-				brokenCurveStateColor[i].a = 1.0f;
-				pointInnerStateColor[i].a = 1.0f;
+            if(prevname == prefString)
+            {
+                return false;
+            }
 
-				invalidInnerStateColor[i] = CopyHueSaturation(pointInnerStateColor[i], innerInvalidColor);
-				alignedCurveStateColor[i] = CopyHueSaturation(pointInnerStateColor[i], parsedYAxis);
-				brokenCurveStateColor[i] = CopyHueSaturation(pointInnerStateColor[i], parsedXAxis);
+            prevname = prefString;
+            string[] split = prefString.Split(';');
 
-			}
+            if(split.Length != 5)
+            {
+                resultColor = defaultColor;
 
-			surfaceTriangleStateColor[0] = parsedWireframeOverlay;	parsedWireframeOverlay.a *= 0.5f;
-			surfaceTriangleStateColor[1] = parsedWireframeOverlay;	parsedWireframeOverlay.a *= 0.25f;
-			surfaceTriangleStateColor[2] = parsedWireframeOverlay;	parsedWireframeOverlay.a *= 0.35f;
-			surfaceTriangleStateColor[3] = parsedWireframeOverlay;	parsedWireframeOverlay.a *= 0.25f;
+                return false;
+            }
 
-			surfaceInnerStateColor[0] = pointInnerStateColor[0] * 0.75f;
-			surfaceInnerStateColor[1] = pointInnerStateColor[1] * 0.75f;
-			surfaceInnerStateColor[2] = pointInnerStateColor[2] * 0.75f;
-			surfaceInnerStateColor[3] = pointInnerStateColor[3] * 0.75f;
-			surfaceInnerStateColor[0].a = 0.5f;
-			surfaceInnerStateColor[1].a = 0.5f;
-			surfaceOuterStateColor[2].a = 1.0f;
-			surfaceOuterStateColor[3].a = 1.0f;
+            split[1] = split[1].Replace(',', '.');
+            split[2] = split[2].Replace(',', '.');
+            split[3] = split[3].Replace(',', '.');
+            split[4] = split[4].Replace(',', '.');
 
+            bool success = float.TryParse(split[1], NumberStyles.Float, CultureInfo.InvariantCulture.NumberFormat, out float r);
 
-			surfaceOuterStateColor[0] = pointInnerStateColor[0];
-			surfaceOuterStateColor[1] = pointInnerStateColor[1];
-			surfaceOuterStateColor[2] = pointInnerStateColor[2];
-			surfaceOuterStateColor[3] = pointInnerStateColor[3];
-			surfaceOuterStateColor[0].a = 0.5f;
-			surfaceOuterStateColor[1].a = 0.5f;
-			surfaceOuterStateColor[2].a = 1.0f;
-			surfaceOuterStateColor[3].a = 1.0f;
+            success &= float.TryParse(split[2], NumberStyles.Float, CultureInfo.InvariantCulture.NumberFormat, out float g);
+            success &= float.TryParse(split[3], NumberStyles.Float, CultureInfo.InvariantCulture.NumberFormat, out float b);
+            success &= float.TryParse(split[4], NumberStyles.Float, CultureInfo.InvariantCulture.NumberFormat, out float a);
 
-			polygonInnerStateColor[0] = CopyHueSaturation(pointInnerStateColor[0], parsedYAxis);
-			polygonInnerStateColor[1] = CopyHueSaturation(pointInnerStateColor[1], parsedYAxis);
-			polygonInnerStateColor[2] = CopyHueSaturation(pointInnerStateColor[2], parsedYAxis);
-			polygonInnerStateColor[3] = CopyHueSaturation(pointInnerStateColor[3], parsedYAxis);
-			for (int i = 0; i < 4; i++) polygonInnerStateColor[i].a = Mathf.Clamp01(polygonInnerStateColor[i].a * 2.5f);
+            if(success)
+            {
+                Color newColor = new Color(r, g, b, a);
 
+                if(newColor == resultColor)
+                {
+                    return false;
+                }
 
-			var invertedColor1 = InvertHue(parsedWireframeActive);
-			var invertedColor2 = InvertHue(parsedCenterAxis);
+                resultColor = newColor;
 
-			minOutlines2D	= CopyValue(pointInnerStateColor[0], invertedColor1);
-			maxOutlines2D	= CopyValue(pointInnerStateColor[0], invertedColor2);
+                return true;
+            }
 
-			outlines2D = new Color[13];
-            var cache = UnityEngine.Random.state; //cache current state to avoid throwing off global rng.
+            resultColor = defaultColor;
+
+            return false;
+        }
+
+        private static readonly Color defaultGrid = new Color(.5f, .5f, .5f, .4f);
+        private static readonly Color defaultGuideline = new Color(.5f, .5f, .5f, .2f);
+        private static readonly Color defaultCenterAxis = new Color(.8f, .8f, .8f, .93f);
+        private static readonly Color defaultSelectedAxis = new Color(246f / 255f, 242f / 255f, 50f / 255f, .89f);
+        private static readonly Color defaultSelectionOutline = new Color(255f / 255f, 102f / 255f, 0f / 255f, 0.0f);
+        private static readonly Color defaultBackground = new Color(0.278431f, 0.278431f, 0.278431f, 0);
+        private static readonly Color defaultWireframe = new Color(0.0f, 0.0f, 0.0f, 0.5f);
+        private static readonly Color defaultWireframeOverlay = new Color(0.0f, 0.0f, 0.0f, 0.25f);
+        private static readonly Color defaultWireframeActive = new Color(125.0f / 255.0f, 176.0f / 255.0f, 250.0f / 255.0f, 95.0f / 255.0f);
+        private static readonly Color defaultWireframeSelected = new Color(94.0f / 255.0f, 119.0f / 255.0f, 155.0f / 255.0f, 0.25f);
+
+        private static readonly Color defaultXAxis = new Color(154f / 255, 243f / 255, 72f / 255, .93f);
+        private static readonly Color defaultYAxis = new Color(154f / 255, 243f / 255, 72f / 255, .93f);
+        private static readonly Color defaultZAxis = new Color(154f / 255, 243f / 255, 72f / 255, .93f);
+
+        private static Color CopyHueSaturation(Color src1, Color src2)
+        {
+            Color.RGBToHSV(src1, out float _, out float s1, out float _);
+            Color.RGBToHSV(src2, out float h2, out float s2, out float v2);
+
+            Color dstColor = Color.HSVToRGB(h2, (s1 + s2) * 0.5f, v2);
+            dstColor.a = src1.a;
+
+            return dstColor;
+        }
+
+        private static Color CopyValue(Color src1, Color src2)
+        {
+            Color.RGBToHSV(src1, out float _, out float _, out float v1);
+            Color.RGBToHSV(src2, out float h2, out float s2, out float _);
+
+            Color dstColor = Color.HSVToRGB(h2, s2, v1);
+            dstColor.a = src2.a;
+
+            return dstColor;
+        }
+
+        private static Color InvertHue(Color src)
+        {
+            Color.RGBToHSV(src, out float h1, out float s1, out float v1);
+
+            Color dstColor = Color.HSVToRGB(1 - h1, s1, v1);
+            dstColor.a = src.a;
+
+            return dstColor;
+        }
+
+        private static string m_TextBackground;
+
+        private static string m_TextGuideline;
+        private static string m_TextGrid;
+
+        private static string m_TextCenterAxis;
+        private static string m_TextSelectedAxis;
+        private static string m_TextSelectionOutline;
+
+        private static string m_TextWireframe;
+        private static string m_TextWireframeOverlay;
+        private static string m_TextWireframeActive;
+        private static string m_TextWireframeSelected;
+
+        private static string m_TextXAxis;
+        private static string m_TextYAxis;
+        private static string m_TextZAxis;
+
+        private static Color m_ParsedBackground = Color.black;
+
+        private static Color m_ParsedGuideline = Color.black;
+        private static Color m_ParsedGrid = Color.black;
+
+        private static Color m_ParsedCenterAxis = Color.black;
+        private static Color m_ParsedSelectedAxis = Color.black;
+        private static Color m_ParsedSelectionOutline = Color.black;
+
+        private static Color m_ParsedWireframe = Color.black;
+        private static Color m_ParsedWireframeOverlay = Color.black;
+        private static Color m_ParsedWireframeActive = Color.black;
+        private static Color m_ParsedWireframeSelected = Color.black;
+
+        private static Color m_ParsedXAxis = Color.black;
+        private static Color m_ParsedYAxis = Color.black;
+        private static Color m_ParsedZAxis = Color.black;
+
+        private static Shader m_SceneViewShader;
+
+        public static Shader GetWireframeShader()
+        {
+            if(!m_SceneViewShader)
+            {
+                Update();
+            }
+
+            return m_SceneViewShader;
+        }
+
+        public static Color Brighten(Color color, float brightScale)
+        {
+            Color.RGBToHSV(color, out float h, out float s, out float v);
+
+            v *= brightScale;
+
+            Color outColor = Color.HSVToRGB(h, s, v);
+            outColor.a = color.a;
+
+            return outColor;
+        }
+
+        public static bool IsInitialized;
+
+        public static void Update()
+        {
+            IsInitialized = true;
+
+            if(!m_SceneViewShader)
+            {
+                m_SceneViewShader = Shader.Find("Hidden/CSG/internal/Background");
+            }
+
+            bool modified = false;
+
+            modified = ParseColor("Scene/Background", ref m_TextBackground, defaultBackground, ref m_ParsedBackground) || modified;
+            modified = ParseColor("Scene/Guide Line", ref m_TextGuideline, defaultGuideline, ref m_ParsedGuideline) || modified;
+            modified = ParseColor("Scene/Grid", ref m_TextGrid, defaultGrid, ref m_ParsedGrid) || modified;
+            modified = ParseColor("Scene/Center Axis", ref m_TextCenterAxis, defaultCenterAxis, ref m_ParsedCenterAxis) || modified;
+            modified = ParseColor("Scene/Selected Axis", ref m_TextSelectedAxis, defaultSelectedAxis, ref m_ParsedSelectedAxis) || modified;
+            modified = ParseColor("Scene/Selection Outline", ref m_TextSelectionOutline, defaultSelectionOutline, ref m_ParsedSelectionOutline) || modified;
+            modified = ParseColor("Scene/Wireframe", ref m_TextWireframe, defaultWireframe, ref m_ParsedWireframe) || modified;
+            modified = ParseColor("Scene/Wireframe Overlay", ref m_TextWireframeOverlay, defaultWireframeOverlay, ref m_ParsedWireframeOverlay) || modified;
+            modified = ParseColor("Scene/Wireframe Active", ref m_TextWireframeActive, defaultWireframeActive, ref m_ParsedWireframeActive) || modified;
+            modified = ParseColor("Scene/Wireframe Selected", ref m_TextWireframeSelected, defaultWireframeSelected, ref m_ParsedWireframeSelected) || modified;
+            modified = ParseColor("Scene/X Axis", ref m_TextXAxis, defaultXAxis, ref m_ParsedXAxis) || modified;
+            modified = ParseColor("Scene/Z Axis", ref m_TextZAxis, defaultZAxis, ref m_ParsedZAxis) || modified;
+            modified = ParseColor("Scene/Y Axis", ref m_TextYAxis, defaultYAxis, ref m_ParsedYAxis) || modified;
+
+            if(!modified)
+            {
+                return;
+            }
+
+            m_Background   = m_ParsedBackground;
+            m_Background.a = 1.0f;
+
+            m_WireframeOutline = m_ParsedWireframeActive;
+
+            m_ClipPlaneOutline     =  m_ParsedWireframe;
+            m_ClipPlaneFill        =  m_ParsedWireframeOverlay;
+            m_ClipPlaneFill.a      *= 0.5f;
+            m_ClipLeftOverOutlines =  m_ParsedWireframe;
+
+            m_RotateCirclePieOutline = m_ParsedWireframe;
+            m_RotateCirclePieFill    = m_ParsedWireframeOverlay;
+            m_RotateCircleOutline    = m_ParsedWireframeActive;
+            m_RotateCircleOutline.a  = Mathf.Clamp01(m_RotateCircleOutline.a * 2.0f);
+            m_RotateCircleHatches    = m_ParsedCenterAxis;
+            m_RotateCircleHatches.a  = Mathf.Clamp01(m_RotateCircleHatches.a * 2.0f);
+
+            m_ShapeDrawingFill = m_ParsedWireframeOverlay;
+
+            Color preSelectionColor = new Color(201f / 255, 200f / 255f, 144f / 255f, 0.89f);
+
+            m_SelectedOutlines   = m_ParsedSelectionOutline;
+            m_SelectedOutlines.a = Mathf.Max(0.5f, Mathf.Clamp01(m_SelectedOutlines.a * 3.0f));
+            m_BoundsOutlines     = m_ParsedWireframeActive;
+            m_BoundsOutlines.a   = Mathf.Clamp01(m_BoundsOutlines.a * 2.5f);
+            m_BoundsEdgeHover    = m_ParsedSelectedAxis;
+            m_BoundsEdgeHover.a  = Mathf.Clamp01(m_BoundsEdgeHover.a * 2.5f);
+            m_SnappedEdges       = m_ParsedCenterAxis;
+            m_SnappedEdges.a     = Mathf.Clamp01(m_SnappedEdges.a * 2.5f);
+
+            m_MeshEdgeOutline   = m_ParsedBackground;
+            m_MeshEdgeOutline.a = Mathf.Max(0.9f, m_MeshEdgeOutline.a);
+
+            m_GuideLine = m_ParsedGuideline;
+
+            pointInnerStateColor[0] = m_ParsedWireframeSelected; // None
+            pointInnerStateColor[1] = preSelectionColor;         // Hovering
+            pointInnerStateColor[2] = m_SelectedOutlines;        // Selected
+            pointInnerStateColor[3] = m_BoundsEdgeHover;         // Hovering + Selected
+
+            alignedCurveStateColor[0] = pointInnerStateColor[0];
+            alignedCurveStateColor[1] = pointInnerStateColor[1];
+            alignedCurveStateColor[2] = pointInnerStateColor[2];
+            alignedCurveStateColor[3] = pointInnerStateColor[3];
+
+            brokenCurveStateColor[0] = pointInnerStateColor[0];
+            brokenCurveStateColor[1] = pointInnerStateColor[1];
+            brokenCurveStateColor[2] = pointInnerStateColor[2];
+            brokenCurveStateColor[3] = pointInnerStateColor[3];
+
+            for(int i = 0; i < 4; i++)
+            {
+                alignedCurveStateColor[i].a = 1.0f;
+                brokenCurveStateColor[i].a  = 1.0f;
+                pointInnerStateColor[i].a   = 1.0f;
+
+                invalidInnerStateColor[i] = CopyHueSaturation(pointInnerStateColor[i], innerInvalidColor);
+                alignedCurveStateColor[i] = CopyHueSaturation(pointInnerStateColor[i], m_ParsedYAxis);
+                brokenCurveStateColor[i]  = CopyHueSaturation(pointInnerStateColor[i], m_ParsedXAxis);
+            }
+
+            surfaceTriangleStateColor[0] =  m_ParsedWireframeOverlay;
+            m_ParsedWireframeOverlay.a   *= 0.5f;
+            surfaceTriangleStateColor[1] =  m_ParsedWireframeOverlay;
+            m_ParsedWireframeOverlay.a   *= 0.25f;
+            surfaceTriangleStateColor[2] =  m_ParsedWireframeOverlay;
+            m_ParsedWireframeOverlay.a   *= 0.35f;
+            surfaceTriangleStateColor[3] =  m_ParsedWireframeOverlay;
+            m_ParsedWireframeOverlay.a   *= 0.25f;
+
+            surfaceInnerStateColor[0]   = pointInnerStateColor[0] * 0.75f;
+            surfaceInnerStateColor[1]   = pointInnerStateColor[1] * 0.75f;
+            surfaceInnerStateColor[2]   = pointInnerStateColor[2] * 0.75f;
+            surfaceInnerStateColor[3]   = pointInnerStateColor[3] * 0.75f;
+            surfaceInnerStateColor[0].a = 0.5f;
+            surfaceInnerStateColor[1].a = 0.5f;
+            surfaceOuterStateColor[2].a = 1.0f;
+            surfaceOuterStateColor[3].a = 1.0f;
+
+            surfaceOuterStateColor[0]   = pointInnerStateColor[0];
+            surfaceOuterStateColor[1]   = pointInnerStateColor[1];
+            surfaceOuterStateColor[2]   = pointInnerStateColor[2];
+            surfaceOuterStateColor[3]   = pointInnerStateColor[3];
+            surfaceOuterStateColor[0].a = 0.5f;
+            surfaceOuterStateColor[1].a = 0.5f;
+            surfaceOuterStateColor[2].a = 1.0f;
+            surfaceOuterStateColor[3].a = 1.0f;
+
+            polygonInnerStateColor[0] = CopyHueSaturation(pointInnerStateColor[0], m_ParsedYAxis);
+            polygonInnerStateColor[1] = CopyHueSaturation(pointInnerStateColor[1], m_ParsedYAxis);
+            polygonInnerStateColor[2] = CopyHueSaturation(pointInnerStateColor[2], m_ParsedYAxis);
+            polygonInnerStateColor[3] = CopyHueSaturation(pointInnerStateColor[3], m_ParsedYAxis);
+
+            for(int i = 0; i < 4; i++)
+            {
+                polygonInnerStateColor[i].a = Mathf.Clamp01(polygonInnerStateColor[i].a * 2.5f);
+            }
+
+            Color invertedColor1 = InvertHue(m_ParsedWireframeActive);
+            Color invertedColor2 = InvertHue(m_ParsedCenterAxis);
+
+            m_MinOutlines2D = CopyValue(pointInnerStateColor[0], invertedColor1);
+            m_MaxOutlines2D = CopyValue(pointInnerStateColor[0], invertedColor2);
+
+            m_Outlines2D = new Color[13];
+            Random.State cache = Random.state; //cache current state to avoid throwing off global rng.
+
             try
             {
-                UnityEngine.Random.InitState(0);
-                for (int i = 0; i < outlines2D.Length; i++)
+                Random.InitState(0);
+
+                for(int i = 0; i < m_Outlines2D.Length; i++)
                 {
-                    var color = new Color(
-                                Mathf.Lerp(minOutlines2D.r, maxOutlines2D.r, UnityEngine.Random.value),
-                                Mathf.Lerp(minOutlines2D.g, maxOutlines2D.g, UnityEngine.Random.value),
-                                Mathf.Lerp(minOutlines2D.b, maxOutlines2D.b, UnityEngine.Random.value),
-                                1.0f
-                            );
-                    float h, s, v;
-                    Color.RGBToHSV(color, out h, out s, out v);
+                    Color color = new Color(
+                        Mathf.Lerp(m_MinOutlines2D.r, m_MaxOutlines2D.r, Random.value),
+                        Mathf.Lerp(m_MinOutlines2D.g, m_MaxOutlines2D.g, Random.value),
+                        Mathf.Lerp(m_MinOutlines2D.b, m_MaxOutlines2D.b, Random.value),
+                        1.0f
+                    );
+
+                    Color.RGBToHSV(color, out float h, out float s, out float v);
 
                     s *= 0.5f;
                     v *= 1.1f;
 
-                    outlines2D[i] = Color.HSVToRGB(h, s, v);
+                    m_Outlines2D[i] = Color.HSVToRGB(h, s, v);
                 }
             }
             finally
             {
-                UnityEngine.Random.state = cache;
+                Random.state = cache;
             }
 
-            gridColorW	= parsedCenterAxis;
+            GridColorW = m_ParsedCenterAxis;
 
-			parsedGrid.a = Mathf.Max(0.85f, parsedGrid.a);
+            m_ParsedGrid.a = Mathf.Max(0.85f, m_ParsedGrid.a);
 
-			gridColor1W = parsedGrid;
-			gridColor2W = parsedGuideline;
-		}
-
-	}
+            GridColor1W = m_ParsedGrid;
+            GridColor2W = m_ParsedGuideline;
+        }
+    }
 }
-

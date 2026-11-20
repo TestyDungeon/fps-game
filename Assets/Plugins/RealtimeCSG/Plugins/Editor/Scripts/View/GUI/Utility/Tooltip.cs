@@ -1,41 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-
-namespace RealtimeCSG
+﻿namespace RealtimeCSG
 {
-	internal class ToolTip
-	{
-		public ToolTip(string _title, string _contents) { title = _title; contents = _contents; }
-		public ToolTip(string _title, string _contents, KeyEvent _key) { title = _title; contents = _contents; key = _key; }
-		public string   title;
-		public string   contents;
-		public KeyEvent key;
+    internal class ToolTip
+    {
+        public ToolTip(string title, string contents)
+        {
+            this.title    = title;
+            this.contents = contents;
+        }
 
-		public string TitleString()
-		{
-			return string.Format("<size=13><color=white><b>{0}</b></color></size>", title);
-		}
+        public ToolTip(string title, string contents, KeyEvent key)
+        {
+            this.title    = title;
+            this.contents = contents;
+            this.key      = key;
+        }
 
-		public string ContentsString()
-		{
-			return string.Format("<size=12><color=white>{0}</color></size>", contents);
-		}
+        public readonly string title;
+        public readonly string contents;
+        public readonly KeyEvent key;
 
-		public string KeyString()
-		{
-			if (key == null || key.IsEmpty())
-				return string.Empty;
+        public string TitleString() => $"<size=13><color=white><b>{title}</b></color></size>";
+        public string ContentsString() => $"<size=12><color=white>{contents}</color></size>";
 
-			return string.Format("<color=white><size=11><b>hotkey:</b> <i>{0}</i></size></color>", key.ToString());
-		}
+        public string KeyString()
+        {
+            if(key == null || key.IsEmpty())
+            {
+                return string.Empty;
+            }
 
-		public override string ToString()
-		{
-			return TitleString() + ContentsString() + KeyString();
-		}
-	}
+            return $"<color=white><size=11><b>hotkey:</b> <i>{key}</i></size></color>";
+        }
+
+        public override string ToString() => TitleString() + ContentsString() + KeyString();
+    }
 }

@@ -1,256 +1,284 @@
-﻿#pragma warning disable 0619
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using InternalRealtimeCSG;
-using UnityEngine.SceneManagement;
-using System;
+using RealtimeCSG.Components;
 
 namespace RealtimeCSG
 {
-	internal static class ParentNodeDataExtensions
-	{
-		// returns true on success
-		internal static bool RemoveNode(HierarchyItem node, ParentNodeData top)
-		{
-			if (node.Parent == null)
-			{
-				return false;
-			}
+    internal static class ParentNodeDataExtensions
+    {
+        // returns true on success
+        internal static bool RemoveNode(HierarchyItem node, ParentNodeData top)
+        {
+            if(node.parent == null)
+            {
+                return false;
+            }
 
-			// on each level remove self from parent.
-			// if it doesn't have any childNodes left, remove itself from it's parent
-			var iterator = node;
-			do
-			{
-				var parent = iterator.Parent;
-				if (parent == null)
-				{
-					break;
-				}
-				parent.RemoveChildItem(iterator);
-				if (parent == top)
-					break;
-				iterator = parent;
-			} while (iterator.ChildNodes.Length == 0);
+            // on each level remove self from parent.
+            // if it doesn't have any childNodes left, remove itself from it's parent
+            HierarchyItem iterator = node;
 
-			node.Parent = null;
-			top.ChildrenModified = true;
-			return true;
-		}
+            do
+            {
+                HierarchyItem parent = iterator.parent;
 
+                if(parent == null)
+                {
+                    break;
+                }
 
-		// returns true when modified
-		internal static bool UpdateNodePosition(HierarchyItem node, ParentNodeData top)
-		{
-			// on each level, compare sibling position to nodes before and after it.
-			// if it's different, remove self and find new position in array.
-			// continue to next parent.
-			var iteratorParent = node.Parent;
-			if (iteratorParent == null)
-			{
-				AddNode(node, top);
-				top.ChildrenModified = true;
-				return true;
-			}
+                parent.RemoveChildItem(iterator);
 
-			var currentLoopCount = HierarchyItem.CurrentLoopCount;
+                if(parent == top)
+                {
+                    break;
+                }
 
-			var iterator = node;
-			while (iteratorParent != null)
-			{
-				var iteratorTransformID = iterator.TransformID;
+                iterator = parent;
+            }
+            while(iterator.childNodes.Length == 0);
 
-				if (iteratorTransformID == 0)
-				{
-					Debug.LogWarning("iterator_transform == null");
-				} else
-				if (iterator.LastLoopCount != currentLoopCount)
-				{
-					var iteratorTransform			= iterator.Transform;
-					var iteratorParentTransformID	= iteratorTransform.parent == null ? 0 : iteratorTransform.parent.GetInstanceIDCompat();
-					// Compare the unity parent transform to the stored parent transform
-					if (iteratorParent.TransformID != iteratorParentTransformID)
-					{
-						var defaultCSGInstanceID = 0;
-						var defaultCSGModel = InternalCSGModelManager.GetDefaultCSGModelForObject(iteratorTransform);
-						if (defaultCSGModel != null &&
-							defaultCSGModel.transform != null)
-							defaultCSGInstanceID = defaultCSGModel.transform.GetInstanceIDCompat();
-						if (defaultCSGInstanceID == 0 || defaultCSGInstanceID != iteratorParent.TransformID)
-						{
-							RemoveNode(node, top);
-							AddNode(node, top);
-							top.ChildrenModified = true;
-							return true;
-						}
-					}
+            node.parent          = null;
+            top.childrenModified = true;
 
-					if (iterator.LastLoopCount != currentLoopCount)
-					{
-						iterator.CachedTransformSiblingIndex	= iteratorTransform.GetSiblingIndex();
-						iterator.LastLoopCount					= currentLoopCount;
-					}
+            return true;
+        }
 
-					// Does the child even exist in the parent transform?
-					int iteratorChildIndex;
-					if (!iteratorParent.FindSiblingIndex(iteratorTransform, iterator.CachedTransformSiblingIndex, iteratorTransformID, out iteratorChildIndex))
-					{
-						RemoveNode(node, top);
-						AddNode(node, top);
-						top.ChildrenModified = true;
-						return true;
-					}
+        // returns true when modified
+        internal static bool UpdateNodePosition(HierarchyItem node, ParentNodeData top)
+        {
+            // on each level, compare sibling position to nodes before and after it.
+            // if it's different, remove self and find new position in array.
+            // continue to next parent.
+            HierarchyItem iteratorParent = node.parent;
 
-					// See if the position of the child has changed ..
-					if (iteratorChildIndex != iterator.SiblingIndex)
-					{
-						iterator.SiblingIndex = iteratorChildIndex;
-						RemoveNode(node, top);//
-						AddNode(node, top);//
-						top.ChildrenModified = true;//
-						return true;
-					}
+            if(iteratorParent == null)
+            {
+                AddNode(node, top);
+                top.childrenModified = true;
 
-					// Compare the child index to the one before and after it ..
-					var iteratorParentChildNodes = iteratorParent.ChildNodes;
-					var iteratorSiblingIndex = iteratorTransform.GetSiblingIndex();
-					if (iteratorChildIndex > 0)
-					{
-						var prevTransform = iteratorParentChildNodes[iteratorChildIndex - 1].Transform;
-						if (!prevTransform)
-						{
-							return false;
-						}
-						var iteratorPrevSiblingIndex = prevTransform.GetSiblingIndex();
-						if (iteratorPrevSiblingIndex >= iteratorSiblingIndex)
-						{
-							RemoveNode(node, top);
-							AddNode(node, top);
-							top.ChildrenModified = true;
-							return true;
-						}
-					} else
-					if (iteratorChildIndex < iteratorParentChildNodes.Length - 1)
-					{
-						var nextTransform = iteratorParentChildNodes[iteratorChildIndex + 1].Transform;
-						if (!nextTransform)
-						{
-							return false;
-						}
-						var iteratorNextSiblingIndex = nextTransform.GetSiblingIndex();
-						if (iteratorNextSiblingIndex <= iteratorSiblingIndex)
-						{
-							RemoveNode(node, top);
-							AddNode(node, top);
-							top.ChildrenModified = true;
-							return true;
-						}
-					}
-				}
+                return true;
+            }
 
-				iterator = iteratorParent;
-				iteratorParent = iterator.Parent;
-			}
+            int currentLoopCount = HierarchyItem.CurrentLoopCount;
 
-			return false;
-		}
+            HierarchyItem iterator = node;
 
-		// returns true on success
-		internal static bool AddNode(HierarchyItem node, ParentNodeData top)
-		{
-			if (node.Parent != null)
-			{
-				return false;
-			}
+            while(iteratorParent != null)
+            {
+                int iteratorTransformID = iterator.transformID;
 
-			if (!top.Transform)
-			{
-				return false;
-			}
+                if(iteratorTransformID == 0)
+                {
+                    Debug.LogWarning("iterator_transform == null");
+                }
+                else if(iterator.lastLoopCount != currentLoopCount)
+                {
+                    Transform iteratorTransform = iterator.transform;
 
-			var ancestors = new List<Transform>();
+                    int iteratorParentTransformID = iteratorTransform.parent == null ? 0 : iteratorTransform.parent.GetIntegerID();
 
-			var leafTransform = node.Transform;
-			if (leafTransform == null)
-			{
-				return false;
-			}
-			var iterator = leafTransform.parent;
-			while (iterator != null &&
-					iterator != top.Transform)
-			{
-				ancestors.Add(iterator);
-				iterator = iterator.parent;
-			}
+                    // Compare the unity parent transform to the stored parent transform
+                    if(iteratorParent.transformID != iteratorParentTransformID)
+                    {
+                        int defaultCSGInstanceID = 0;
 
-			var defaultModel = InternalCSGModelManager.GetDefaultCSGModelForObject(iterator);
-			if (!defaultModel)
-				return false;
+                        CSGModel defaultCSGModel = InternalCSGModelManager.GetDefaultCSGModelForObject(iteratorTransform);
 
-			var defaultModelTransform = defaultModel.transform;
+                        if(defaultCSGModel != null &&
+                           defaultCSGModel.transform != null)
+                        {
+                            defaultCSGInstanceID = defaultCSGModel.transform.GetIntegerID();
+                        }
 
-			if (iterator == null || top.Transform == null ||
-                top.Transform == defaultModelTransform)
+                        if(defaultCSGInstanceID == 0 || defaultCSGInstanceID != iteratorParent.transformID)
+                        {
+                            RemoveNode(node, top);
+                            AddNode(node, top);
+                            top.childrenModified = true;
+
+                            return true;
+                        }
+                    }
+
+                    if(iterator.lastLoopCount != currentLoopCount)
+                    {
+                        iterator.cachedTransformSiblingIndex = iteratorTransform.GetSiblingIndex();
+                        iterator.lastLoopCount               = currentLoopCount;
+                    }
+
+                    // Does the child even exist in the parent transform?
+                    if(!iteratorParent.FindSiblingIndex(iterator.cachedTransformSiblingIndex, iteratorTransformID, out int iteratorChildIndex))
+                    {
+                        RemoveNode(node, top);
+                        AddNode(node, top);
+                        top.childrenModified = true;
+
+                        return true;
+                    }
+
+                    // See if the position of the child has changed ..
+                    if(iteratorChildIndex != iterator.siblingIndex)
+                    {
+                        iterator.siblingIndex = iteratorChildIndex;
+                        RemoveNode(node, top);
+                        AddNode(node, top);
+                        top.childrenModified = true;
+
+                        return true;
+                    }
+
+                    // Compare the child index to the one before and after it ..
+                    HierarchyItem[] iteratorParentChildNodes = iteratorParent.childNodes;
+                    int             iteratorSiblingIndex     = iteratorTransform.GetSiblingIndex();
+
+                    if(iteratorChildIndex > 0)
+                    {
+                        Transform prevTransform = iteratorParentChildNodes[iteratorChildIndex - 1].transform;
+
+                        if(!prevTransform)
+                        {
+                            return false;
+                        }
+
+                        int iteratorPrevSiblingIndex = prevTransform.GetSiblingIndex();
+
+                        if(iteratorPrevSiblingIndex >= iteratorSiblingIndex)
+                        {
+                            RemoveNode(node, top);
+                            AddNode(node, top);
+                            top.childrenModified = true;
+
+                            return true;
+                        }
+                    }
+                    else if(iteratorChildIndex < iteratorParentChildNodes.Length - 1)
+                    {
+                        Transform nextTransform = iteratorParentChildNodes[iteratorChildIndex + 1].transform;
+
+                        if(!nextTransform)
+                        {
+                            return false;
+                        }
+
+                        int iteratorNextSiblingIndex = nextTransform.GetSiblingIndex();
+
+                        if(iteratorNextSiblingIndex <= iteratorSiblingIndex)
+                        {
+                            RemoveNode(node, top);
+                            AddNode(node, top);
+                            top.childrenModified = true;
+
+                            return true;
+                        }
+                    }
+                }
+
+                iterator       = iteratorParent;
+                iteratorParent = iterator.parent;
+            }
+
+            return false;
+        }
+
+        // returns true on success
+        internal static bool AddNode(HierarchyItem node, ParentNodeData top)
+        {
+            if(node.parent != null)
+            {
+                return false;
+            }
+
+            if(!top.transform)
+            {
+                return false;
+            }
+
+            List<Transform> ancestors     = new List<Transform>();
+            Transform       leafTransform = node.transform;
+
+            if(leafTransform == null)
+            {
+                return false;
+            }
+
+            Transform iterator = leafTransform.parent;
+
+            while(iterator != null && iterator != top.transform)
+            {
+                ancestors.Add(iterator);
+                iterator = iterator.parent;
+            }
+
+            CSGModel defaultModel = InternalCSGModelManager.GetDefaultCSGModelForObject(iterator);
+
+            if(!defaultModel)
+            {
+                return false;
+            }
+
+            Transform defaultModelTransform = defaultModel.transform;
+
+            if(iterator == null || top.transform == null ||
+               top.transform == defaultModelTransform)
             {
                 iterator = defaultModelTransform;
             }
 
-			if (iterator == null)
-			{
-				node.Reset();
-				top.Reset();
+            if(iterator == null)
+            {
+                node.Reset();
+                top.Reset();
+
                 return false;
-			}
-#if !UNITY_2018_3_OR_NEWER
-			// TODO: figure out how to check this, yet still support prefab isolation mode
-			if (iterator != top.Transform)
-			{
-				return false;
-			}
-#endif
+            }
 
-			//var currentLoopCount = CurrentLoopCount;
+            HierarchyItem lastParent    = top;
+            int           ancestorDepth = ancestors.Count - 1;
 
-			HierarchyItem lastParent = top;
-			var ancestorDepth = ancestors.Count - 1;
-			while (ancestorDepth >= 0)
-			{
-				var ancestor = ancestors[ancestorDepth];
-				int childIndex;
-				if (!lastParent.FindSiblingIndex(ancestor, ancestor.GetSiblingIndex(), ancestor.GetInstanceIDCompat(), out childIndex))
-					break;
+            while(ancestorDepth >= 0)
+            {
+                Transform ancestor = ancestors[ancestorDepth];
 
-				lastParent = lastParent.ChildNodes[childIndex];
-				ancestorDepth--;
-			}
-			while (ancestorDepth >= 0)
-			{
-				var newAncestor = new HierarchyItem();
-				newAncestor.Transform	= ancestors[ancestorDepth];
-				newAncestor.TransformID	= newAncestor.Transform.GetInstanceIDCompat();
-				newAncestor.Parent		= lastParent;
+                if(!lastParent.FindSiblingIndex(ancestor.GetSiblingIndex(), ancestor.GetIntegerID(), out int childIndex))
+                {
+                    break;
+                }
 
-				if (!lastParent.AddChildItem(newAncestor))
-					return false;
+                lastParent = lastParent.childNodes[childIndex];
+                ancestorDepth--;
+            }
 
-				lastParent = newAncestor;
-				ancestorDepth--;
-			}
+            while(ancestorDepth >= 0)
+            {
+                HierarchyItem newAncestor = new HierarchyItem();
+                newAncestor.transform   = ancestors[ancestorDepth];
+                newAncestor.transformID = newAncestor.transform.GetIntegerID();
+                newAncestor.parent      = lastParent;
 
-			node.Parent = lastParent;
-			top.ChildrenModified = true;
+                if(!lastParent.AddChildItem(newAncestor))
+                {
+                    return false;
+                }
+
+                lastParent = newAncestor;
+                ancestorDepth--;
+            }
+
+            node.parent          = lastParent;
+            top.childrenModified = true;
+
             return lastParent.AddChildItem(node);
-		}
+        }
 
-		public static bool AddNode(this ParentNodeData parentNodeData, HierarchyItem hierarchyItem)
-		{
-			return AddNode(hierarchyItem, parentNodeData);
-		}
+        public static bool AddNode(this ParentNodeData parentNodeData, HierarchyItem hierarchyItem)
+        {
+            return AddNode(hierarchyItem, parentNodeData);
+        }
 
-		public static bool RemoveNode(this ParentNodeData parentNodeData, HierarchyItem hierarchyItem)
-		{
-			return RemoveNode(hierarchyItem, parentNodeData);
-		}
-	}
+        public static bool RemoveNode(this ParentNodeData parentNodeData, HierarchyItem hierarchyItem)
+        {
+            return RemoveNode(hierarchyItem, parentNodeData);
+        }
+    }
 }
-

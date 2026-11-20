@@ -1,1165 +1,1318 @@
 ﻿using System;
 using System.Collections.Generic;
+using InternalRealtimeCSG;
+using RealtimeCSG.Components;
+using RealtimeCSG.Legacy;
 using UnityEditor;
 using UnityEngine;
-using InternalRealtimeCSG;
-using RealtimeCSG.Legacy;
-using RealtimeCSG.Components;
 
 namespace RealtimeCSG
 {
     internal sealed class GeneratorSphere : GeneratorBase, IGenerator
-	{
-		[NonSerialized] Vector3		worldPosition;
-		[NonSerialized] Vector3		prevWorldPosition;
-		[NonSerialized] CSGPlane?	hoverDefaultPlane;
-		
-		[NonSerialized] CSGPlane[]	firstSnappedPlanes	= null;
-		[NonSerialized] Vector3[]	firstSnappedEdges	= null;
-		[NonSerialized] CSGBrush	firstSnappedBrush	= null;
-		[NonSerialized] bool		hadSphere = false;
-		[NonSerialized] bool		prevIsHemisphere = false;
-		
+    {
+        [NonSerialized] private Vector3 _worldPosition;
+        [NonSerialized] private Vector3 _prevWorldPosition;
+        [NonSerialized] private CSGPlane? _hoverDefaultPlane;
 
-		[NonSerialized] int			prevSplits = -1;
-		[NonSerialized] ControlMesh splitControlMesh;
-		[NonSerialized] Shape		splitShape;
-		[NonSerialized] uint?		sphereSmoothingGroup = null;
+        [NonSerialized] private CSGPlane[] _firstSnappedPlanes;
+        [NonSerialized] private Vector3[] _firstSnappedEdges;
+        [NonSerialized] private CSGBrush _firstSnappedBrush;
+        [NonSerialized] private bool _hadSphere;
+        [NonSerialized] private bool _prevIsHemisphere;
 
-		// sphere specific
-		[SerializeField] GeneratorSphereSettings		settings		= new GeneratorSphereSettings();
+        [NonSerialized] private int _prevSplits = -1;
+        [NonSerialized] private ControlMesh _splitControlMesh;
+        [NonSerialized] private Shape _splitShape;
+        [NonSerialized] private uint? _sphereSmoothingGroup;
 
-		protected override IShapeSettings ShapeSettings { get { return settings; } }
+        // sphere specific
+        [SerializeField] private GeneratorSphereSettings settings = new GeneratorSphereSettings();
 
-		public int		SphereSplits
-		{
-			get { return settings.sphereSplits; }
-			set { if (settings.sphereSplits == value) return; Undo.RecordObject(this, "Modified Sphere Splits"); settings.sphereSplits = value; UpdateBaseShape(); }
-		}
+        protected override IShapeSettings ShapeSettings
+        {
+            get => settings;
+        }
 
-		public float     SphereOffset
-		{ 
-			get { return settings.sphereOffset; }
-			set { if (settings.sphereOffset == value) return; Undo.RecordObject(this, "Modified Sphere Offset"); settings.sphereOffset = value; UpdateBaseShape(); }
-		}
+        public int SphereSplits
+        {
+            get => settings.SphereSplits;
+            set
+            {
+                if(settings.SphereSplits == value)
+                {
+                    return;
+                }
 
-		public bool		SphereSmoothShading
-		{
-			get { return settings.sphereSmoothShading; }
-			set { if (settings.sphereSmoothShading == value) return; Undo.RecordObject(this, "Modified Sphere Smoothing"); settings.sphereSmoothShading = value; UpdateBaseShape(); }
-		}
+                Undo.RecordObject(this, "Modified Sphere Splits");
+                settings.SphereSplits = value;
 
-		public bool		IsHemiSphere
-		{
-			get { return settings.isHemiSphere; }
-			set { if (settings.isHemiSphere == value) return; Undo.RecordObject(this, "Modified Sphere Smoothing"); settings.isHemiSphere = value; UpdateBaseShape(); }
-		}
+                UpdateBaseShape();
+            }
+        }
 
-		public float	SphereRadius
-		{
-			get { return settings.SphereRadius; }
-			set { if (settings.SphereRadius == value) return; Undo.RecordObject(this, "Modified Sphere Radius"); settings.SphereRadius = value; UpdateBaseShape(); }
-		}
+        public float SphereOffset
+        {
+            get => settings.SphereOffset;
+            set
+            {
+                if(settings.SphereOffset == value)
+                {
+                    return;
+                }
 
-		public override void PerformDeselectAll() { Cancel(); }
-		public override void PerformDelete() { Cancel(); }
+                Undo.RecordObject(this, "Modified Sphere Offset");
+                settings.SphereOffset = value;
 
-		public override void Init()
-		{
-			base.Init();
-			Reset();
-		}
+                UpdateBaseShape();
+            }
+        }
 
-		public override void Reset() 
-		{
+        public bool SphereSmoothShading
+        {
+            get => settings.SphereSmoothShading;
+            set
+            {
+                if(settings.SphereSmoothShading == value)
+                {
+                    return;
+                }
+
+                Undo.RecordObject(this, "Modified Sphere Smoothing");
+                settings.SphereSmoothShading = value;
+
+                UpdateBaseShape();
+            }
+        }
+
+        public bool IsHemiSphere
+        {
+            get => settings.IsHemiSphere;
+            set
+            {
+                if(settings.IsHemiSphere == value)
+                {
+                    return;
+                }
+
+                Undo.RecordObject(this, "Modified Sphere Smoothing");
+                settings.IsHemiSphere = value;
+
+                UpdateBaseShape();
+            }
+        }
+
+        public float SphereRadius
+        {
+            get => settings.SphereRadius;
+            set
+            {
+                if(settings.SphereRadius == value)
+                {
+                    return;
+                }
+
+                Undo.RecordObject(this, "Modified Sphere Radius");
+                settings.SphereRadius = value;
+
+                UpdateBaseShape();
+            }
+        }
+
+        public override void PerformDeselectAll()
+        {
+            Cancel();
+        }
+
+        public override void PerformDelete()
+        {
+            Cancel();
+        }
+
+        public override void Init()
+        {
+            base.Init();
+            Reset();
+        }
+
+        public override void Reset()
+        {
             settings.Reset();
-			base.Reset();
-			firstSnappedPlanes	= null;
-			firstSnappedEdges	= null;
-			firstSnappedBrush	= null;
-			hadSphere = false;		
-			prevSplits = -1;
-			prevIsHemisphere = IsHemiSphere;
-			splitControlMesh = null;
-			splitShape = null;
-			sphereSmoothingGroup = null;
-		}
+            base.Reset();
 
-		public bool HotKeyReleased()
-		{
-            var camera = Camera.current;
+            _firstSnappedPlanes   = null;
+            _firstSnappedEdges    = null;
+            _firstSnappedBrush    = null;
+            _hadSphere            = false;
+            _prevSplits           = -1;
+            _prevIsHemisphere     = IsHemiSphere;
+            _splitControlMesh     = null;
+            _splitShape           = null;
+            _sphereSmoothingGroup = null;
+        }
+
+        public bool HotKeyReleased()
+        {
+            Camera camera = Camera.current;
 
             ResetVisuals();
-			switch (editMode)
-			{
-				default:
-				{
-					return true;
-				}
-				case EditMode.CreateShape:
-				{
-					if (settings.vertices.Length == 1)
-					{
-						settings.AddPoint(worldPosition);
-					}
-					
-					if ((settings.vertices[0] - settings.vertices[1]).magnitude <= MathConstants.EqualityEpsilon)
-					{
-						Cancel();
-						return false;
-					}
-					StartEditMode(camera);
-					return true;
-				}
-				case EditMode.CreatePlane:
-				{
-					Cancel();
-					return false;
-				}
-			}
-		}
 
-		protected override void MoveShape(Vector3 offset)
-		{
-			settings.MoveShape(offset);
-		}
+            switch(editMode)
+            {
+                default:
+                {
+                    return true;
+                }
+                case EditMode.CreateShape:
+                {
+                    if(settings.vertices.Length == 1)
+                    {
+                        settings.AddPoint(_worldPosition);
+                    }
 
-		
-		void PaintRadiusMessage(Camera camera)
-		{
-			if (settings.vertices == null || settings.vertices.Length == 0)
-				return;
+                    if((settings.vertices[0] - settings.vertices[1]).magnitude <= MathConstants.EQUALITY_EPSILON)
+                    {
+                        Cancel();
 
-			var endPosition = settings.vertices.Length == 1 ? worldPosition : settings.vertices[1];
-			var centerPoint	= settings.vertices[0];
-			var delta		= (endPosition - centerPoint).normalized;
+                        return false;
+                    }
 
-			PaintUtility.DrawLength(camera, "radius: ", HandleUtility.GetHandleSize(centerPoint), Matrix4x4.identity, Vector3.Cross(buildPlane.normal, delta), centerPoint, endPosition, Color.white);
-		}
+                    StartEditMode(camera);
 
-		void PaintSquare(Camera camera)
-		{
-			var wireframeColor = ColorSettings.BoundsOutlines;
+                    return true;
+                }
+                case EditMode.CreatePlane:
+                {
+                    Cancel();
 
-			var endPosition = settings.vertices.Length == 1 ? worldPosition : settings.vertices[1];
-			var centerPoint = settings.vertices[0];
-			var height		= (endPosition - centerPoint).magnitude;
+                    return false;
+                }
+            }
+        }
 
-			var upVector = buildPlane.normal * height;
+        protected override void MoveShape(Vector3 offset)
+        {
+            settings.MoveShape(offset);
+        }
 
-			var point0 = settings.vertices[0] + (gridTangent * settings.sphereRadius) + (gridBinormal * settings.sphereRadius);
-			var point1 = settings.vertices[0] + (gridTangent * settings.sphereRadius) - (gridBinormal * settings.sphereRadius);
-			var point2 = settings.vertices[0] - (gridTangent * settings.sphereRadius) - (gridBinormal * settings.sphereRadius);
-			var point3 = settings.vertices[0] - (gridTangent * settings.sphereRadius) + (gridBinormal * settings.sphereRadius);
-			
-			var point4 = point0;
-			var point5 = point1;
-			var point6 = point2;
-			var point7 = point3;
+        private void PaintRadiusMessage(Camera camera)
+        {
+            if(settings.vertices == null || settings.vertices.Length == 0)
+            {
+                return;
+            }
 
-            var point8 = point0 + upVector;
-            var point9 = point1 + upVector;
-            var pointA = point2 + upVector;
-            var pointB = point3 + upVector;
-			if (!IsHemiSphere)
-			{
-				point4 -= upVector;
-				point5 -= upVector;
-				point6 -= upVector;
-				point7 -= upVector;
-			}
+            Vector3 endPosition = settings.vertices.Length == 1 ? _worldPosition : settings.vertices[1];
+            Vector3 centerPoint = settings.vertices[0];
+            Vector3 delta       = (endPosition - centerPoint).normalized;
 
-			var points = new Vector3[] { point8, point9, point9, pointA, pointA, pointB, pointB, point8,
-										point4, point5, point5, point6, point6, point7, point7, point4,
-										point8, point4, point9, point5, pointA, point6, pointB, point7};
+            PaintUtility.DrawLength(camera, "radius: ", HandleUtility.GetHandleSize(centerPoint), Matrix4x4.identity, Vector3.Cross(buildPlane.Normal, delta), centerPoint, endPosition, Color.white);
+        }
 
-			PaintUtility.DrawDottedLines(points, wireframeColor, 4.0f);
+        private void PaintSquare(Camera camera)
+        {
+            Color wireframeColor = ColorSettings.BoundsOutlines;
 
-			if (settings.vertices.Length == 0)
-				return;
+            Vector3 endPosition = settings.vertices.Length == 1 ? _worldPosition : settings.vertices[1];
+            Vector3 centerPoint = settings.vertices[0];
+            float   height      = (endPosition - centerPoint).magnitude;
 
-			{
-				var volume = new Vector3[8];
+            Vector3 upVector = buildPlane.Normal * height;
 
-				var localBounds = new AABB();
-				localBounds.Reset();
-				localBounds.Extend(toGridQuaternion * (point0 + upVector));
-				localBounds.Extend(toGridQuaternion * (point1 + upVector));
-				localBounds.Extend(toGridQuaternion * (point2 + upVector));
-				localBounds.Extend(toGridQuaternion * (point3 + upVector));
-				if (IsHemiSphere)
-					localBounds.Extend(toGridQuaternion * point3);
-				else
-					localBounds.Extend(toGridQuaternion * (point3 - upVector));
-				BoundsUtilities.GetBoundsCornerPoints(localBounds, volume);
-				
-				PaintUtility.RenderBoundsSizes(toGridQuaternion, fromGridQuaternion, camera, volume, Color.white, Color.white, Color.white, true, true, true);
-			}
-		}
+            Vector3 point0 = settings.vertices[0] + gridTangent * settings.sphereRadius + gridBinormal * settings.sphereRadius;
+            Vector3 point1 = settings.vertices[0] + gridTangent * settings.sphereRadius - gridBinormal * settings.sphereRadius;
+            Vector3 point2 = settings.vertices[0] - gridTangent * settings.sphereRadius - gridBinormal * settings.sphereRadius;
+            Vector3 point3 = settings.vertices[0] - gridTangent * settings.sphereRadius + gridBinormal * settings.sphereRadius;
 
-		void PaintCircle(SceneView sceneView, int id)
-		{
-            var camera      = sceneView.camera;
-            var temp		= Handles.color;
-			var origMatrix	= Handles.matrix;
-					
-			Handles.matrix = MathConstants.identityMatrix;
-			var rotation = camera.transform.rotation;
+            Vector3 point4 = point0;
+            Vector3 point5 = point1;
+            Vector3 point6 = point2;
+            Vector3 point7 = point3;
 
-			bool isValid;
-			var realVertices = settings.GetVertices(buildPlane, worldPosition, gridTangent, gridBinormal, out isValid);
-			if (realVertices != null && realVertices.Length >= 3)
-			{
-				var wireframeColor = ColorSettings.WireframeOutline;
-				if (!shapeIsValid || !isValid)
-					wireframeColor = Color.red;
-				
-				for (int i = 1; i < realVertices.Length; i++)
-				{
-					PaintUtility.DrawLine(realVertices[i - 1], realVertices[i], GUIConstants.oldLineScale, wireframeColor);
-					PaintUtility.DrawDottedLine(realVertices[i - 1], realVertices[i], wireframeColor, 4.0f);
-				}
+            Vector3 point8 = point0 + upVector;
+            Vector3 point9 = point1 + upVector;
+            Vector3 pointA = point2 + upVector;
+            Vector3 pointB = point3 + upVector;
 
-				PaintUtility.DrawLine(realVertices[realVertices.Length - 1], realVertices[0], GUIConstants.oldLineScale, wireframeColor);
-				PaintUtility.DrawDottedLine(realVertices[realVertices.Length - 1], realVertices[0], wireframeColor, 4.0f);
-				
-				if (realVertices.Length >= 3)
-				{
-					var color = ColorSettings.ShapeDrawingFill;
-					PaintUtility.DrawPolygon(MathConstants.identityMatrix, realVertices, color);
-				}
+            if(!IsHemiSphere)
+            {
+                point4 -= upVector;
+                point5 -= upVector;
+                point6 -= upVector;
+                point7 -= upVector;
+            }
 
-				PaintSquare(camera);
-			}
+            Vector3[] points = { point8, point9, point9, pointA, pointA, pointB, pointB, point8, point4, point5, point5, point6, point6, point7, point7, point4, point8, point4, point9, point5, pointA, point6, pointB, point7 };
 
+            PaintUtility.DrawDottedLines(points, wireframeColor);
 
+            if(settings.vertices.Length == 0)
+            {
+                return;
+            }
 
-			if (settings.vertices != null && settings.vertices.Length > 0)
-			{
-				Handles.color = ColorSettings.PointInnerStateColor[0];
-				for (int i = 0; i < settings.vertices.Length; i++)
-				{
-					float handleSize = CSG_HandleUtility.GetHandleSize(settings.vertices[i]);
-					float scaledHandleSize = handleSize * GUIConstants.handleScale;
-					PaintUtility.SquareDotCap(id, settings.vertices[i], rotation, scaledHandleSize);
-				}
-				PaintRadiusMessage(camera);
-			}
-						
-			Handles.color = ColorSettings.PointInnerStateColor[3];
-			{
-				float handleSize = CSG_HandleUtility.GetHandleSize(worldPosition);
-				float scaledHandleSize = handleSize * GUIConstants.handleScale;
-				PaintUtility.SquareDotCap(id, worldPosition, rotation, scaledHandleSize);
-			}
-			
-			Handles.matrix = origMatrix;
-			Handles.color = temp;
-		}
+            Vector3[] volume = new Vector3[8];
 
-		void CreateSnappedPlanes()
-		{
-			firstSnappedPlanes = new CSGPlane[firstSnappedEdges.Length / 2];
+            AABB localBounds = new AABB();
+            localBounds.Reset();
+            localBounds.Extend(toGridQuaternion * (point0 + upVector));
+            localBounds.Extend(toGridQuaternion * (point1 + upVector));
+            localBounds.Extend(toGridQuaternion * (point2 + upVector));
+            localBounds.Extend(toGridQuaternion * (point3 + upVector));
 
-			for (int i = 0; i < firstSnappedEdges.Length; i += 2)
-			{
-				var point0 = firstSnappedEdges[i + 0];
-				var point1 = firstSnappedEdges[i + 1];
+            if(IsHemiSphere)
+            {
+                localBounds.Extend(toGridQuaternion * point3);
+            }
+            else
+            {
+                localBounds.Extend(toGridQuaternion * (point3 - upVector));
+            }
 
-				var binormal = (point1 - point0).normalized;
-				var tangent  = buildPlane.normal;
-				var normal	 = Vector3.Cross(binormal, tangent);
+            BoundsUtilities.GetBoundsCornerPoints(localBounds, volume);
 
-				var worldPlane	= new CSGPlane(normal, point0);
-				// note, we use 'inverse' of the worldToLocalMatrix because to transform a plane we'd need to do an inverse, 
-				// and using the already inversed matrix we don't need to do a costly inverse.
-				var localPlane		= GeometryUtility.InverseTransformPlane(firstSnappedBrush.transform.localToWorldMatrix, worldPlane);
-				var	vertices		= firstSnappedBrush.ControlMesh.Vertices;
-				var planeIsInversed	= false;
-				for (int v = 0; v < vertices.Length; v++)
-				{
-					if (localPlane.Distance(vertices[v]) > MathConstants.DistanceEpsilon)
-					{
-						planeIsInversed = true;
-						break;
-					}
-				}
-				if (planeIsInversed)
-					firstSnappedPlanes[i / 2] = worldPlane.Negated();
-				else
-					firstSnappedPlanes[i / 2] = worldPlane;
-			}
-		}
+            PaintUtility.RenderBoundsSizes(toGridQuaternion, fromGridQuaternion, camera, volume, Color.white, Color.white, Color.white, true, true, true);
+        }
 
-		protected override void HandleEditShapeEvents(SceneView sceneView, Rect sceneRect)
-		{
-            var camera = sceneView.camera;
-            if (!SceneDragToolManager.IsDraggingObjectInScene &&
-				Event.current.type == EventType.Repaint)
-			{			
-				if (visualSnappedEdges != null)
-					PaintUtility.DrawLines(visualSnappedEdges.ToArray(), GUIConstants.oldThickLineScale, ColorSettings.SnappedEdges);
-				
-				if (visualSnappedGrid != null)
-				{
-					var _origMatrix = Handles.matrix;
-					Handles.matrix = MathConstants.identityMatrix;
-					PaintUtility.DrawDottedLines(visualSnappedGrid.ToArray(), ColorSettings.SnappedEdges);
-					Handles.matrix = _origMatrix;
-				}
-					
-				if (visualSnappedBrush != null)
-				{
-					if (visualSnappedBrush.compareTransformation != null &&
-						visualSnappedBrush.ChildData != null &&
-						visualSnappedBrush.ChildData.ModelTransform)
-					{
-						var brush_transformation	= visualSnappedBrush.compareTransformation.localToWorldMatrix;
-						CSGRenderer.DrawOutlines(visualSnappedBrush.brushNodeID, brush_transformation, ColorSettings.SelectedOutlines, ColorSettings.SelectedOutlines, ColorSettings.SelectedOutlines, ColorSettings.SelectedOutlines);
-					}						
-				}
-				
-				var origMatrix	= Handles.matrix;
-				Handles.matrix = MathConstants.identityMatrix;
+        private void PaintCircle(SceneView sceneView, int id)
+        {
+            Camera    camera     = sceneView.camera;
+            Color     temp       = Handles.color;
+            Matrix4x4 origMatrix = Handles.matrix;
 
-				bool isValid;
-				var realVertices		= settings.GetVertices(buildPlane, worldPosition, gridTangent, gridBinormal, out isValid);
-				if (editMode == EditMode.EditShape)
-					shapeIsValid = isValid;
+            Handles.matrix = MathConstants.identityMatrix;
+            Quaternion rotation = camera.transform.rotation;
 
-				var wireframeColor		= ColorSettings.WireframeOutline;
-				//var topWireframeColor	= ColorSettings.BoundsEdgeHover;
+            Vector3[] realVertices = settings.GetVertices(buildPlane, _worldPosition, gridTangent, out bool isValid);
 
-				if (!shapeIsValid || !isValid)
-					wireframeColor = Color.red;
+            if(realVertices != null && realVertices.Length >= 3)
+            {
+                Color wireframeColor = ColorSettings.WireframeOutline;
 
-				if (realVertices.Length > 0)
-				{
-					if (realVertices.Length >= 3)
-					{
-						var color = ColorSettings.ShapeDrawingFill;
-						PaintUtility.DrawPolygon(MathConstants.identityMatrix, realVertices, color);
-					}
+                if(!shapeIsValid || !isValid)
+                {
+                    wireframeColor = Color.red;
+                }
 
-					for (int i = 1; i < realVertices.Length; i++)
-					{
-						PaintUtility.DrawLine(realVertices[i - 1], realVertices[i], GUIConstants.oldLineScale, wireframeColor);
-						PaintUtility.DrawDottedLine(realVertices[i - 1], realVertices[i], wireframeColor, 4.0f);
-					}
+                for(int i = 1; i < realVertices.Length; i++)
+                {
+                    PaintUtility.DrawLine(realVertices[i - 1], realVertices[i], GUIConstants.OLD_LINE_SCALE, wireframeColor);
 
-					PaintUtility.DrawLine(realVertices[realVertices.Length - 1], realVertices[0], GUIConstants.oldLineScale, wireframeColor);
-					PaintUtility.DrawDottedLine(realVertices[realVertices.Length - 1], realVertices[0], wireframeColor, 4.0f);
-					/*
-					if (editMode == EditMode.ExtrudeShape)
-					{
-						var delta = (base.extrusionPoints[1].Vertex - base.extrusionPoints[0].Vertex);
-						for (int i = 1; i < realVertices.Length; i++)
-						{
-							PaintUtility.DrawLine(realVertices[i - 1] + delta, realVertices[i] + delta, GUIConstants.oldLineScale, topWireframeColor);
-							PaintUtility.DrawDottedLine(realVertices[i - 1] + delta, realVertices[i] + delta, topWireframeColor, 4.0f);
-						}
+                    PaintUtility.DrawDottedLine(realVertices[i - 1], realVertices[i], wireframeColor);
+                }
 
-						for (int i = 0; i < realVertices.Length; i++)
-						{
-							PaintUtility.DrawLine(realVertices[i] + delta, realVertices[i], GUIConstants.oldLineScale, wireframeColor);
-							PaintUtility.DrawDottedLine(realVertices[i] + delta, realVertices[i], wireframeColor, 4.0f);
-						}
+                PaintUtility.DrawLine(realVertices[realVertices.Length - 1], realVertices[0], GUIConstants.OLD_LINE_SCALE, wireframeColor);
 
-						PaintUtility.DrawLine(realVertices[realVertices.Length - 1] + delta, realVertices[0] + delta, GUIConstants.oldLineScale, topWireframeColor);
-						PaintUtility.DrawDottedLine(realVertices[realVertices.Length - 1] + delta, realVertices[0] + delta, topWireframeColor, 4.0f);
-					}
-					*/
-					PaintSquare(camera);
-					PaintRadiusMessage(camera);
-				}
-				
-				Handles.matrix = origMatrix;
-			}
-			
-			var shapeType = Event.current.GetTypeForControl(shapeId);
-			HandleKeyboard(shapeType);
+                PaintUtility.DrawDottedLine(realVertices[realVertices.Length - 1], realVertices[0], wireframeColor);
 
-			for (int i = 1; i < settings.vertices.Length; i++)
-			{
-				var id = settings.vertexIDs[i];
-				var point_type = Event.current.GetTypeForControl(id);
-				switch (point_type)
-				{
-					case EventType.Repaint:
-					{
-						if (SceneDragToolManager.IsDraggingObjectInScene)
-							break;
+                if(realVertices.Length >= 3)
+                {
+                    Color color = ColorSettings.ShapeDrawingFill;
+                    PaintUtility.DrawPolygon(MathConstants.identityMatrix, realVertices, color);
+                }
 
-						bool isSelected = id == GUIUtility.keyboardControl;
-						var temp		= Handles.color;
-						var origMatrix	= Handles.matrix;
-					
-						Handles.matrix = MathConstants.identityMatrix;
-						var rotation = camera.transform.rotation;
+                PaintSquare(camera);
+            }
 
+            float handleSize;
+            float scaledHandleSize;
 
-						if (isSelected)
-						{
-							Handles.color = ColorSettings.PointInnerStateColor[3];
-						} else
-						if (HandleUtility.nearestControl == id)
-						{
-							Handles.color = ColorSettings.PointInnerStateColor[1];
-						} else						
-						{
-							Handles.color = ColorSettings.PointInnerStateColor[0];
-						}
+            if(settings.vertices != null && settings.vertices.Length > 0)
+            {
+                Handles.color = ColorSettings.PointInnerStateColor[0];
 
-						float handleSize = CSG_HandleUtility.GetHandleSize(settings.vertices[i]);
-						float scaledHandleSize = handleSize * GUIConstants.handleScale;
-						PaintUtility.SquareDotCap(id, settings.vertices[i], rotation, scaledHandleSize);
-						
-						Handles.matrix = origMatrix;
-						Handles.color = temp;
-						break;
-					}
+                for(int i = 0; i < settings.vertices.Length; i++)
+                {
+                    handleSize       = CSGHandleUtility.GetHandleSize(settings.vertices[i]);
+                    scaledHandleSize = handleSize * GUIConstants.HANDLE_SCALE;
+                    PaintUtility.SquareDotCap(id, settings.vertices[i], rotation, scaledHandleSize);
+                }
 
-					case EventType.Layout:
-					{
-						if ((Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan))
-							break;
+                PaintRadiusMessage(camera);
+            }
 
-						var origMatrix = Handles.matrix;
-						Handles.matrix = MathConstants.identityMatrix;
-						float handleSize = CSG_HandleUtility.GetHandleSize(settings.vertices[i]);
-						float scaledHandleSize = handleSize * GUIConstants.handleScale;
-						HandleUtility.AddControl(id, HandleUtility.DistanceToCircle(settings.vertices[i], scaledHandleSize));
-						Handles.matrix = origMatrix;						
-					
-						break;
-					}
+            Handles.color = ColorSettings.PointInnerStateColor[3];
 
-					case EventType.ValidateCommand:
-					case EventType.KeyDown:
-					{
-						if (GUIUtility.hotControl == id)
-						{
-							if (Keys.CancelActionKey.IsKeyPressed())
-							{
-								Event.current.Use(); 
-								break;
-							}
-						}
-						break;
-					}
-					case EventType.KeyUp:
-					{
-						if (GUIUtility.hotControl == id)
-						{
-							if (Keys.CancelActionKey.IsKeyPressed())
+            handleSize       = CSGHandleUtility.GetHandleSize(_worldPosition);
+            scaledHandleSize = handleSize * GUIConstants.HANDLE_SCALE;
+            PaintUtility.SquareDotCap(id, _worldPosition, rotation, scaledHandleSize);
+
+            Handles.matrix = origMatrix;
+            Handles.color  = temp;
+        }
+
+        private void CreateSnappedPlanes()
+        {
+            _firstSnappedPlanes = new CSGPlane[_firstSnappedEdges.Length / 2];
+
+            for(int i = 0; i < _firstSnappedEdges.Length; i += 2)
+            {
+                Vector3 point0 = _firstSnappedEdges[i + 0];
+                Vector3 point1 = _firstSnappedEdges[i + 1];
+
+                Vector3 binormal = (point1 - point0).normalized;
+                Vector3 tangent  = buildPlane.Normal;
+                Vector3 normal   = Vector3.Cross(binormal, tangent);
+
+                CSGPlane worldPlane = new CSGPlane(normal, point0);
+
+                // note, we use 'inverse' of the worldToLocalMatrix because to transform a plane we'd need to do an inverse,
+                // and using the already inversed matrix we don't need to do a costly inverse.
+                CSGPlane localPlane = GeometryUtility.InverseTransformPlane(_firstSnappedBrush.transform.localToWorldMatrix, worldPlane);
+
+                Vector3[] vertices        = _firstSnappedBrush.controlMesh.vertices;
+                bool      planeIsInversed = false;
+
+                for(int v = 0; v < vertices.Length; v++)
+                {
+                    if(localPlane.Distance(vertices[v]) > MathConstants.DISTANCE_EPSILON)
+                    {
+                        planeIsInversed = true;
+
+                        break;
+                    }
+                }
+
+                if(planeIsInversed)
+                {
+                    _firstSnappedPlanes[i / 2] = worldPlane.Negated();
+                }
+                else
+                {
+                    _firstSnappedPlanes[i / 2] = worldPlane;
+                }
+            }
+        }
+
+        protected override void HandleEditShapeEvents(SceneView sceneView, Rect sceneRect)
+        {
+            Camera camera = sceneView.camera;
+
+            if(!SceneDragToolManager.IsDraggingObjectInScene && Event.current.type == EventType.Repaint)
+            {
+                if(visualSnappedEdges != null)
+                {
+                    PaintUtility.DrawLines(visualSnappedEdges.ToArray(), GUIConstants.OLD_THICK_LINE_SCALE, ColorSettings.SnappedEdges);
+                }
+
+                if(visualSnappedGrid != null)
+                {
+                    Matrix4x4 matrix = Handles.matrix;
+                    Handles.matrix = MathConstants.identityMatrix;
+                    PaintUtility.DrawDottedLines(visualSnappedGrid.ToArray(), ColorSettings.SnappedEdges);
+                    Handles.matrix = matrix;
+                }
+
+                if(visualSnappedBrush != null)
+                {
+                    if(visualSnappedBrush.compareTransformation != null && visualSnappedBrush.childData != null && visualSnappedBrush.childData.modelTransform)
+                    {
+                        Matrix4x4 brushTransformation = visualSnappedBrush.compareTransformation.localToWorldMatrix;
+
+                        CSGRenderer.DrawOutlines(visualSnappedBrush.brushNodeID, brushTransformation, ColorSettings.SelectedOutlines, ColorSettings.SelectedOutlines, ColorSettings.SelectedOutlines, ColorSettings.SelectedOutlines);
+                    }
+                }
+
+                Matrix4x4 origMatrix = Handles.matrix;
+                Handles.matrix = MathConstants.identityMatrix;
+
+                Vector3[] realVertices = settings.GetVertices(buildPlane, _worldPosition, gridTangent, out bool isValid);
+
+                if(editMode == EditMode.EditShape)
+                {
+                    shapeIsValid = isValid;
+                }
+
+                Color wireframeColor = ColorSettings.WireframeOutline;
+
+                if(!shapeIsValid || !isValid)
+                {
+                    wireframeColor = Color.red;
+                }
+
+                if(realVertices.Length > 0)
+                {
+                    if(realVertices.Length >= 3)
+                    {
+                        Color color = ColorSettings.ShapeDrawingFill;
+                        PaintUtility.DrawPolygon(MathConstants.identityMatrix, realVertices, color);
+                    }
+
+                    for(int i = 1; i < realVertices.Length; i++)
+                    {
+                        PaintUtility.DrawLine(realVertices[i - 1], realVertices[i], GUIConstants.OLD_LINE_SCALE, wireframeColor);
+
+                        PaintUtility.DrawDottedLine(realVertices[i - 1], realVertices[i], wireframeColor);
+                    }
+
+                    PaintUtility.DrawLine(realVertices[realVertices.Length - 1], realVertices[0], GUIConstants.OLD_LINE_SCALE, wireframeColor);
+                    PaintUtility.DrawDottedLine(realVertices[realVertices.Length - 1], realVertices[0], wireframeColor);
+
+                    PaintSquare(camera);
+                    PaintRadiusMessage(camera);
+                }
+
+                Handles.matrix = origMatrix;
+            }
+
+            EventType shapeType = Event.current.GetTypeForControl(shapeId);
+            HandleKeyboard(shapeType);
+
+            for(int i = 1; i < settings.vertices.Length; i++)
+            {
+                int       id        = settings.vertexIDs[i];
+                EventType pointType = Event.current.GetTypeForControl(id);
+
+                switch(pointType)
+                {
+                    case EventType.Repaint:
+                    {
+                        if(SceneDragToolManager.IsDraggingObjectInScene)
+                        {
+                            break;
+                        }
+
+                        bool      isSelected = id == GUIUtility.keyboardControl;
+                        Color     temp       = Handles.color;
+                        Matrix4x4 origMatrix = Handles.matrix;
+
+                        Handles.matrix = MathConstants.identityMatrix;
+                        Quaternion rotation = camera.transform.rotation;
+
+                        if(isSelected)
+                        {
+                            Handles.color = ColorSettings.PointInnerStateColor[3];
+                        }
+                        else if(HandleUtility.nearestControl == id)
+                        {
+                            Handles.color = ColorSettings.PointInnerStateColor[1];
+                        }
+                        else
+                        {
+                            Handles.color = ColorSettings.PointInnerStateColor[0];
+                        }
+
+                        float handleSize       = CSGHandleUtility.GetHandleSize(settings.vertices[i]);
+                        float scaledHandleSize = handleSize * GUIConstants.HANDLE_SCALE;
+                        PaintUtility.SquareDotCap(id, settings.vertices[i], rotation, scaledHandleSize);
+
+                        Handles.matrix = origMatrix;
+                        Handles.color  = temp;
+
+                        break;
+                    }
+
+                    case EventType.Layout:
+                    {
+                        if(Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
+                        {
+                            break;
+                        }
+
+                        Matrix4x4 origMatrix = Handles.matrix;
+                        Handles.matrix = MathConstants.identityMatrix;
+                        float handleSize       = CSGHandleUtility.GetHandleSize(settings.vertices[i]);
+                        float scaledHandleSize = handleSize * GUIConstants.HANDLE_SCALE;
+
+                        HandleUtility.AddControl(id, HandleUtility.DistanceToCircle(settings.vertices[i], scaledHandleSize));
+
+                        Handles.matrix = origMatrix;
+
+                        break;
+                    }
+
+                    case EventType.ValidateCommand:
+                    case EventType.KeyDown:
+                    {
+                        if(GUIUtility.hotControl == id)
+                        {
+                            if(Keys.cancelActionKey.IsKeyPressed())
                             {
-                                GUIUtility.hotControl = 0;
-								GUIUtility.keyboardControl = 0;
-								EditorGUIUtility.editingTextField = false;
-								Event.current.Use(); 
-								break;
-							}
-						}
-						break;
-					}
+                                Event.current.Use();
+                            }
+                        }
 
-					case EventType.MouseDown:
-					{
-						if (!sceneRect.Contains(Event.current.mousePosition))
-							break;
-						if (Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
-							break;
-						if (GUIUtility.hotControl == 0 && HandleUtility.nearestControl == id && Event.current.button == 0)
-						{
-                            GUIUtility.hotControl = id;
-							GUIUtility.keyboardControl = id;
-							EditorGUIUtility.editingTextField = false; 
-							EditorGUIUtility.SetWantsMouseJumping(1);
-							Event.current.Use(); 
-							break;
-						}
-						break;
-					}
-					case EventType.MouseDrag:
-					{
-						if (Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
-							break;
-						if (GUIUtility.hotControl == id && Event.current.button == 0)
-						{
-							Undo.RecordObject(this, "Modify shape");
+                        break;
+                    }
+                    case EventType.KeyUp:
+                    {
+                        if(GUIUtility.hotControl == id)
+                        {
+                            if(Keys.cancelActionKey.IsKeyPressed())
+                            {
+                                GUIUtility.hotControl             = 0;
+                                GUIUtility.keyboardControl        = 0;
+                                EditorGUIUtility.editingTextField = false;
+                                Event.current.Use();
+                            }
+                        }
 
-							var mouseRay		= HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-							var alignedPlane	= new CSGPlane(RealtimeCSG.CSGGrid.CurrentWorkGridPlane.normal, settings.vertices[0]);
-							var worldPosition	= buildPlane.Project(alignedPlane.RayIntersection(mouseRay));
-							if (float.IsInfinity(worldPosition.x) || float.IsNaN(worldPosition.x) ||
-								float.IsInfinity(worldPosition.y) || float.IsNaN(worldPosition.y) ||
-								float.IsInfinity(worldPosition.z) || float.IsNaN(worldPosition.z))
-								worldPosition = settings.vertices[i];
+                        break;
+                    }
 
-							ResetVisuals();
-							if (snapFunction != null)
-							{
-								CSGBrush snappedOnBrush;
-								worldPosition = snapFunction(camera, worldPosition, buildPlane, ref base.visualSnappedEdges, out snappedOnBrush, generatedBrushes, ignoreAllBrushes: true);
-							}
-								
-							base.visualSnappedGrid = RealtimeCSG.CSGGrid.FindAllGridEdgesThatTouchPoint(camera, worldPosition);
+                    case EventType.MouseDown:
+                    {
+                        if(!sceneRect.Contains(Event.current.mousePosition))
+                        {
+                            break;
+                        }
+
+                        if(Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
+                        {
+                            break;
+                        }
+
+                        if(GUIUtility.hotControl == 0 && HandleUtility.nearestControl == id && Event.current.button == 0)
+                        {
+                            GUIUtility.hotControl             = id;
+                            GUIUtility.keyboardControl        = id;
+                            EditorGUIUtility.editingTextField = false;
+                            EditorGUIUtility.SetWantsMouseJumping(1);
+                            Event.current.Use();
+                        }
+
+                        break;
+                    }
+                    case EventType.MouseDrag:
+                    {
+                        if(Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
+                        {
+                            break;
+                        }
+
+                        if(GUIUtility.hotControl == id && Event.current.button == 0)
+                        {
+                            Undo.RecordObject(this, "Modify shape");
+
+                            Ray      mouseRay      = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+                            CSGPlane alignedPlane  = new CSGPlane(CSGGrid.CurrentWorkGridPlane.Normal, settings.vertices[0]);
+                            Vector3  worldPosition = buildPlane.Project(alignedPlane.RayIntersection(mouseRay));
+
+                            if(float.IsInfinity(worldPosition.x) || float.IsNaN(worldPosition.x) ||
+                               float.IsInfinity(worldPosition.y) || float.IsNaN(worldPosition.y) ||
+                               float.IsInfinity(worldPosition.z) || float.IsNaN(worldPosition.z))
+                            {
+                                worldPosition = settings.vertices[i];
+                            }
+
+                            ResetVisuals();
+
+                            if(snapFunction != null)
+                            {
+                                worldPosition = snapFunction(camera, worldPosition, buildPlane, ref visualSnappedEdges, out CSGBrush _, generatedBrushes, true);
+                            }
+
+                            visualSnappedGrid = CSGGrid.FindAllGridEdgesThatTouchPoint(camera, worldPosition);
 
                             settings.vertices[i] = worldPosition;
 
-							UpdateBaseShape(true);
+                            UpdateBaseShape();
 
-							GUI.changed = true;
-							Event.current.Use(); 
-							break;
-						}
-						break;
-					}
-					case EventType.MouseUp:
-					{
-						if (GUIUtility.hotControl != id)
-							break;
-						if (Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
-							break;
-						if (Event.current.button == 0)
+                            GUI.changed = true;
+                            Event.current.Use();
+                        }
+
+                        break;
+                    }
+                    case EventType.MouseUp:
+                    {
+                        if(GUIUtility.hotControl != id)
                         {
-							GUIUtility.hotControl = 0;
-							GUIUtility.keyboardControl = 0;
-							EditorGUIUtility.editingTextField = false;
-							EditorGUIUtility.SetWantsMouseJumping(0);
-							Event.current.Use(); 
+                            break;
+                        }
 
-							ResetVisuals();
-							if (SphereRadius == 0)
-							{
-								Cancel();
-							}
-							break;
-						}
-						break;
-					}
-				}
-				
-			}
-		}
-		
-		protected override void HandleCreateShapeEvents(SceneView sceneView, Rect sceneRect)
-		{
-			bool		pointOnEdge			= false;
-			bool		havePlane			= false;
-			bool		vertexOnGeometry	= false;
-			CSGBrush	vertexOnBrush		= null;
-			
-			CSGPlane	hoverBuildPlane		= buildPlane;
-            var camera = sceneView.camera;
-            var assume2DView = CSGSettings.Assume2DView(camera);
-			if (camera != null &&
-				camera.pixelRect.Contains(Event.current.mousePosition))
-			{
-				if (!hoverDefaultPlane.HasValue ||
-					settings.vertices.Length == 0)
-				{
-					bool forceGrid = RealtimeCSG.CSGGrid.ForceGrid;
-					RealtimeCSG.CSGGrid.ForceGrid = false;
-					hoverDefaultPlane = RealtimeCSG.CSGGrid.CurrentGridPlane;
-					RealtimeCSG.CSGGrid.ForceGrid = forceGrid;
-					firstSnappedEdges = null;
-					firstSnappedBrush = null;
-					firstSnappedPlanes = null;
-					base.geometryModel = null;
-				}
-				if (editMode == EditMode.CreatePlane)
-				{
-					LegacyBrushIntersection intersection;
-					if (!assume2DView && !havePlane &&
-                        EditorWindow.mouseOverWindow == sceneView &&
-                        SceneQueryUtility.FindWorldIntersection(camera, Event.current.mousePosition, out intersection))
-					{
-						worldPosition = intersection.worldIntersection;
-						hoverBuildPlane = intersection.worldPlane;
-						vertexOnBrush = intersection.brush;
-
-						vertexOnGeometry = true;
-					} else
-					{
-						hoverBuildPlane = hoverDefaultPlane.Value;
-						vertexOnBrush = null;
-
-						var mouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-						worldPosition = hoverBuildPlane.RayIntersection(mouseRay);
-						vertexOnGeometry = false;
-					}
-					
-					ResetVisuals();
-					if (snapFunction != null)
-					{
-						CSGBrush snappedOnBrush;
-						worldPosition = snapFunction(camera, worldPosition, hoverBuildPlane, ref visualSnappedEdges, out snappedOnBrush, generatedBrushes, ignoreAllBrushes: true);
-						if (snappedOnBrush != null)
-						{
-							pointOnEdge = (visualSnappedEdges != null &&
-									  visualSnappedEdges.Count > 0);
-							vertexOnBrush = snappedOnBrush;
-							vertexOnGeometry = true;
-						}
-					}
-
-					if (settings.vertices.Length == 1)
-					{
-						if (hoverBuildPlane.normal != MathConstants.zeroVector3)
-						{
-							editMode = EditMode.CreateShape;
-							havePlane = true;
-						}
-					}
-				} else
-				{
-					var mouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-					worldPosition = hoverBuildPlane.RayIntersection(mouseRay);
-
-					ResetVisuals();
-					if (snapFunction != null)
-					{
-						CSGBrush snappedOnBrush;
-						worldPosition = snapFunction(camera, worldPosition, hoverBuildPlane, ref visualSnappedEdges, out snappedOnBrush, generatedBrushes, ignoreAllBrushes: true);
-						if (snappedOnBrush != null)
-						{
-							pointOnEdge = (visualSnappedEdges != null &&
-											visualSnappedEdges.Count > 0);
-							vertexOnBrush = snappedOnBrush;
-						}
-					}
-				}
-
-				if (geometryModel == null && vertexOnBrush != null)
-				{
-					if (vertexOnBrush.ChildData != null && vertexOnBrush.ChildData.Model)
-						geometryModel = vertexOnBrush.ChildData.Model;
-				}
-
-				if (worldPosition != prevWorldPosition)
-				{
-					prevWorldPosition = worldPosition;
-					if (settings.vertices.Length > 0)
-					{
-						if (hadSphere || (settings.vertices[0] - worldPosition).magnitude > MathConstants.EqualityEpsilon)
-						{
-							hadSphere = true;
-							UpdateBaseShape(true);
-						}
-					}
-					if (Event.current.type != EventType.Repaint)
-						CSG_EditorGUIUtility.RepaintAll();
-				}
-				
-				visualSnappedGrid = RealtimeCSG.CSGGrid.FindAllGridEdgesThatTouchPoint(camera, worldPosition);
-				visualSnappedBrush = vertexOnBrush;
-			}
-			
-			RealtimeCSG.CSGGrid.SetForcedGrid(camera, hoverBuildPlane);
-			
-
-			if (!SceneDragToolManager.IsDraggingObjectInScene &&
-				Event.current.type == EventType.Repaint)
-			{
-				PaintSnapVisualisation();
-				PaintCircle(sceneView, base.shapeId);
-			}
-			
-
-			var type = Event.current.GetTypeForControl(base.shapeId);
-			switch (type)
-			{
-				case EventType.Layout:
-				{
-					return;
-				}
-
-				case EventType.ValidateCommand:
-				case EventType.KeyDown:
-				{
-					if (GUIUtility.hotControl == base.shapeId)
-					{
-						if (Keys.PerformActionKey.IsKeyPressed() ||
-							Keys.DeleteSelectionKey.IsKeyPressed() ||
-							Keys.CancelActionKey.IsKeyPressed())
-						{
-							Event.current.Use();
-						}
-					}
-					return;
-				}
-				case EventType.KeyUp:
-				{
-					if (GUIUtility.hotControl == base.shapeId)
-					{
-						if (Keys.CylinderBuilderMode.IsKeyPressed() ||
-							Keys.PerformActionKey.IsKeyPressed())
-						{
-							HotKeyReleased(); 
-							Event.current.Use();
-							return;
-						}
-						if (Keys.DeleteSelectionKey.IsKeyPressed() ||
-							Keys.CancelActionKey.IsKeyPressed())
-						{
-							Cancel();
-							Event.current.Use();
-							return;
-						}
-					}
-					return;
-				}
-
-				case EventType.MouseDown:
-				{
-					if (!sceneRect.Contains(Event.current.mousePosition))
-						break;
-					if (Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
-						return;
-					if ((GUIUtility.hotControl != 0 && GUIUtility.hotControl != shapeEditId && GUIUtility.hotControl != base.shapeId) ||
-						Event.current.button != 0)
-						return;
-					
-					Event.current.Use();
-					if (settings.vertices.Length == 0)
-					{
-						if ((GUIUtility.hotControl == 0 ||
-							GUIUtility.hotControl == base.shapeEditId) && base.shapeId != -1)
+                        if(Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
                         {
-							base.CalculateWorldSpaceTangents(camera);
-                            GUIUtility.hotControl = base.shapeId;
-							GUIUtility.keyboardControl = base.shapeId;
-							EditorGUIUtility.editingTextField = false; 
-						}
-					}
+                            break;
+                        }
 
-					if (GUIUtility.hotControl == base.shapeId && settings.vertices.Length < 2)
-					{
-						if (!float.IsNaN(worldPosition.x) && !float.IsInfinity(worldPosition.x) &&
-							!float.IsNaN(worldPosition.y) && !float.IsInfinity(worldPosition.y) &&
-							!float.IsNaN(worldPosition.z) && !float.IsInfinity(worldPosition.z))
-						{
-							if (hoverBuildPlane.normal.sqrMagnitude != 0)
-								buildPlane = hoverBuildPlane;
-							CalculateWorldSpaceTangents(camera);
+                        if(Event.current.button == 0)
+                        {
+                            GUIUtility.hotControl             = 0;
+                            GUIUtility.keyboardControl        = 0;
+                            EditorGUIUtility.editingTextField = false;
+                            EditorGUIUtility.SetWantsMouseJumping(0);
+                            Event.current.Use();
 
-							if (settings.vertices.Length == 0)
-							{
-								if (pointOnEdge)
-								{
-									firstSnappedEdges = visualSnappedEdges.ToArray();
-									firstSnappedBrush = visualSnappedBrush;
-									firstSnappedPlanes = null;
-								} else
-								{
-									firstSnappedBrush = null;
-									firstSnappedEdges = null;
-									firstSnappedPlanes = null;
-								}
-								planeOnGeometry = vertexOnGeometry;
-							} else
-							{
-								if (firstSnappedEdges != null)
-								{
-									if (firstSnappedPlanes == null)
-										CreateSnappedPlanes();
+                            ResetVisuals();
 
-									bool outside = true;
-									for (int i = 0; i < firstSnappedPlanes.Length; i++)
-									{
-										if (firstSnappedPlanes[i].Distance(worldPosition) <= MathConstants.DistanceEpsilon)
-										{
-											outside = false;
-											break;
-										}
-									}
+                            if(SphereRadius == 0)
+                            {
+                                Cancel();
+                            }
+                        }
 
-									planeOnGeometry = !outside;
-								}
+                        break;
+                    }
+                }
+            }
+        }
 
-								if (vertexOnGeometry)
-								{
-									var plane = hoverDefaultPlane.Value;
-									var distance = plane.Distance(worldPosition);
-									plane.d += distance;
-									hoverDefaultPlane = plane;
+        protected override void HandleCreateShapeEvents(SceneView sceneView, Rect sceneRect)
+        {
+            bool     pointOnEdge      = false;
+            bool     havePlane        = false;
+            bool     vertexOnGeometry = false;
+            CSGBrush vertexOnBrush    = null;
 
-									for (int i = 0; i < settings.vertices.Length; i++)
-									{
-										if (!settings.onGeometryVertices[i])
-										{
-											settings.vertices[i] = GeometryUtility.ProjectPointOnPlane(plane, settings.vertices[i]);
-											settings.onGeometryVertices[i] = true;
-										}
-									}
-								}
-							}
-							ArrayUtility.Add(ref settings.onGeometryVertices, vertexOnGeometry);
-							settings.AddPoint(worldPosition);
-							CSG_EditorGUIUtility.RepaintAll();
-							if (settings.vertices.Length == 2)
-							{
-								HotKeyReleased();
-							}
-						}
-					}
-					return;
-				}
-				case EventType.MouseDrag:
-				{
-					if (Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
-						break;
-					if (GUIUtility.hotControl == base.shapeId && Event.current.button == 0)
-					{
-						Event.current.Use();
-					}
-					return;
-				}
-				case EventType.MouseUp:
-				{
-					if (GUIUtility.hotControl != base.shapeId)
-						return;
-					if (Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
-						return;
-					if (Event.current.button == 0)
-					{
-						Event.current.Use(); 
+            CSGPlane hoverBuildPlane = buildPlane;
+            Camera   camera          = sceneView.camera;
+            bool     assume2DView    = CSGSettings.Assume2DView(camera);
 
-						ResetVisuals();
-						if (settings.vertices.Length == 2)
-						{
-							GUIUtility.hotControl = 0;
-							GUIUtility.keyboardControl = 0;
-							EditorGUIUtility.editingTextField = false;
+            if(camera != null && camera.pixelRect.Contains(Event.current.mousePosition))
+            {
+                if(!_hoverDefaultPlane.HasValue || settings.vertices.Length == 0)
+                {
+                    bool forceGrid = CSGGrid.ForceGrid;
+                    CSGGrid.ForceGrid   = false;
+                    _hoverDefaultPlane  = CSGGrid.CurrentGridPlane;
+                    CSGGrid.ForceGrid   = forceGrid;
+                    _firstSnappedEdges  = null;
+                    _firstSnappedBrush  = null;
+                    _firstSnappedPlanes = null;
+                    geometryModel       = null;
+                }
 
-							editMode = EditMode.CreateShape;
-							HotKeyReleased();
-						}
-					}
-					return;
-				}
-			}
-		}
+                if(editMode == EditMode.CreatePlane)
+                {
+                    if(!assume2DView && !havePlane && EditorWindow.mouseOverWindow == sceneView && SceneQueryUtility.FindWorldIntersection(camera, Event.current.mousePosition, out LegacyBrushIntersection intersection))
+                    {
+                        _worldPosition  = intersection.worldIntersection;
+                        hoverBuildPlane = intersection.worldPlane;
+                        vertexOnBrush   = intersection.brush;
 
-		protected override void CreateControlIDs()
-		{
-			base.CreateControlIDs();
+                        vertexOnGeometry = true;
+                    }
+                    else
+                    {
+                        hoverBuildPlane = _hoverDefaultPlane.Value;
 
-			if (settings.vertices.Length > 0)
-			{
-				if (settings.vertexIDs == null ||
-					settings.vertexIDs.Length != settings.vertices.Length)
-					settings.vertexIDs = new int[settings.vertices.Length];
-				for (int i = 0; i < settings.vertices.Length; i++)
-				{
-					settings.vertexIDs[i] = GUIUtility.GetControlID(ShapeBuilderPointHash, FocusType.Passive);
-				}
-			}			
-		}
+                        Ray mouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+                        _worldPosition = hoverBuildPlane.RayIntersection(mouseRay);
+                    }
 
-		public override void HandleEvents(SceneView sceneView, Rect sceneRect)
-		{
-			base.HandleEvents(sceneView, sceneRect);
+                    ResetVisuals();
 
-			if (Event.current.type == EventType.MouseUp)
-			{
-				if (GUIUtility.hotControl == 0 &&
-					Event.current.modifiers == EventModifiers.None &&
-					!mouseIsDragging && Event.current.button == 0 &&
-					(Tools.viewTool == ViewTool.None || Tools.viewTool == ViewTool.Pan))
-				{
-					ResetVisuals();
-					Event.current.Use();
-					Commit(sceneView.camera);
-				}
-			}
-		}
-		
-		public bool OnShowGUI(bool isSceneGUI)
-		{
-			return GeneratorSphereGUI.OnShowGUI(this, isSceneGUI);
-		}
+                    if(snapFunction != null)
+                    {
+                        _worldPosition = snapFunction(camera, _worldPosition, hoverBuildPlane, ref visualSnappedEdges, out CSGBrush snappedOnBrush, generatedBrushes, true);
 
+                        if(snappedOnBrush != null)
+                        {
+                            pointOnEdge      = visualSnappedEdges != null && visualSnappedEdges.Count > 0;
+                            vertexOnBrush    = snappedOnBrush;
+                            vertexOnGeometry = true;
+                        }
+                    }
 
-		public override AABB GetShapeBounds()
-		{
-			return ShapeSettings.CalculateBounds(Quaternion.identity, gridTangent, gridBinormal);
-		}
+                    if(settings.vertices.Length == 1)
+                    {
+                        if(hoverBuildPlane.Normal != MathConstants.zeroVector3)
+                        {
+                            editMode = EditMode.CreateShape;
+                        }
+                    }
+                }
+                else
+                {
+                    Ray mouseRay = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
+                    _worldPosition = hoverBuildPlane.RayIntersection(mouseRay);
 
-		public override bool Commit(Camera camera)
+                    ResetVisuals();
+
+                    if(snapFunction != null)
+                    {
+                        _worldPosition = snapFunction(camera, _worldPosition, hoverBuildPlane, ref visualSnappedEdges, out CSGBrush snappedOnBrush, generatedBrushes, true);
+
+                        if(snappedOnBrush != null)
+                        {
+                            pointOnEdge   = visualSnappedEdges != null && visualSnappedEdges.Count > 0;
+                            vertexOnBrush = snappedOnBrush;
+                        }
+                    }
+                }
+
+                if(geometryModel == null && vertexOnBrush != null)
+                {
+                    if(vertexOnBrush.childData != null && vertexOnBrush.childData.model)
+                    {
+                        geometryModel = vertexOnBrush.childData.model;
+                    }
+                }
+
+                if(_worldPosition != _prevWorldPosition)
+                {
+                    _prevWorldPosition = _worldPosition;
+
+                    if(settings.vertices.Length > 0)
+                    {
+                        if(_hadSphere || (settings.vertices[0] - _worldPosition).magnitude > MathConstants.EQUALITY_EPSILON)
+                        {
+                            _hadSphere = true;
+                            UpdateBaseShape();
+                        }
+                    }
+
+                    if(Event.current.type != EventType.Repaint)
+                    {
+                        CSGEditorGUIUtility.RepaintAll();
+                    }
+                }
+
+                visualSnappedGrid  = CSGGrid.FindAllGridEdgesThatTouchPoint(camera, _worldPosition);
+                visualSnappedBrush = vertexOnBrush;
+
+                MatchSurfaceMaterial(camera, vertexOnBrush, hoverBuildPlane.Normal);
+            }
+
+            CSGGrid.SetForcedGrid(camera, hoverBuildPlane);
+
+            if(!SceneDragToolManager.IsDraggingObjectInScene && Event.current.type == EventType.Repaint)
+            {
+                PaintSnapVisualisation();
+                PaintCircle(sceneView, shapeId);
+            }
+
+            EventType type = Event.current.GetTypeForControl(shapeId);
+
+            switch(type)
+            {
+                case EventType.Layout:
+                {
+                    return;
+                }
+
+                case EventType.ValidateCommand:
+                case EventType.KeyDown:
+                {
+                    if(GUIUtility.hotControl == shapeId)
+                    {
+                        if(Keys.performActionKey.IsKeyPressed() || Keys.deleteSelectionKey.IsKeyPressed() || Keys.cancelActionKey.IsKeyPressed())
+                        {
+                            Event.current.Use();
+                        }
+                    }
+
+                    return;
+                }
+                case EventType.KeyUp:
+                {
+                    if(GUIUtility.hotControl == shapeId)
+                    {
+                        if(Keys.cylinderBuilderMode.IsKeyPressed() || Keys.performActionKey.IsKeyPressed())
+                        {
+                            HotKeyReleased();
+                            Event.current.Use();
+
+                            return;
+                        }
+
+                        if(Keys.deleteSelectionKey.IsKeyPressed() || Keys.cancelActionKey.IsKeyPressed())
+                        {
+                            Cancel();
+                            Event.current.Use();
+                        }
+                    }
+
+                    return;
+                }
+
+                case EventType.MouseDown:
+                {
+                    if(!sceneRect.Contains(Event.current.mousePosition))
+                    {
+                        break;
+                    }
+
+                    if(Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
+                    {
+                        return;
+                    }
+
+                    if((GUIUtility.hotControl != 0 && GUIUtility.hotControl != shapeEditId && GUIUtility.hotControl != shapeId) || Event.current.button != 0)
+                    {
+                        return;
+                    }
+
+                    Event.current.Use();
+
+                    if(settings.vertices.Length == 0)
+                    {
+                        if((GUIUtility.hotControl == 0 || GUIUtility.hotControl == shapeEditId) && shapeId != -1)
+                        {
+                            CalculateWorldSpaceTangents(camera);
+                            GUIUtility.hotControl             = shapeId;
+                            GUIUtility.keyboardControl        = shapeId;
+                            EditorGUIUtility.editingTextField = false;
+                        }
+                    }
+
+                    if(GUIUtility.hotControl == shapeId && settings.vertices.Length < 2)
+                    {
+                        if(!float.IsNaN(_worldPosition.x) && !float.IsInfinity(_worldPosition.x) &&
+                           !float.IsNaN(_worldPosition.y) && !float.IsInfinity(_worldPosition.y) &&
+                           !float.IsNaN(_worldPosition.z) && !float.IsInfinity(_worldPosition.z))
+                        {
+                            if(hoverBuildPlane.Normal.sqrMagnitude != 0)
+                            {
+                                buildPlane = hoverBuildPlane;
+                            }
+
+                            CalculateWorldSpaceTangents(camera);
+
+                            if(settings.vertices.Length == 0)
+                            {
+                                if(pointOnEdge)
+                                {
+                                    _firstSnappedEdges = visualSnappedEdges.ToArray();
+                                    _firstSnappedBrush = visualSnappedBrush;
+                                }
+                                else
+                                {
+                                    _firstSnappedBrush = null;
+                                    _firstSnappedEdges = null;
+                                }
+
+                                _firstSnappedPlanes = null;
+                                planeOnGeometry     = vertexOnGeometry;
+                            }
+                            else
+                            {
+                                if(_firstSnappedEdges != null)
+                                {
+                                    if(_firstSnappedPlanes == null)
+                                    {
+                                        CreateSnappedPlanes();
+                                    }
+
+                                    bool outside = true;
+
+                                    for(int i = 0; i < _firstSnappedPlanes.Length; i++)
+                                    {
+                                        if(_firstSnappedPlanes[i].Distance(_worldPosition) <= MathConstants.DISTANCE_EPSILON)
+                                        {
+                                            outside = false;
+
+                                            break;
+                                        }
+                                    }
+
+                                    planeOnGeometry = !outside;
+                                }
+
+                                if(vertexOnGeometry)
+                                {
+                                    CSGPlane plane    = _hoverDefaultPlane.Value;
+                                    float    distance = plane.Distance(_worldPosition);
+                                    plane.d            += distance;
+                                    _hoverDefaultPlane =  plane;
+
+                                    for(int i = 0; i < settings.vertices.Length; i++)
+                                    {
+                                        if(!settings.onGeometryVertices[i])
+                                        {
+                                            settings.vertices[i] = GeometryUtility.ProjectPointOnPlane(plane, settings.vertices[i]);
+
+                                            settings.onGeometryVertices[i] = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            ArrayUtility.Add(ref settings.onGeometryVertices, vertexOnGeometry);
+                            settings.AddPoint(_worldPosition);
+                            CSGEditorGUIUtility.RepaintAll();
+
+                            if(settings.vertices.Length == 2)
+                            {
+                                HotKeyReleased();
+                            }
+                        }
+                    }
+
+                    return;
+                }
+                case EventType.MouseDrag:
+                {
+                    if(Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
+                    {
+                        break;
+                    }
+
+                    if(GUIUtility.hotControl == shapeId && Event.current.button == 0)
+                    {
+                        Event.current.Use();
+                    }
+
+                    return;
+                }
+                case EventType.MouseUp:
+                {
+                    if(GUIUtility.hotControl != shapeId)
+                    {
+                        return;
+                    }
+
+                    if(Tools.viewTool != ViewTool.None && Tools.viewTool != ViewTool.Pan)
+                    {
+                        return;
+                    }
+
+                    if(Event.current.button == 0)
+                    {
+                        Event.current.Use();
+
+                        ResetVisuals();
+
+                        if(settings.vertices.Length == 2)
+                        {
+                            GUIUtility.hotControl             = 0;
+                            GUIUtility.keyboardControl        = 0;
+                            EditorGUIUtility.editingTextField = false;
+
+                            editMode = EditMode.CreateShape;
+                            HotKeyReleased();
+                        }
+                    }
+
+                    return;
+                }
+            }
+        }
+
+        protected override void CreateControlIDs()
+        {
+            base.CreateControlIDs();
+
+            if(settings.vertices.Length > 0)
+            {
+                if(settings.vertexIDs == null || settings.vertexIDs.Length != settings.vertices.Length)
+                {
+                    settings.vertexIDs = new int[settings.vertices.Length];
+                }
+
+                for(int i = 0; i < settings.vertices.Length; i++)
+                {
+                    settings.vertexIDs[i] = GUIUtility.GetControlID(shapeBuilderPointHash, FocusType.Passive);
+                }
+            }
+        }
+
+        public override void HandleEvents(SceneView sceneView, Rect sceneRect)
+        {
+            base.HandleEvents(sceneView, sceneRect);
+
+            if(Event.current.type == EventType.MouseUp)
+            {
+                if(GUIUtility.hotControl == 0 && Event.current.modifiers == EventModifiers.None && !mouseIsDragging && Event.current.button == 0 && (Tools.viewTool == ViewTool.None || Tools.viewTool == ViewTool.Pan))
+                {
+                    ResetVisuals();
+                    Event.current.Use();
+                    Commit(sceneView.camera);
+                }
+            }
+        }
+
+        public bool OnShowGUI(bool isSceneGUI)
+        {
+            return GeneratorSphereGUI.OnShowGUI(this, isSceneGUI);
+        }
+
+        public override AABB GetShapeBounds()
+        {
+            return ShapeSettings.CalculateBounds(Quaternion.identity, gridTangent, gridBinormal);
+        }
+
+        public override bool Commit(Camera camera)
         {
             isFinished = true;
             CleanupGrid();
 
-            if (SphereRadius == 0 || generatedBrushes == null || generatedBrushes.Length < 1 ||
-				!UpdateBaseShape(true))
+            if(SphereRadius == 0 || generatedBrushes == null || generatedBrushes.Length < 1 || !UpdateBaseShape())
             {
                 Cancel();
+
                 return false;
             }
 
             EndCommit();
+
             return true;
-		}
-
-		private bool GenerateSphere(float radius, int splits, CSGModel parentModel, CSGBrush brush, out ControlMesh controlMesh, out Shape shape)
-        {
-			if (prevSplits != splits || prevIsHemisphere != IsHemiSphere || splitControlMesh == null || splitShape == null)
-			{
-				splitControlMesh = null;
-				splitShape = null;
-				BrushFactory.CreateCubeControlMesh(out splitControlMesh, out splitShape, Vector3.one);
-
-				var axi = new Vector3[] { MathConstants.upVector3, MathConstants.leftVector3, MathConstants.forwardVector3 };
-				List<int> intersectedEdges = new List<int>();
-				float step = 1.0f / (float)(splits + 1);
-				float offset;
-				for (int i = 0; i < axi.Length; i++)
-				{
-					var normal = axi[i];
-					offset = 0.5f - step;
-					while (offset > 0.0f)
-					{
-						ControlMeshUtility.CutMesh(splitControlMesh, splitShape, new CSGPlane(-normal, -offset), ref intersectedEdges);
-						if (i != 0 || !IsHemiSphere)
-						{
-							ControlMeshUtility.CutMesh(splitControlMesh, splitShape, new CSGPlane(normal, -offset), ref intersectedEdges);
-						}
-						offset -= step;
-					}
-					if (i != 0 || !IsHemiSphere)
-					{
-						if ((splits & 1) == 1)
-							ControlMeshUtility.CutMesh(splitControlMesh, splitShape, new CSGPlane(normal, 0), ref intersectedEdges);
-					}
-				}
-
-				if (IsHemiSphere)
-				{
-					var cuttingPlane = new CSGPlane(MathConstants.upVector3, 0);
-					intersectedEdges.Clear();
-					if (ControlMeshUtility.CutMesh(splitControlMesh, splitShape, cuttingPlane, ref intersectedEdges))
-					{
-						var edge_loop = ControlMeshUtility.FindEdgeLoop(splitControlMesh, ref intersectedEdges);
-						if (edge_loop != null)
-						{
-							if (ControlMeshUtility.SplitEdgeLoop(splitControlMesh, splitShape, edge_loop))
-							{
-								Shape foundShape;
-								ControlMesh foundControlMesh;
-								ControlMeshUtility.FindAndDetachSeparatePiece(splitControlMesh, splitShape, cuttingPlane, out foundControlMesh, out foundShape);
-							}
-						}
-					}
-				}
-
-
-				// Spherize the cube
-				for (int i = 0; i < splitControlMesh.Vertices.Length; i++)
-				{
-					Vector3 v = splitControlMesh.Vertices[i] * 2.0f;
-					float x2 = v.x * v.x;
-					float y2 = v.y * v.y;
-					float z2 = v.z * v.z;
-					Vector3 s;
-					s.x = v.x * Mathf.Sqrt(1f - (y2 * 0.5f) - (z2 * 0.5f) + ((y2 * z2) / 3.0f));
-					s.y = v.y * Mathf.Sqrt(1f - (z2 * 0.5f) - (x2 * 0.5f) + ((z2 * x2) / 3.0f));
-					s.z = v.z * Mathf.Sqrt(1f - (x2 * 0.5f) - (y2 * 0.5f) + ((x2 * y2) / 3.0f));
-					splitControlMesh.Vertices[i] = s;//(splitControlMesh.Vertices[i] * 0.75f) + (splitControlMesh.Vertices[i].normalized * 0.25f);
-				}
-
-
-				if (!ControlMeshUtility.Triangulate(null, splitControlMesh, splitShape))
-				{
-					Debug.LogWarning("!ControlMeshUtility.IsConvex");
-					controlMesh = null;
-					shape = null;
-					return false;
-				}
-				ControlMeshUtility.FixTexGens(splitControlMesh, splitShape);
-
-				if (!ControlMeshUtility.IsConvex(splitControlMesh, splitShape))
-				{
-					Debug.LogWarning("!ControlMeshUtility.IsConvex");
-					controlMesh = null;
-					shape = null;
-					return false;
-				}
-				ControlMeshUtility.UpdateTangents(splitControlMesh, splitShape);
-
-				prevSplits = splits;
-				prevIsHemisphere = IsHemiSphere;
-			}
-
-			if (splitControlMesh == null || splitShape == null || !splitControlMesh.Valid)
-			{
-				Debug.LogWarning("splitControlMesh == null || splitShape == null || !splitControlMesh.IsValid");
-				controlMesh = null;
-				shape = null;
-				return false;
-			}
-
-			controlMesh = splitControlMesh.Clone();
-			shape = splitShape.Clone();
-
-			/*
-			float angle_offset = GeometryUtility.SignedAngle(gridTangent, delta / sphereRadius, buildPlane.normal);
-			angle_offset -= 90;
-
-			angle_offset += sphereOffset;
-			angle_offset *= Mathf.Deg2Rad;
-
-			Vector3 p1 = MathConstants.zeroVector3;
-			for (int i = 0; i < realSplits; i++)
-			{
-				var angle = ((i * Mathf.PI * 2.0f) / (float)realSplits) + angle_offset;
-
-				p1.x = (Mathf.Sin(angle) * sphereRadius);
-				p1.z = (Mathf.Cos(angle) * sphereRadius);
-			}
-			*/
-
-			for (int i = 0; i < controlMesh.Vertices.Length; i++)
-			{
-				var vertex = controlMesh.Vertices[i];
-				vertex *= radius;
-				controlMesh.Vertices[i] = vertex;
-			}
-
-			for (int i = 0; i < shape.Surfaces.Length; i++)
-			{
-				var plane = shape.Surfaces[i].Plane;
-				plane.d *= radius;
-				shape.Surfaces[i].Plane = plane;
-			}
-
-			bool smoothShading = SphereSmoothShading;
-			if (!sphereSmoothingGroup.HasValue && smoothShading)
-			{
-				sphereSmoothingGroup = SurfaceUtility.FindUnusedSmoothingGroupIndex();
-			}
-
-			for (int i = 0; i < shape.TexGenFlags.Length; i++)
-			{
-				shape.TexGens[i].SmoothingGroup = smoothShading ? sphereSmoothingGroup.Value : 0;
-			}
-
-			var defaultTexGen = new TexGen();
-			defaultTexGen.Scale = MathConstants.oneVector3;
-			//defaultTexGen.Color = Color.white;
-			
-			var fakeSurface = new Surface();
-			fakeSurface.TexGenIndex = 0;
-			
-			var defaultMaterial = CSGSettings.DefaultMaterial;
-			for (var s = 0; s < shape.Surfaces.Length; s++)
-			{
-				var texGenIndex = shape.Surfaces[s].TexGenIndex;
-
-				var axis		= GeometryUtility.SnapToClosestAxis(shape.Surfaces[s].Plane.normal);
-				var rotation	= Quaternion.FromToRotation(axis, MathConstants.backVector3);
-				var matrix		= Matrix4x4.TRS(MathConstants.zeroVector3, rotation, MathConstants.oneVector3);
-
-				SurfaceUtility.AlignTextureSpaces(matrix, false, ref shape.TexGens[texGenIndex], ref shape.TexGenFlags[texGenIndex], ref shape.Surfaces[s]);
-				shape.TexGens[texGenIndex].RenderMaterial = defaultMaterial;
-			}
-
-			return true;
         }
 
-		void IGenerator.OnDefaultMaterialModified()
-		{
-			if (generatedBrushes == null)
-				return;
+        private bool GenerateSphere(float radius, int splits, out ControlMesh controlMesh, out Shape shape)
+        {
+            if(_prevSplits != splits || _prevIsHemisphere != IsHemiSphere || _splitControlMesh == null || _splitShape == null)
+            {
+                _splitControlMesh = null;
+                _splitShape       = null;
+                BrushFactory.CreateCubeControlMesh(out _splitControlMesh, out _splitShape, Vector3.one);
 
-			var defaultMaterial = CSGSettings.DefaultMaterial;
-			for (int i = 0; i < generatedBrushes.Length; i++)
-			{
-				var brush = generatedBrushes[i];
-				if (!brush)
-					continue;
+                Vector3[] axi = { MathConstants.upVector3, MathConstants.leftVector3, MathConstants.forwardVector3 };
 
-				var shape = brush.Shape;
-				for (var m = 0; m < shape.TexGens.Length; m++)
-					shape.TexGens[m].RenderMaterial = defaultMaterial;
+                List<int> intersectedEdges = new List<int>();
+                float     step             = 1.0f / (splits + 1);
 
-				if (brush.ControlMesh != null)
-					brush.ControlMesh.SetDirty();
-			}
-		}
+                for(int i = 0; i < axi.Length; i++)
+                {
+                    Vector3 normal = axi[i];
+                    float   offset = 0.5f - step;
 
-        internal override bool UpdateBaseShape(bool registerUndo = true)
-		{
-			if (settings.vertices == null ||
-				settings.vertices.Length == 0)
-				editMode = EditMode.CreatePlane;
+                    while(offset > 0.0f)
+                    {
+                        ControlMeshUtility.CutMesh(_splitControlMesh, _splitShape, new CSGPlane(-normal, -offset), ref intersectedEdges);
 
-			if (editMode == EditMode.CreatePlane)
-				return false;
+                        if(i != 0 || !IsHemiSphere)
+                        {
+                            ControlMeshUtility.CutMesh(_splitControlMesh, _splitShape, new CSGPlane(normal, -offset), ref intersectedEdges);
+                        }
 
-			float radius = SphereRadius;
-			if (editMode == EditMode.CreateShape)
-			{
-				brushPosition = settings.vertices[0];
-				//extrusionPoints[0].Vertex = settings.vertices[0];
-				radius = (settings.vertices[0] - worldPosition).magnitude;
-			}
+                        offset -= step;
+                    }
 
-            GenerateBrushObjects(1);
-			
-            if (radius == 0 || generatedBrushes == null || generatedBrushes.Length < 1)
-			{
-				InternalCSGModelManager.skipCheckForChanges = false;
-                HideGenerateBrushes();
+                    if(i != 0 || !IsHemiSphere)
+                    {
+                        if((splits & 1) == 1)
+                        {
+                            ControlMeshUtility.CutMesh(_splitControlMesh, _splitShape, new CSGPlane(normal, 0), ref intersectedEdges);
+                        }
+                    }
+                }
+
+                if(IsHemiSphere)
+                {
+                    CSGPlane cuttingPlane = new CSGPlane(MathConstants.upVector3, 0);
+                    intersectedEdges.Clear();
+
+                    if(ControlMeshUtility.CutMesh(_splitControlMesh, _splitShape, cuttingPlane, ref intersectedEdges))
+                    {
+                        List<int> edgeLoop = ControlMeshUtility.FindEdgeLoop(_splitControlMesh, ref intersectedEdges);
+
+                        if(edgeLoop != null)
+                        {
+                            if(ControlMeshUtility.SplitEdgeLoop(_splitControlMesh, _splitShape, edgeLoop))
+                            {
+                                ControlMeshUtility.FindAndDetachSeparatePiece(_splitControlMesh, _splitShape, cuttingPlane, out ControlMesh _, out Shape _);
+                            }
+                        }
+                    }
+                }
+
+                // Spherize the cube
+                for(int i = 0; i < _splitControlMesh.vertices.Length; i++)
+                {
+                    Vector3 v  = _splitControlMesh.vertices[i] * 2.0f;
+                    float   x2 = v.x * v.x;
+                    float   y2 = v.y * v.y;
+                    float   z2 = v.z * v.z;
+                    Vector3 s;
+                    s.x = v.x * Mathf.Sqrt(1f - y2 * 0.5f - z2 * 0.5f + y2 * z2 / 3.0f);
+                    s.y = v.y * Mathf.Sqrt(1f - z2 * 0.5f - x2 * 0.5f + z2 * x2 / 3.0f);
+                    s.z = v.z * Mathf.Sqrt(1f - x2 * 0.5f - y2 * 0.5f + x2 * y2 / 3.0f);
+
+                    _splitControlMesh.vertices[i] = s;
+                }
+
+                if(!ControlMeshUtility.Triangulate(null, _splitControlMesh, _splitShape))
+                {
+                    Debug.LogWarning("!ControlMeshUtility.IsConvex");
+                    controlMesh = null;
+                    shape       = null;
+
+                    return false;
+                }
+
+                ControlMeshUtility.FixTexGens(_splitControlMesh, _splitShape);
+
+                if(!ControlMeshUtility.IsConvex(_splitControlMesh, _splitShape))
+                {
+                    Debug.LogWarning("!ControlMeshUtility.IsConvex");
+                    controlMesh = null;
+                    shape       = null;
+
+                    return false;
+                }
+
+                ControlMeshUtility.UpdateTangents(_splitControlMesh, _splitShape);
+
+                _prevSplits       = splits;
+                _prevIsHemisphere = IsHemiSphere;
+            }
+
+            if(_splitControlMesh == null || _splitShape == null || !_splitControlMesh.Valid)
+            {
+                Debug.LogWarning("splitControlMesh == null || splitShape == null || !splitControlMesh.IsValid");
+                controlMesh = null;
+                shape       = null;
+
                 return false;
             }
-			
-            //UpdateBrushOperation(height);
 
-            bool failures = false;
-            bool modifiedHierarchy = false;
-            if (generatedGameObjects != null && generatedGameObjects.Length > 0)
+            controlMesh = _splitControlMesh.Clone();
+            shape       = _splitShape.Clone();
+
+            for(int i = 0; i < controlMesh.vertices.Length; i++)
             {
-                for (int i = generatedGameObjects.Length - 1; i >= 0; i--)
+                Vector3 vertex = controlMesh.vertices[i];
+                vertex                  *= radius;
+                controlMesh.vertices[i] =  vertex;
+            }
+
+            for(int i = 0; i < shape.surfaces.Length; i++)
+            {
+                CSGPlane plane = shape.surfaces[i].Plane;
+                plane.d                 *= radius;
+                shape.surfaces[i].Plane =  plane;
+            }
+
+            bool smoothShading = SphereSmoothShading;
+
+            if(!_sphereSmoothingGroup.HasValue && smoothShading)
+            {
+                _sphereSmoothingGroup = SurfaceUtility.FindUnusedSmoothingGroupIndex();
+            }
+
+            for(int i = 0; i < shape.texGenFlags.Length; i++)
+            {
+                shape.texGens[i].SmoothingGroup = smoothShading ? _sphereSmoothingGroup.Value : 0;
+            }
+
+            Material defaultMaterial = CSGSettings.DefaultMaterial;
+
+            for(int s = 0; s < shape.surfaces.Length; s++)
+            {
+                int texGenIndex = shape.surfaces[s].TexGenIndex;
+
+                Vector3    axis     = GeometryUtility.SnapToClosestAxis(shape.surfaces[s].Plane.Normal);
+                Quaternion rotation = Quaternion.FromToRotation(axis, MathConstants.backVector3);
+                Matrix4x4  matrix   = Matrix4x4.TRS(MathConstants.zeroVector3, rotation, MathConstants.oneVector3);
+
+                SurfaceUtility.AlignTextureSpaces(matrix, false, ref shape.texGens[texGenIndex], ref shape.surfaces[s]);
+
+                shape.texGens[texGenIndex].RenderMaterial = defaultMaterial;
+            }
+
+            return true;
+        }
+
+        void IGenerator.OnDefaultMaterialModified()
+        {
+            if(generatedBrushes == null)
+            {
+                return;
+            }
+
+            Material defaultMaterial = CSGSettings.DefaultMaterial;
+
+            for(int i = 0; i < generatedBrushes.Length; i++)
+            {
+                CSGBrush brush = generatedBrushes[i];
+
+                if(!brush)
                 {
-                    if (generatedGameObjects[i])
+                    continue;
+                }
+
+                Shape shape = brush.shape;
+
+                for(int m = 0; m < shape.texGens.Length; m++)
+                {
+                    shape.texGens[m].RenderMaterial = defaultMaterial;
+                }
+
+                if(brush.controlMesh != null)
+                {
+                    brush.controlMesh.SetDirty();
+                }
+            }
+        }
+
+        internal override bool UpdateBaseShape(bool registerUndo = true)
+        {
+            if(settings.vertices == null || settings.vertices.Length == 0)
+            {
+                editMode = EditMode.CreatePlane;
+            }
+
+            if(editMode == EditMode.CreatePlane)
+            {
+                return false;
+            }
+
+            float radius = SphereRadius;
+
+            if(editMode == EditMode.CreateShape)
+            {
+                brushPosition = settings.vertices[0];
+                radius        = (settings.vertices[0] - _worldPosition).magnitude;
+            }
+
+            GenerateBrushObjects(1);
+
+            if(radius == 0 || generatedBrushes == null || generatedBrushes.Length < 1)
+            {
+                InternalCSGModelManager.SkipCheckForChanges = false;
+                HideGenerateBrushes();
+
+                return false;
+            }
+
+            bool failures          = false;
+            bool modifiedHierarchy = false;
+
+            if(generatedGameObjects != null && generatedGameObjects.Length > 0)
+            {
+                for(int i = generatedGameObjects.Length - 1; i >= 0; i--)
+                {
+                    if(generatedGameObjects[i])
+                    {
                         continue;
+                    }
+
                     ArrayUtility.RemoveAt(ref generatedGameObjects, i);
                 }
             }
-            if (generatedGameObjects == null || generatedGameObjects.Length == 0)
+
+            if(generatedGameObjects == null || generatedGameObjects.Length == 0)
             {
                 Cancel();
+
                 return false;
             }
-            if (generatedGameObjects != null && generatedGameObjects.Length > 0)
+
+            if(generatedGameObjects != null && generatedGameObjects.Length > 0)
             {
-                if (registerUndo)
-                    Undo.RecordObjects(generatedGameObjects, "Created Sphere");
-                
-                var brush = generatedBrushes[0];
-                if (brush && brush.gameObject)
+                if(registerUndo)
                 {
-                    ControlMesh newControlMesh;
-                    Shape newShape;
-                    if (GenerateSphere(radius, settings.sphereSplits, parentModel, brush, out newControlMesh, out newShape))
+                    Undo.RecordObjects(generatedGameObjects, "Created Sphere");
+                }
+
+                CSGBrush brush = generatedBrushes[0];
+
+                if(brush && brush.gameObject)
+                {
+                    if(GenerateSphere(radius, settings.SphereSplits, out ControlMesh newControlMesh, out Shape newShape))
                     {
-                        if (!brush.gameObject.activeSelf)
+                        if(!brush.gameObject.activeSelf)
                         {
                             modifiedHierarchy = true;
                             brush.gameObject.SetActive(true);
-						}
+                        }
 
-						brush.Shape = newShape;
-						brush.ControlMesh = newControlMesh;
-						if (registerUndo)
-							EditorUtility.SetDirty(brush);
-						ControlMeshUtility.UpdateBrushMesh(brush, brush.ControlMesh, brush.Shape);
-                    } else
+                        brush.shape       = newShape;
+                        brush.controlMesh = newControlMesh;
+
+                        if(registerUndo)
+                        {
+                            EditorUtility.SetDirty(brush);
+                        }
+
+                        ControlMeshUtility.UpdateBrushMesh(brush, brush.controlMesh, brush.shape);
+                    }
+                    else
                     {
                         failures = true;
-                        if (brush.gameObject.activeSelf)
+
+                        if(brush.gameObject.activeSelf)
                         {
                             modifiedHierarchy = true;
                             brush.gameObject.SetActive(false);
@@ -1170,17 +1323,21 @@ namespace RealtimeCSG
 
             try
             {
-                InternalCSGModelManager.skipCheckForChanges = true;
-                if (registerUndo)
+                InternalCSGModelManager.SkipCheckForChanges = true;
+
+                if(registerUndo)
+                {
                     EditorUtility.SetDirty(this);
-                //CSGModelManager.External.SetDirty(parentModel.modelNodeID); 
-                InternalCSGModelManager.CheckForChanges(forceHierarchyUpdate: modifiedHierarchy);
+                }
+
+                InternalCSGModelManager.CheckForChanges(modifiedHierarchy);
             }
             finally
             {
-                InternalCSGModelManager.skipCheckForChanges = false;
+                InternalCSGModelManager.SkipCheckForChanges = false;
             }
+
             return !failures;
-		}
-	}
+        }
+    }
 }

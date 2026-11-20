@@ -1,760 +1,1164 @@
-﻿using System.Globalization;
+﻿using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
+using InternalRealtimeCSG;
+using RealtimeCSG.Components;
+using RealtimeCSG.Foundation;
 using UnityEditor;
 using UnityEngine;
-using InternalRealtimeCSG;
-using System;
-using System.Linq;
-using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 namespace RealtimeCSG
 {
-	internal sealed partial class SceneViewBottomBarGUI
-	{
-		static int BottomBarEditorOverlayHash	= "BottomBarEditorOverlay".GetHashCode();
-		static int BottomBarGUIHash				= "BottomBarGUI".GetHashCode();
+    internal sealed partial class SceneViewBottomBarGUI
+    {
+        private static readonly int bottomBarEditorOverlayHash = "BottomBarEditorOverlay".GetHashCode();
+        private static readonly int bottomBarGUIHash = "BottomBarGUI".GetHashCode();
 
-		public static void ShowGUI(SceneView sceneView, bool haveOffset = true)
-		{
-			InitStyles();
-			CSG_GUIStyleUtility.InitStyles();
-			if (sceneView != null)
-			{
-                #if UNITY_2018_3_OR_NEWER
-				float height = sceneView.rootVisualElement.contentRect.height; //Screen.height;
-				float width  = sceneView.rootVisualElement.contentRect.width;  //Screen.width;
-#else
-                float height = sceneView.position.height;
-                float width  = sceneView.position.width;
-                #endif
-                
-				Rect  bottomBarRect;
-				if (haveOffset)
-				{
-					bottomBarRect = new Rect(0, height - (CSG_GUIStyleUtility.BottomToolBarHeight + 18), 
-											  width, CSG_GUIStyleUtility.BottomToolBarHeight);
-				} else
-					bottomBarRect = new Rect(0, height - (CSG_GUIStyleUtility.BottomToolBarHeight + 1), width, CSG_GUIStyleUtility.BottomToolBarHeight);
+        public static void ShowGUI(SceneView sceneView)
+        {
+            if (CSGSettings.EnableRealtimeCSG == false)
+            {
+                return;
+            }
 
-				try
-				{ 
-					Handles.BeginGUI();
-					
-					bool prevGUIChanged = GUI.changed;
-					if (Event.current.type == EventType.Repaint)
-						CSG_GUIStyleUtility.BottomToolBarStyle.Draw(bottomBarRect, false, false, false, false);
-					OnBottomBarGUI(sceneView, bottomBarRect);
-					GUI.changed = prevGUIChanged || GUI.changed;
-					
-					int controlID = GUIUtility.GetControlID(BottomBarGUIHash, FocusType.Keyboard, bottomBarRect);
-					var type = Event.current.GetTypeForControl(controlID);
-					switch (type)
-					{
-						case EventType.MouseDown: { if (bottomBarRect.Contains(Event.current.mousePosition)) { GUIUtility.hotControl = controlID; GUIUtility.keyboardControl = controlID; Event.current.Use(); } break; }
-						case EventType.MouseMove: { if (bottomBarRect.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
-						case EventType.MouseUp:   { if (GUIUtility.hotControl == controlID) { GUIUtility.hotControl = 0; GUIUtility.keyboardControl = 0; Event.current.Use(); } break; }
-						case EventType.MouseDrag: { if (GUIUtility.hotControl == controlID) { Event.current.Use(); } break; }
-						case EventType.ScrollWheel: { if (bottomBarRect.Contains(Event.current.mousePosition)) { Event.current.Use(); } break; }
-					}
+            InitStyles();
 
-					//TooltipUtility.HandleAreaOffset(new Vector2(-bottomBarRect.xMin, -bottomBarRect.yMin));
-				}
-				finally
-				{
-					Handles.EndGUI();
-				}
-			}
-		}
+            if(sceneView != null)
+            {
+                float height = sceneView.rootVisualElement.contentRect.height;
+                float width  = sceneView.rootVisualElement.contentRect.width;
 
-		
-		static Rect currentRect = new Rect();
-		static void OnBottomBarGUI(SceneView sceneView, Rect barSize)
-		{
-			//if (Event.current.type == EventType.Layout)
-			//	return;
+                Rect bottomBarRect = new Rect(0, 0, width, CsgguiStyleUtility.BOTTOM_TOOL_BAR_HEIGHT);
 
-			var snapMode        = RealtimeCSG.CSGSettings.SnapMode;
-			var uniformGrid		= RealtimeCSG.CSGSettings.UniformGrid;
-			var moveSnapVector  = RealtimeCSG.CSGSettings.SnapVector;
-			var rotationSnap	= RealtimeCSG.CSGSettings.SnapRotation;
-			var scaleSnap		= RealtimeCSG.CSGSettings.SnapScale;
-			var showGrid		= RealtimeCSG.CSGSettings.GridVisible;
-			var lockAxisX		= RealtimeCSG.CSGSettings.LockAxisX;
-			var lockAxisY		= RealtimeCSG.CSGSettings.LockAxisY;
-			var lockAxisZ		= RealtimeCSG.CSGSettings.LockAxisZ;
-			var distanceUnit	= RealtimeCSG.CSGSettings.DistanceUnit;
-			var helperSurfaces  = RealtimeCSG.CSGSettings.VisibleHelperSurfaces;
-			var showWireframe	= RealtimeCSG.CSGSettings.IsWireframeShown(sceneView);
-			var skin			= CSG_GUIStyleUtility.Skin;
-			var updateSurfaces	= false;
-			bool wireframeModified = false;
+                try
+                {
+                    Handles.BeginGUI();
 
-#if UNITY_2018_3_OR_NEWER
-			var viewWidth = sceneView.rootVisualElement.contentRect.width;
-#else
-            var viewWidth = sceneView.position.width;
-#endif
+                    bool prevGUIChanged = GUI.changed;
 
-			float layoutHeight = barSize.height;
-			float layoutX = 6.0f;
+                    if(Event.current.type == EventType.Repaint)
+                    {
+                        CsgguiStyleUtility.BottomToolBarStyle.Draw(bottomBarRect, false, false, false, false);
+                    }
 
-			bool modified = false;
-			GUI.changed = false;
-			{
-				currentRect.width	= 27;
-				currentRect.y		= 0;
-				currentRect.height	= layoutHeight - currentRect.y;
-				currentRect.y		+= barSize.y;
-				currentRect.x		= layoutX;
-				layoutX += currentRect.width;
+                    OnBottomBarGUI(sceneView, bottomBarRect);
+                    GUI.changed = prevGUIChanged || GUI.changed;
+
+                    int       controlID = GUIUtility.GetControlID(bottomBarGUIHash, FocusType.Keyboard, bottomBarRect);
+                    EventType type      = Event.current.GetTypeForControl(controlID);
+
+                    switch(type)
+                    {
+                        case EventType.MouseDown:
+                        {
+                            if(bottomBarRect.Contains(Event.current.mousePosition))
+                            {
+                                GUIUtility.hotControl      = controlID;
+                                GUIUtility.keyboardControl = controlID;
+                                Event.current.Use();
+                            }
+
+                            break;
+                        }
+                        case EventType.MouseMove:
+                        {
+                            if(bottomBarRect.Contains(Event.current.mousePosition))
+                            {
+                                Event.current.Use();
+                            }
+
+                            break;
+                        }
+                        case EventType.MouseUp:
+                        {
+                            if(GUIUtility.hotControl == controlID)
+                            {
+                                GUIUtility.hotControl      = 0;
+                                GUIUtility.keyboardControl = 0;
+                                Event.current.Use();
+                            }
+
+                            break;
+                        }
+                        case EventType.MouseDrag:
+                        {
+                            if(GUIUtility.hotControl == controlID)
+                            {
+                                Event.current.Use();
+                            }
+
+                            break;
+                        }
+                        case EventType.ScrollWheel:
+                        {
+                            if(bottomBarRect.Contains(Event.current.mousePosition))
+                            {
+                                Event.current.Use();
+                            }
+
+                            break;
+                        }
+                    }
+                }
+                finally
+                {
+                    Handles.EndGUI();
+                }
+            }
+        }
+
+        private static Rect m_CurrentRect;
+
+        private static void OnBottomBarGUI(SceneView sceneView, Rect barSize)
+        {
+            SnapMode           snapMode          = CSGSettings.SnapMode;
+            bool               uniformGrid       = CSGSettings.UniformGrid;
+            Vector3            moveSnapVector    = CSGSettings.SnapVector;
+            float              rotationSnap      = CSGSettings.SnapRotation;
+            float              scaleSnap         = CSGSettings.SnapScale;
+            bool               showGrid          = CSGSettings.GridVisible;
+            bool               lockAxisX         = CSGSettings.LockAxisX;
+            bool               lockAxisY         = CSGSettings.LockAxisY;
+            bool               lockAxisZ         = CSGSettings.LockAxisZ;
+            DistanceUnit       distanceUnit      = CSGSettings.DistanceUnit;
+            HelperSurfaceFlags helperSurfaces    = CSGSettings.VisibleHelperSurfaces;
+            bool               showWireframe     = CSGSettings.IsWireframeShown(sceneView);
+            CSGSkin            skin              = CsgguiStyleUtility.Skin;
+            bool               updateSurfaces    = false;
+            bool               wireframeModified = false;
+
+            float viewWidth = sceneView.rootVisualElement.contentRect.width;
+
+            float layoutHeight = barSize.height;
+            float layoutX      = 6.0f;
+
+            bool modified = false;
+            GUI.changed = false;
+
+            m_CurrentRect.width  =  27;
+            m_CurrentRect.y      =  0;
+            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+            m_CurrentRect.y      += barSize.y;
+            m_CurrentRect.x      =  layoutX;
+            layoutX              += m_CurrentRect.width;
 
 #region "Grid" button
-				if (showGrid)
-				{
-					showGrid = GUI.Toggle(currentRect, showGrid, skin.gridIconOn, EditorStyles.toolbarButton);
-				} else
-				{
-					showGrid = GUI.Toggle(currentRect, showGrid, skin.gridIcon,   EditorStyles.toolbarButton);
-				}
-				//(x:6.00, y:0.00, width:27.00, height:18.00)
-				TooltipUtility.SetToolTip(showGridTooltip, currentRect);
+
+            showGrid = GUI.Toggle(m_CurrentRect, showGrid, showGrid ? skin.gridIconOn : skin.gridIcon, EditorStyles.toolbarButton);
+
+            //(x:6.00, y:0.00, width:27.00, height:18.00)
+            TooltipUtility.SetToolTip(showGridTooltip, m_CurrentRect);
+
 #endregion
 
-				if (viewWidth >= 800)
-					layoutX += 6; //(x:33.00, y:0.00, width:6.00, height:6.00)
-					
-				var prevBackgroundColor = GUI.backgroundColor;
-				var lockedBackgroundColor = skin.lockedBackgroundColor;
-				if (lockAxisX)
-					GUI.backgroundColor = lockedBackgroundColor;
+            if(viewWidth >= 800)
+            {
+                layoutX += 6; //(x:33.00, y:0.00, width:6.00, height:6.00)
+            }
+
+            Color prevBackgroundColor   = GUI.backgroundColor;
+            Color lockedBackgroundColor = skin.lockedBackgroundColor;
+
+            if(lockAxisX)
+            {
+                GUI.backgroundColor = lockedBackgroundColor;
+            }
 
 #region "X" lock button
-				currentRect.width	= 17;
-				currentRect.y		= 0;
-				currentRect.height	= layoutHeight - currentRect.y;
-				currentRect.y		+= barSize.y;
-				currentRect.x		= layoutX;
-				layoutX += currentRect.width;
 
-				lockAxisX = !GUI.Toggle(currentRect, !lockAxisX, xLabel, skin.xToolbarButton);
-				//(x:39.00, y:0.00, width:17.00, height:18.00)
-				if (lockAxisX)
-					TooltipUtility.SetToolTip(xTooltipOn, currentRect);
-				else
-					TooltipUtility.SetToolTip(xTooltipOff, currentRect);
-				GUI.backgroundColor = prevBackgroundColor;
+            m_CurrentRect.width  =  17;
+            m_CurrentRect.y      =  0;
+            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+            m_CurrentRect.y      += barSize.y;
+            m_CurrentRect.x      =  layoutX;
+            layoutX              += m_CurrentRect.width;
+
+            lockAxisX = !GUI.Toggle(m_CurrentRect, !lockAxisX, xLabel, skin.xToolbarButton);
+
+            //(x:39.00, y:0.00, width:17.00, height:18.00)
+            TooltipUtility.SetToolTip(lockAxisX ? xTooltipOn : xTooltipOff, m_CurrentRect);
+
+            GUI.backgroundColor = prevBackgroundColor;
+
 #endregion
-												
+
 #region "Y" lock button
-				currentRect.x		= layoutX;
-				layoutX += currentRect.width;
 
-				if (lockAxisY)
-					GUI.backgroundColor = lockedBackgroundColor;
-				lockAxisY = !GUI.Toggle(currentRect, !lockAxisY, yLabel, skin.yToolbarButton);
-				//(x:56.00, y:0.00, width:17.00, height:18.00)
-				if (lockAxisY)
-					TooltipUtility.SetToolTip(yTooltipOn, currentRect);
-				else
-					TooltipUtility.SetToolTip(yTooltipOff, currentRect);
-				GUI.backgroundColor = prevBackgroundColor;
+            m_CurrentRect.x =  layoutX;
+            layoutX         += m_CurrentRect.width;
+
+            if(lockAxisY)
+            {
+                GUI.backgroundColor = lockedBackgroundColor;
+            }
+
+            lockAxisY = !GUI.Toggle(m_CurrentRect, !lockAxisY, yLabel, skin.yToolbarButton);
+
+            //(x:56.00, y:0.00, width:17.00, height:18.00)
+            TooltipUtility.SetToolTip(lockAxisY ? yTooltipOn : yTooltipOff, m_CurrentRect);
+
+            GUI.backgroundColor = prevBackgroundColor;
+
 #endregion
-						
+
 #region "Z" lock button
-				currentRect.x		= layoutX;
-				layoutX += currentRect.width;
 
-				if (lockAxisZ)
-					GUI.backgroundColor = lockedBackgroundColor;
-				lockAxisZ = !GUI.Toggle(currentRect, !lockAxisZ, zLabel, skin.zToolbarButton);
-				//(x:56.00, y:0.00, width:17.00, height:18.00)
-				if (lockAxisZ)
-					TooltipUtility.SetToolTip(zTooltipOn, currentRect);
-				else
-					TooltipUtility.SetToolTip(zTooltipOff, currentRect);
-				GUI.backgroundColor = prevBackgroundColor;
+            m_CurrentRect.x =  layoutX;
+            layoutX         += m_CurrentRect.width;
+
+            if(lockAxisZ)
+            {
+                GUI.backgroundColor = lockedBackgroundColor;
+            }
+
+            lockAxisZ = !GUI.Toggle(m_CurrentRect, !lockAxisZ, zLabel, skin.zToolbarButton);
+
+            //(x:56.00, y:0.00, width:17.00, height:18.00)
+            TooltipUtility.SetToolTip(lockAxisZ ? zTooltipOn : zTooltipOff, m_CurrentRect);
+
+            GUI.backgroundColor = prevBackgroundColor;
+
 #endregion
-			}
-			modified = GUI.changed || modified;
 
-			if (viewWidth >= 800)
-				layoutX += 6; // (x:91.00, y:0.00, width:6.00, height:6.00)
-				
+            modified = GUI.changed || modified;
+
+            if(viewWidth >= 800)
+            {
+                layoutX += 6; // (x:91.00, y:0.00, width:6.00, height:6.00)
+            }
+
 #region "SnapMode" button
-			GUI.changed = false;
-			{
-				currentRect.width	= 27;
-				currentRect.y		= 0;
-				currentRect.height	= layoutHeight - currentRect.y;
-				currentRect.y		+= barSize.y;
-				currentRect.x		= layoutX;
-				layoutX += currentRect.width;
 
+            GUI.changed = false;
 
-                switch (snapMode)
+            {
+                m_CurrentRect.width  =  27;
+                m_CurrentRect.y      =  0;
+                m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                m_CurrentRect.y      += barSize.y;
+                m_CurrentRect.x      =  layoutX;
+                layoutX              += m_CurrentRect.width;
+
+                switch(snapMode)
                 {
                     case SnapMode.GridSnapping:
                     {
-                        var newValue = GUI.Toggle(currentRect, snapMode == SnapMode.GridSnapping, CSG_GUIStyleUtility.Skin.gridSnapIconOn, EditorStyles.toolbarButton);
-                        if (GUI.changed)
+                        bool newValue = GUI.Toggle(m_CurrentRect, true, CsgguiStyleUtility.Skin.gridSnapIconOn, EditorStyles.toolbarButton);
+
+                        if(GUI.changed)
                         {
                             snapMode = newValue ? SnapMode.GridSnapping : SnapMode.RelativeSnapping;
                         }
+
                         //(x:97.00, y:0.00, width:27.00, height:18.00)
-                        TooltipUtility.SetToolTip(gridSnapModeTooltip, currentRect);
+                        TooltipUtility.SetToolTip(gridSnapModeTooltip, m_CurrentRect);
+
                         break;
                     }
                     case SnapMode.RelativeSnapping:
                     {
-                        var newValue = GUI.Toggle(currentRect, snapMode == SnapMode.RelativeSnapping, CSG_GUIStyleUtility.Skin.relSnapIconOn, EditorStyles.toolbarButton);
-                        if (GUI.changed)
+                        bool newValue = GUI.Toggle(m_CurrentRect, true, CsgguiStyleUtility.Skin.relSnapIconOn, EditorStyles.toolbarButton);
+
+                        if(GUI.changed)
                         {
                             snapMode = newValue ? SnapMode.RelativeSnapping : SnapMode.None;
                         }
+
                         //(x:97.00, y:0.00, width:27.00, height:18.00)
-                        TooltipUtility.SetToolTip(relativeSnapModeTooltip, currentRect);
+                        TooltipUtility.SetToolTip(relativeSnapModeTooltip, m_CurrentRect);
+
                         break;
                     }
                     default:
                     case SnapMode.None:
                     {
-                        var newValue = GUI.Toggle(currentRect, snapMode != SnapMode.None, CSG_GUIStyleUtility.Skin.noSnapIconOn, EditorStyles.toolbarButton);
-                        if (GUI.changed)
+                        bool newValue = GUI.Toggle(m_CurrentRect, snapMode != SnapMode.None, CsgguiStyleUtility.Skin.noSnapIconOn, EditorStyles.toolbarButton);
+
+                        if(GUI.changed)
                         {
                             snapMode = newValue ? SnapMode.GridSnapping : SnapMode.None;
                         }
+
                         //(x:97.00, y:0.00, width:27.00, height:18.00)
-                        TooltipUtility.SetToolTip(noSnappingModeTooltip, currentRect);
+                        TooltipUtility.SetToolTip(noSnappingModeTooltip, m_CurrentRect);
+
                         break;
                     }
                 }
             }
+
             modified = GUI.changed || modified;
+
 #endregion
-				
-			if (viewWidth >= 460)
-			{
-				if (snapMode != SnapMode.None)
-				{
+
+            if(viewWidth >= 460)
+            {
+                if(snapMode != SnapMode.None)
+                {
 #region "Position" label
-					if (viewWidth >= 500)
-					{ 
-						if (viewWidth >= 865)
-						{
-							currentRect.width	= 44;
-							currentRect.y		= 1;
-							currentRect.height	= layoutHeight - currentRect.y;
-							currentRect.y		+= barSize.y;
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
 
-							uniformGrid = GUI.Toggle(currentRect, uniformGrid, positionLargeLabel, miniTextStyle);
-							//(x:128.00, y:2.00, width:44.00, height:16.00)
+                    if(viewWidth >= 500)
+                    {
+                        if(viewWidth >= 865)
+                        {
+                            m_CurrentRect.width  =  44;
+                            m_CurrentRect.y      =  1;
+                            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                            m_CurrentRect.y      += barSize.y;
+                            m_CurrentRect.x      =  layoutX;
+                            layoutX              += m_CurrentRect.width;
 
-							TooltipUtility.SetToolTip(positionTooltip, currentRect);
-						} else
-						{
-							currentRect.width	= 22;
-							currentRect.y		= 1;
-							currentRect.height	= layoutHeight - currentRect.y;
-							currentRect.y		+= barSize.y;
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
+                            uniformGrid = GUI.Toggle(m_CurrentRect, uniformGrid, positionLargeLabel, m_MiniTextStyle);
+                            //(x:128.00, y:2.00, width:44.00, height:16.00)
+                        }
+                        else
+                        {
+                            m_CurrentRect.width  =  22;
+                            m_CurrentRect.y      =  1;
+                            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                            m_CurrentRect.y      += barSize.y;
+                            m_CurrentRect.x      =  layoutX;
+                            layoutX              += m_CurrentRect.width;
 
-							uniformGrid = GUI.Toggle(currentRect, uniformGrid, positionSmallLabel, miniTextStyle);
-							//(x:127.00, y:2.00, width:22.00, height:16.00)
+                            uniformGrid = GUI.Toggle(m_CurrentRect, uniformGrid, positionSmallLabel, m_MiniTextStyle);
+                            //(x:127.00, y:2.00, width:22.00, height:16.00)
+                        }
 
-							TooltipUtility.SetToolTip(positionTooltip, currentRect);
-						}
-					}
+                        TooltipUtility.SetToolTip(positionTooltip, m_CurrentRect);
+                    }
+
 #endregion
-							
-					layoutX += 2;
+
+                    layoutX += 2;
 
 #region "Position" field
-					if (uniformGrid || viewWidth < 515)
-					{
-						EditorGUI.showMixedValue = !(moveSnapVector.x == moveSnapVector.y && moveSnapVector.x == moveSnapVector.z);
-						GUI.changed = false;
-						{
-							currentRect.width	= 70;
-							currentRect.y		= 3;
-							currentRect.height	= layoutHeight - (currentRect.y - 1);
-							currentRect.y		+= barSize.y;
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
-							
-							moveSnapVector.x = Units.DistanceUnitToUnity(distanceUnit, EditorGUI.DoubleField(currentRect, Units.UnityToDistanceUnit(distanceUnit, moveSnapVector.x), textInputStyle));//, MinSnapWidth, MaxSnapWidth));
-							//(x:176.00, y:3.00, width:70.00, height:16.00)
-						}
-						if (GUI.changed)
-						{
-							modified = true;
-							moveSnapVector.y = moveSnapVector.x;
-							moveSnapVector.z = moveSnapVector.x;
-						}
-						EditorGUI.showMixedValue = false;
-					} else
-					{
-						GUI.changed = false;
-						{
-							currentRect.width	= 70;
-							currentRect.y		= 3;
-							currentRect.height	= layoutHeight - (currentRect.y - 1);
-							currentRect.y		+= barSize.y;
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
-							layoutX ++;
 
-							moveSnapVector.x = Units.DistanceUnitToUnity(distanceUnit, EditorGUI.DoubleField(currentRect, Units.UnityToDistanceUnit(distanceUnit, moveSnapVector.x), textInputStyle));//, MinSnapWidth, MaxSnapWidth));
-							//(x:175.00, y:3.00, width:70.00, height:16.00)
-								
+                    if(uniformGrid || viewWidth < 515)
+                    {
+                        EditorGUI.showMixedValue =
+                            !(moveSnapVector.x == moveSnapVector.y && moveSnapVector.x == moveSnapVector.z);
 
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
-							layoutX ++;
+                        GUI.changed = false;
 
-							// NOTE: moveSnapVector.y and moveSnapVector.z have accidentally been reversed relatively to unity's coordinate system, so we swap them here
-							moveSnapVector.z = Units.DistanceUnitToUnity(distanceUnit, EditorGUI.DoubleField(currentRect, Units.UnityToDistanceUnit(distanceUnit, moveSnapVector.z), textInputStyle));//, MinSnapWidth, MaxSnapWidth));
-							//(x:247.00, y:3.00, width:70.00, height:16.00)
-								
+                        {
+                            m_CurrentRect.width  =  70;
+                            m_CurrentRect.y      =  3;
+                            m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y - 1);
+                            m_CurrentRect.y      += barSize.y;
+                            m_CurrentRect.x      =  layoutX;
+                            layoutX              += m_CurrentRect.width;
 
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
+                            moveSnapVector.x = Units.DistanceUnitToUnity(
+                                distanceUnit
+                              , EditorGUI.DoubleField(
+                                    m_CurrentRect, Units.UnityToDistanceUnit(distanceUnit, moveSnapVector.x)
+                                  , m_TextInputStyle
+                                )
+                            );
+                            //(x:176.00, y:3.00, width:70.00, height:16.00)
+                        }
 
-							moveSnapVector.y = Units.DistanceUnitToUnity(distanceUnit, EditorGUI.DoubleField(currentRect, Units.UnityToDistanceUnit(distanceUnit, moveSnapVector.y), textInputStyle));//, MinSnapWidth, MaxSnapWidth));
-							//(x:319.00, y:3.00, width:70.00, height:16.00)
-						}
-						modified = GUI.changed || modified;
-					}
+                        if(GUI.changed)
+                        {
+                            modified         = true;
+                            moveSnapVector.y = moveSnapVector.x;
+                            moveSnapVector.z = moveSnapVector.x;
+                        }
+
+                        EditorGUI.showMixedValue = false;
+                    }
+                    else
+                    {
+                        GUI.changed = false;
+
+                        m_CurrentRect.width  =  70;
+                        m_CurrentRect.y      =  3;
+                        m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y - 1);
+                        m_CurrentRect.y      += barSize.y;
+                        m_CurrentRect.x      =  layoutX;
+                        layoutX              += m_CurrentRect.width;
+                        layoutX++;
+
+                        moveSnapVector.x = Units.DistanceUnitToUnity(distanceUnit, EditorGUI.DoubleField(m_CurrentRect, Units.UnityToDistanceUnit(distanceUnit, moveSnapVector.x), m_TextInputStyle));
+                        //(x:175.00, y:3.00, width:70.00, height:16.00)
+
+                        m_CurrentRect.x =  layoutX;
+                        layoutX         += m_CurrentRect.width;
+                        layoutX++;
+
+                        // NOTE: moveSnapVector.y and moveSnapVector.z have accidentally been reversed relatively to unity's coordinate system, so we swap them here
+                        moveSnapVector.z = Units.DistanceUnitToUnity(distanceUnit, EditorGUI.DoubleField(m_CurrentRect, Units.UnityToDistanceUnit(distanceUnit, moveSnapVector.z), m_TextInputStyle));
+
+                        //(x:247.00, y:3.00, width:70.00, height:16.00)
+
+                        m_CurrentRect.x =  layoutX;
+                        layoutX         += m_CurrentRect.width;
+
+                        moveSnapVector.y = Units.DistanceUnitToUnity(distanceUnit, EditorGUI.DoubleField(m_CurrentRect, Units.UnityToDistanceUnit(distanceUnit, moveSnapVector.y), m_TextInputStyle));
+                        //(x:319.00, y:3.00, width:70.00, height:16.00)
+
+                        modified = GUI.changed || modified;
+                    }
+
 #endregion
 
-					layoutX++;
+                    layoutX++;
 
 #region "Position" Unit
-					DistanceUnit nextUnit = Units.CycleToNextUnit(distanceUnit);
-					GUIContent   unitText = Units.GetUnitGUIContent(distanceUnit);
-						
-					currentRect.width	= 22;
-					currentRect.y		= 2;
-					currentRect.height	= layoutHeight - currentRect.y;
-					currentRect.y		+= barSize.y;
-					currentRect.x		= layoutX;
-					layoutX += currentRect.width;
 
-					if (GUI.Button(currentRect, unitText, miniTextStyle))//(x:393.00, y:2.00, width:13.00, height:16.00)
-					{
-						distanceUnit = nextUnit;
-						modified = true;
-					}
+                    DistanceUnit nextUnit = Units.CycleToNextUnit(distanceUnit);
+                    GUIContent   unitText = Units.GetUnitGUIContent(distanceUnit);
+
+                    m_CurrentRect.width  =  22;
+                    m_CurrentRect.y      =  2;
+                    m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                    m_CurrentRect.y      += barSize.y;
+                    m_CurrentRect.x      =  layoutX;
+                    layoutX              += m_CurrentRect.width;
+
+                    //(x:393.00, y:2.00, width:13.00, height:16.00)
+                    if(GUI.Button(m_CurrentRect, unitText, m_MiniTextStyle))
+                    {
+                        distanceUnit = nextUnit;
+                        modified     = true;
+                    }
+
 #endregion
 
-					layoutX += 2;
+                    layoutX += 2;
 
 #region "Position" +/-
-					if (viewWidth >= 700)
-					{
-						currentRect.width	= 19;
-						currentRect.y		= 2;
-						currentRect.height	= layoutHeight - (currentRect.y + 1);
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
 
-						if (GUI.Button(currentRect, positionPlusLabel,  EditorStyles.miniButtonLeft))  { GridUtility.DoubleGridSize(); moveSnapVector = RealtimeCSG.CSGSettings.SnapVector; }
-						//(x:410.00, y:2.00, width:19.00, height:15.00)
-						TooltipUtility.SetToolTip(positionPlusTooltip, currentRect);
+                    if(viewWidth >= 700)
+                    {
+                        m_CurrentRect.width  =  19;
+                        m_CurrentRect.y      =  2;
+                        m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y + 1);
+                        m_CurrentRect.y      += barSize.y;
+                        m_CurrentRect.x      =  layoutX;
+                        layoutX              += m_CurrentRect.width;
 
-						currentRect.width	= 17;
-						currentRect.y		= 2;
-						currentRect.height	= layoutHeight - (currentRect.y + 1);
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
+                        if(GUI.Button(m_CurrentRect, positionPlusLabel, EditorStyles.miniButtonLeft))
+                        {
+                            GUIUtility.keyboardControl = 0;
 
-						if (GUI.Button(currentRect, positionMinusLabel, EditorStyles.miniButtonRight)) { GridUtility.HalfGridSize(); moveSnapVector = RealtimeCSG.CSGSettings.SnapVector; }
-						//(x:429.00, y:2.00, width:17.00, height:15.00)
-						TooltipUtility.SetToolTip(positionMinnusTooltip, currentRect);
-					}
+                            GridUtility.DoubleGridSize();
+                            moveSnapVector = CSGSettings.SnapVector;
+                        }
+
+                        //(x:410.00, y:2.00, width:19.00, height:15.00)
+                        TooltipUtility.SetToolTip(positionPlusTooltip, m_CurrentRect);
+
+                        m_CurrentRect.width  =  17;
+                        m_CurrentRect.y      =  2;
+                        m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y + 1);
+                        m_CurrentRect.y      += barSize.y;
+                        m_CurrentRect.x      =  layoutX;
+                        layoutX              += m_CurrentRect.width;
+
+                        if(GUI.Button(m_CurrentRect, positionMinusLabel, EditorStyles.miniButtonRight))
+                        {
+                            GUIUtility.keyboardControl = 0;
+
+                            GridUtility.HalfGridSize();
+                            moveSnapVector = CSGSettings.SnapVector;
+                        }
+
+                        //(x:429.00, y:2.00, width:17.00, height:15.00)
+                        TooltipUtility.SetToolTip(positionMinnusTooltip, m_CurrentRect);
+
+                        //Preset
+                        float DefaultPresetWidth = 35;
+
+                        layoutX += 5;
+                        m_CurrentRect.width = DefaultPresetWidth;
+                        m_CurrentRect.y = 2;
+                        m_CurrentRect.height = layoutHeight - (m_CurrentRect.y + 1);
+                        m_CurrentRect.y += barSize.y;
+                        m_CurrentRect.x = layoutX;
+
+                        for (int i = 0; i < CSGSettings.Presets[PresetCategory.Grid_Size].Count; i++)
+                        {
+                            GUIStyle buttonStyle = EditorStyles.miniButtonMid;
+
+                            if (i == 0)
+                            {
+                                buttonStyle = EditorStyles.miniButtonLeft;
+                            }
+                            else if (i == CSGSettings.Presets[PresetCategory.Grid_Size].Count - 1)
+                            {
+                                buttonStyle = EditorStyles.miniButtonRight;
+                            }
+
+                            string PresetString = CSGSettings.Presets[PresetCategory.Grid_Size][i].Label;
+
+                            if (string.IsNullOrEmpty(CSGSettings.Presets[PresetCategory.Grid_Size][i].Label) || string.IsNullOrWhiteSpace(CSGSettings.Presets[PresetCategory.Grid_Size][i].Label))
+                            {
+                                m_CurrentRect.width = DefaultPresetWidth;
+
+                                double RoundedPreset = System.Math.Round(CSGSettings.Presets[PresetCategory.Grid_Size][i].Value, 3);
+                                PresetString = RoundedPreset.ToString();
+                                if (RoundedPreset < 1.0d)
+                                {
+                                    PresetString = PresetString.Replace("0.", ".");
+                                }
+                            }
+                            else
+                            {
+                                GUIContent presetLabelText = new GUIContent(PresetString);
+                                Vector2 labelSize = EditorStyles.label.CalcSize(presetLabelText);
+
+                                m_CurrentRect.width = Mathf.Max(labelSize.x + 15, DefaultPresetWidth);
+                            }
+
+                            m_CurrentRect.x = layoutX;
+
+                            if (GUI.Toggle(m_CurrentRect, CSGSettings.Presets[PresetCategory.Grid_Size][i].Value == CSGSettings.SnapVector.x, PresetString, buttonStyle))
+                            {
+                                if (GUI.changed && modified == false)
+                                {
+                                    GUIUtility.keyboardControl = 0;
+
+                                    CSGSettings.SnapVector = new Vector3(CSGSettings.Presets[PresetCategory.Grid_Size][i].Value, CSGSettings.Presets[PresetCategory.Grid_Size][i].Value, CSGSettings.Presets[PresetCategory.Grid_Size][i].Value);
+                                    CSGSettings.Save();
+                                    moveSnapVector = CSGSettings.SnapVector;
+                                }
+                            }
+
+                            layoutX += m_CurrentRect.width;
+                        }
+                    }
+
 #endregion
 
-					layoutX += 2;
+                    layoutX += 2;
 
 #region "Angle" label
-					if (viewWidth >= 750)
-					{
-						if (viewWidth >= 865)
-						{
-							currentRect.width	= 31;
-							currentRect.y		= 1;
-							currentRect.height	= layoutHeight - currentRect.y;
-							currentRect.y		+= barSize.y;
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
 
-							GUI.Label(currentRect, angleLargeLabel, miniTextStyle);
-							//(x:450.00, y:2.00, width:31.00, height:16.00)
-						} else
-						{
-							currentRect.width	= 22;
-							currentRect.y		= 1;
-							currentRect.height	= layoutHeight - currentRect.y;
-							currentRect.y		+= barSize.y;
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
+                    if(viewWidth >= 750)
+                    {
+                        if(viewWidth >= 865)
+                        {
+                            m_CurrentRect.width  =  31;
+                            m_CurrentRect.y      =  1;
+                            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                            m_CurrentRect.y      += barSize.y;
+                            m_CurrentRect.x      =  layoutX;
+                            layoutX              += m_CurrentRect.width;
 
-							GUI.Label(currentRect, angleSmallLabel, miniTextStyle);
-							//(x:355.00, y:2.00, width:22.00, height:16.00)
-						}
-						TooltipUtility.SetToolTip(angleTooltip, currentRect);
-					}
+                            GUI.Label(m_CurrentRect, angleLargeLabel, m_MiniTextStyle);
+                            //(x:450.00, y:2.00, width:31.00, height:16.00)
+                        }
+                        else
+                        {
+                            m_CurrentRect.width  =  22;
+                            m_CurrentRect.y      =  1;
+                            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                            m_CurrentRect.y      += barSize.y;
+                            m_CurrentRect.x      =  layoutX;
+                            layoutX              += m_CurrentRect.width;
+
+                            GUI.Label(m_CurrentRect, angleSmallLabel, m_MiniTextStyle);
+                            //(x:355.00, y:2.00, width:22.00, height:16.00)
+                        }
+
+                        TooltipUtility.SetToolTip(angleTooltip, m_CurrentRect);
+                    }
+
 #endregion
-						
-					layoutX += 2;
+
+                    layoutX += 2;
 
 #region "Angle" field
-					GUI.changed = false;
-					{
-						currentRect.width	= 70;
-						currentRect.y		= 3;
-						currentRect.height	= layoutHeight - (currentRect.y - 1);
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
 
-						rotationSnap = EditorGUI.FloatField(currentRect, rotationSnap, textInputStyle);//, MinSnapWidth, MaxSnapWidth);
-						//(x:486.00, y:3.00, width:70.00, height:16.00)
-						if (viewWidth <= 750)
-							TooltipUtility.SetToolTip(angleTooltip, currentRect);
-					}
-					modified = GUI.changed || modified;
+                    GUI.changed = false;
+
+                    m_CurrentRect.width  =  70;
+                    m_CurrentRect.y      =  3;
+                    m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y - 1);
+                    m_CurrentRect.y      += barSize.y;
+                    m_CurrentRect.x      =  layoutX;
+                    layoutX              += m_CurrentRect.width;
+
+                    rotationSnap = EditorGUI.FloatField(m_CurrentRect, rotationSnap, m_TextInputStyle);
+
+                    //(x:486.00, y:3.00, width:70.00, height:16.00)
+                    if(viewWidth <= 750)
+                    {
+                        TooltipUtility.SetToolTip(angleTooltip, m_CurrentRect);
+                    }
+
+                    modified = GUI.changed || modified;
+
 #endregion
 
-					layoutX++;
+                    layoutX++;
 
 #region "Angle" Unit
-					if (viewWidth >= 370)
-					{
-						currentRect.width	= 14;
-						currentRect.y		= 1;
-						currentRect.height	= layoutHeight - currentRect.y;
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
-							
-						GUI.Label(currentRect, angleUnitLabel, miniTextStyle);
-					}
+
+                    if(viewWidth >= 370)
+                    {
+                        m_CurrentRect.width  =  14;
+                        m_CurrentRect.y      =  1;
+                        m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                        m_CurrentRect.y      += barSize.y;
+                        m_CurrentRect.x      =  layoutX;
+                        layoutX              += m_CurrentRect.width;
+
+                        GUI.Label(m_CurrentRect, angleUnitLabel, m_MiniTextStyle);
+                    }
+
 #endregion
-						
-					layoutX += 2;
+
+                    layoutX += 2;
 
 #region "Angle" +/-
-					if (viewWidth >= 700)
-					{
-						currentRect.width	= 19;
-						currentRect.y		= 1;
-						currentRect.height	= layoutHeight - (currentRect.y + 1);
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
 
-						if (GUI.Button(currentRect, anglePlusLabel, EditorStyles.miniButtonLeft)) { rotationSnap *= 2.0f; modified = true; }
-						//(x:573.00, y:2.00, width:19.00, height:15.00)
-						TooltipUtility.SetToolTip(anglePlusTooltip, currentRect);
-							
+                    if(viewWidth >= 700)
+                    {
+                        m_CurrentRect.width  =  19;
+                        m_CurrentRect.y      =  1;
+                        m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y + 1);
+                        m_CurrentRect.y      += barSize.y;
+                        m_CurrentRect.x      =  layoutX;
+                        layoutX              += m_CurrentRect.width;
 
-						currentRect.width	= 17;
-						currentRect.y		= 1;
-						currentRect.height	= layoutHeight - (currentRect.y + 1);
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
+                        if(GUI.Button(m_CurrentRect, anglePlusLabel, EditorStyles.miniButtonLeft))
+                        {
+                            GUIUtility.keyboardControl = 0;
 
-						if (GUI.Button(currentRect, angleMinusLabel, EditorStyles.miniButtonRight)) { rotationSnap /= 2.0f; modified = true; }
-						//(x:592.00, y:2.00, width:17.00, height:15.00)
-						TooltipUtility.SetToolTip(angleMinnusTooltip, currentRect);
-					}
+                            rotationSnap *= 2.0f;
+                            modified     =  true;
+                        }
+
+                        //(x:573.00, y:2.00, width:19.00, height:15.00)
+                        TooltipUtility.SetToolTip(anglePlusTooltip, m_CurrentRect);
+
+                        m_CurrentRect.width  =  17;
+                        m_CurrentRect.y      =  1;
+                        m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y + 1);
+                        m_CurrentRect.y      += barSize.y;
+                        m_CurrentRect.x      =  layoutX;
+                        layoutX              += m_CurrentRect.width;
+
+                        if(GUI.Button(m_CurrentRect, angleMinusLabel, EditorStyles.miniButtonRight))
+                        {
+                            GUIUtility.keyboardControl = 0;
+
+                            rotationSnap /= 2.0f;
+                            modified     =  true;
+                        }
+
+                        //(x:592.00, y:2.00, width:17.00, height:15.00)
+                        TooltipUtility.SetToolTip(angleMinnusTooltip, m_CurrentRect);
+
+                        //Preset
+                        float DefaultPresetWidth = 48;
+
+                        layoutX += 5;
+                        m_CurrentRect.width = DefaultPresetWidth;
+                        m_CurrentRect.y = 2;
+                        m_CurrentRect.height = layoutHeight - (m_CurrentRect.y + 1);
+                        m_CurrentRect.y += barSize.y;
+                        m_CurrentRect.x = layoutX;
+
+                        for (int i = 0; i < CSGSettings.Presets[PresetCategory.Angle_Snap].Count; i++)
+                        {
+                            GUIStyle buttonStyle = EditorStyles.miniButtonMid;
+
+                            if (i == 0)
+                            {
+                                buttonStyle = EditorStyles.miniButtonLeft;
+                            }
+                            else if (i == CSGSettings.Presets[PresetCategory.Angle_Snap].Count - 1)
+                            {
+                                buttonStyle = EditorStyles.miniButtonRight;
+                            }
+
+                            string PresetString = CSGSettings.Presets[PresetCategory.Angle_Snap][i].Label;
+
+                            if (string.IsNullOrEmpty(CSGSettings.Presets[PresetCategory.Angle_Snap][i].Label) || string.IsNullOrWhiteSpace(CSGSettings.Presets[PresetCategory.Angle_Snap][i].Label))
+                            {
+                                m_CurrentRect.width = DefaultPresetWidth;
+
+                                double RoundedPreset = System.Math.Round(CSGSettings.Presets[PresetCategory.Angle_Snap][i].Value, 3);
+                                PresetString = RoundedPreset.ToString() + "°";
+                                if (RoundedPreset < 1.0d)
+                                {
+                                    PresetString = PresetString.Replace("0.", ".");
+                                }
+                            }
+
+                            GUIContent presetLabelText = new GUIContent(PresetString);
+                            Vector2 labelSize = EditorStyles.label.CalcSize(presetLabelText);
+
+                            m_CurrentRect.width = Mathf.Max(labelSize.x + 15, DefaultPresetWidth);
+
+                            m_CurrentRect.x = layoutX;
+
+                            if (GUI.Toggle(m_CurrentRect, CSGSettings.Presets[PresetCategory.Angle_Snap][i].Value == CSGSettings.SnapRotation, PresetString, buttonStyle))
+                            {
+                                if (GUI.changed && modified == false)
+                                {
+                                    GUIUtility.keyboardControl = 0;
+
+                                    CSGSettings.SnapRotation = CSGSettings.Presets[PresetCategory.Angle_Snap][i].Value;
+                                    CSGSettings.Save();
+                                    rotationSnap = CSGSettings.SnapRotation;
+                                }
+                            }
+
+                            layoutX += m_CurrentRect.width;
+                        }
+                    }
+
 #endregion
 
-					layoutX += 2;
+                    layoutX += 2;
 
 #region "Scale" label
-					if (viewWidth >= 750)
-					{
-						if (viewWidth >= 865)
-						{
-							currentRect.width	= 31;
-							currentRect.y		= 1;
-							currentRect.height	= layoutHeight - currentRect.y;
-							currentRect.y		+= barSize.y;
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
 
-							GUI.Label(currentRect, scaleLargeLabel, miniTextStyle);
-							//(x:613.00, y:2.00, width:31.00, height:16.00)
-						} else
-						{
-							currentRect.width	= 19;
-							currentRect.y		= 1;
-							currentRect.height	= layoutHeight - currentRect.y;
-							currentRect.y		+= barSize.y;
-							currentRect.x		= layoutX;
-							layoutX += currentRect.width;
+                    if(viewWidth >= 750)
+                    {
+                        if(viewWidth >= 865)
+                        {
+                            m_CurrentRect.width  =  31;
+                            m_CurrentRect.y      =  1;
+                            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                            m_CurrentRect.y      += barSize.y;
+                            m_CurrentRect.x      =  layoutX;
+                            layoutX              += m_CurrentRect.width;
 
-							GUI.Label(currentRect, scaleSmallLabel, miniTextStyle);
-							//(x:495.00, y:2.00, width:19.00, height:16.00)
-						}
-						TooltipUtility.SetToolTip(scaleTooltip, currentRect);
-					}
+                            GUI.Label(m_CurrentRect, scaleLargeLabel, m_MiniTextStyle);
+                            //(x:613.00, y:2.00, width:31.00, height:16.00)
+                        }
+                        else
+                        {
+                            m_CurrentRect.width  =  19;
+                            m_CurrentRect.y      =  1;
+                            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                            m_CurrentRect.y      += barSize.y;
+                            m_CurrentRect.x      =  layoutX;
+                            layoutX              += m_CurrentRect.width;
+
+                            GUI.Label(m_CurrentRect, scaleSmallLabel, m_MiniTextStyle);
+                            //(x:495.00, y:2.00, width:19.00, height:16.00)
+                        }
+
+                        TooltipUtility.SetToolTip(scaleTooltip, m_CurrentRect);
+                    }
+
 #endregion
-						
-					layoutX += 2;
+
+                    layoutX += 2;
 
 #region "Scale" field
-					GUI.changed = false;
-					{
-						currentRect.width	= 70;
-						currentRect.y		= 3;
-						currentRect.height	= layoutHeight - (currentRect.y - 1); 
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
 
-						scaleSnap = EditorGUI.FloatField(currentRect, scaleSnap, textInputStyle);//, MinSnapWidth, MaxSnapWidth);
-						//(x:648.00, y:3.00, width:70.00, height:16.00)
-						if (viewWidth <= 750)
-							TooltipUtility.SetToolTip(scaleTooltip, currentRect);
-					}
-					modified = GUI.changed || modified;
+                    GUI.changed = false;
+
+                    m_CurrentRect.width  =  70;
+                    m_CurrentRect.y      =  3;
+                    m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y - 1);
+                    m_CurrentRect.y      += barSize.y;
+                    m_CurrentRect.x      =  layoutX;
+                    layoutX              += m_CurrentRect.width;
+
+                    scaleSnap = EditorGUI.FloatField(m_CurrentRect, scaleSnap, m_TextInputStyle);
+
+                    //(x:648.00, y:3.00, width:70.00, height:16.00)
+                    if(viewWidth <= 750)
+                    {
+                        TooltipUtility.SetToolTip(scaleTooltip, m_CurrentRect);
+                    }
+
+                    modified = GUI.changed || modified;
+
 #endregion
 
-					layoutX ++;
-						
+                    layoutX++;
+
 #region "Scale" Unit
-					if (viewWidth >= 370)
-					{
-						currentRect.width	= 15;
-						currentRect.y		= 1;
-						currentRect.height	= layoutHeight - currentRect.y; 
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
 
-						GUI.Label(currentRect, scaleUnitLabel, miniTextStyle);
-						//(x:722.00, y:2.00, width:15.00, height:16.00)
-					}
+                    if(viewWidth >= 370)
+                    {
+                        m_CurrentRect.width  =  15;
+                        m_CurrentRect.y      =  1;
+                        m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                        m_CurrentRect.y      += barSize.y;
+                        m_CurrentRect.x      =  layoutX;
+                        layoutX              += m_CurrentRect.width;
+
+                        GUI.Label(m_CurrentRect, scaleUnitLabel, m_MiniTextStyle);
+                        //(x:722.00, y:2.00, width:15.00, height:16.00)
+                    }
+
 #endregion
-						
-					layoutX += 2;
+
+                    layoutX += 2;
 
 #region "Scale" +/-
-					if (viewWidth >= 700)
-					{
-						currentRect.width	= 19;
-						currentRect.y		= 2;
-						currentRect.height	= layoutHeight - (currentRect.y + 1);
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
 
-						if (GUI.Button(currentRect, scalePlusLabel, EditorStyles.miniButtonLeft)) { scaleSnap *= 10.0f; modified = true; }
-						//(x:741.00, y:2.00, width:19.00, height:15.00)
-						TooltipUtility.SetToolTip(scalePlusTooltip, currentRect);
-							
+                    if(viewWidth >= 700)
+                    {
+                        m_CurrentRect.width  =  19;
+                        m_CurrentRect.y      =  2;
+                        m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y + 1);
+                        m_CurrentRect.y      += barSize.y;
+                        m_CurrentRect.x      =  layoutX;
+                        layoutX              += m_CurrentRect.width;
 
-						currentRect.width	= 17;
-						currentRect.y		= 2;
-						currentRect.height	= layoutHeight - (currentRect.y + 1);
-						currentRect.y		+= barSize.y;
-						currentRect.x		= layoutX;
-						layoutX += currentRect.width;
+                        if(GUI.Button(m_CurrentRect, scalePlusLabel, EditorStyles.miniButtonLeft))
+                        {
+                            GUIUtility.keyboardControl = 0;
 
-						if (GUI.Button(currentRect, scaleMinusLabel, EditorStyles.miniButtonRight)) { scaleSnap /= 10.0f; modified = true; }
-						//(x:760.00, y:2.00, width:17.00, height:15.00)
-						TooltipUtility.SetToolTip(scaleMinnusTooltip, currentRect);
-					}
+                            scaleSnap *= 10.0f;
+                            modified  =  true;
+                        }
+
+                        //(x:741.00, y:2.00, width:19.00, height:15.00)
+                        TooltipUtility.SetToolTip(scalePlusTooltip, m_CurrentRect);
+
+                        m_CurrentRect.width  =  17;
+                        m_CurrentRect.y      =  2;
+                        m_CurrentRect.height =  layoutHeight - (m_CurrentRect.y + 1);
+                        m_CurrentRect.y      += barSize.y;
+                        m_CurrentRect.x      =  layoutX;
+                        layoutX              += m_CurrentRect.width;
+
+                        if(GUI.Button(m_CurrentRect, scaleMinusLabel, EditorStyles.miniButtonRight))
+                        {
+                            GUIUtility.keyboardControl = 0;
+
+                            scaleSnap /= 10.0f;
+                            modified  =  true;
+                        }
+
+                        //(x:760.00, y:2.00, width:17.00, height:15.00)
+                        TooltipUtility.SetToolTip(scaleMinnusTooltip, m_CurrentRect);
+
+                        //Preset
+                        float DefaultPresetWidth = 35;
+
+                        layoutX += 5;
+                        m_CurrentRect.width = DefaultPresetWidth;
+                        m_CurrentRect.y = 2;
+                        m_CurrentRect.height = layoutHeight - (m_CurrentRect.y + 1);
+                        m_CurrentRect.y += barSize.y;
+                        m_CurrentRect.x = layoutX;
+
+                        for (int i = 0; i < CSGSettings.Presets[PresetCategory.Scale_Snap].Count; i++)
+                        {
+                            GUIStyle buttonStyle = EditorStyles.miniButtonMid;
+
+                            if (i == 0)
+                            {
+                                buttonStyle = EditorStyles.miniButtonLeft;
+                            }
+                            else if (i == CSGSettings.Presets[PresetCategory.Scale_Snap].Count - 1)
+                            {
+                                buttonStyle = EditorStyles.miniButtonRight;
+                            }
+
+                            string PresetString = CSGSettings.Presets[PresetCategory.Scale_Snap][i].Label;
+
+                            if (string.IsNullOrEmpty(CSGSettings.Presets[PresetCategory.Scale_Snap][i].Label) || string.IsNullOrWhiteSpace(CSGSettings.Presets[PresetCategory.Scale_Snap][i].Label))
+                            {
+                                m_CurrentRect.width = DefaultPresetWidth;
+
+                                double RoundedPreset = System.Math.Round(CSGSettings.Presets[PresetCategory.Scale_Snap][i].Value, 3);
+                                PresetString = RoundedPreset.ToString();
+                                if (RoundedPreset < 1.0d)
+                                {
+                                    PresetString = PresetString.Replace("0.", ".");
+                                }
+                            }
+
+                            GUIContent presetLabelText = new GUIContent(PresetString);
+                            Vector2 labelSize = EditorStyles.label.CalcSize(presetLabelText);
+
+                            m_CurrentRect.width = Mathf.Max(labelSize.x + 15, DefaultPresetWidth);
+
+                            m_CurrentRect.x = layoutX;
+
+                            if (GUI.Toggle(m_CurrentRect, CSGSettings.Presets[PresetCategory.Scale_Snap][i].Value == CSGSettings.SnapScale, PresetString, buttonStyle))
+                            {
+                                if (GUI.changed && modified == false)
+                                {
+                                    GUIUtility.keyboardControl = 0;
+
+                                    CSGSettings.SnapScale = CSGSettings.Presets[PresetCategory.Scale_Snap][i].Value;
+                                    CSGSettings.Save();
+                                    scaleSnap = CSGSettings.SnapScale;
+                                }
+                            }
+
+                            layoutX += m_CurrentRect.width;
+                        }
+                    }
+
 #endregion
-				}
-			}
+                }
+            }
 
+            float prevLayoutX = layoutX;
 
-			var prevLayoutX = layoutX;
-				
-			layoutX = viewWidth;
+            layoutX = viewWidth;
 
-				
 #region "Rebuild"
-			currentRect.width	= 27;
-			currentRect.y		= 0;
-			currentRect.height	= layoutHeight - currentRect.y; 
-			currentRect.y		+= barSize.y;
-			layoutX -= currentRect.width;
-			currentRect.x		= layoutX;
 
-			if (GUI.Button(currentRect, CSG_GUIStyleUtility.Skin.rebuildIcon, EditorStyles.toolbarButton))
-			{
-				Debug.Log("Starting complete rebuild");
+            m_CurrentRect.width  =  27;
+            m_CurrentRect.y      =  0;
+            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+            m_CurrentRect.y      += barSize.y;
+            layoutX              -= m_CurrentRect.width;
+            m_CurrentRect.x      =  layoutX;
 
-				var text = new System.Text.StringBuilder();
+            if(GUI.Button(m_CurrentRect, CsgguiStyleUtility.Skin.rebuildIcon, EditorStyles.toolbarButton))
+            {
+                // TODO: make logging optional
+                Debug.Log("Starting complete rebuild");
 
-				MaterialUtility.ResetMaterialTypeLookup();
+                StringBuilder text = new StringBuilder();
 
-				InternalCSGModelManager.skipCheckForChanges = true;
-				RealtimeCSG.CSGSettings.Reload();
-				UnityCompilerDefineManager.UpdateUnityDefines();
+                MaterialUtility.ResetMaterialTypeLookup();
 
-				InternalCSGModelManager.registerTime = 0.0;
-				InternalCSGModelManager.validateTime = 0.0;
-				InternalCSGModelManager.hierarchyValidateTime = 0.0;
-				InternalCSGModelManager.updateHierarchyTime = 0.0;
+                InternalCSGModelManager.SkipCheckForChanges = true;
+                CSGSettings.Reload();
+                UnityCompilerDefineManager.UpdateUnityDefines();
 
-				var startTime = EditorApplication.timeSinceStartup;
-				InternalCSGModelManager.ForceRebuildAll();
-				InternalCSGModelManager.OnHierarchyModified();
-				var hierarchy_update_endTime = EditorApplication.timeSinceStartup;
-				text.AppendFormat(CultureInfo.InvariantCulture, "Full hierarchy rebuild in {0:F} ms. ", (hierarchy_update_endTime - startTime) * 1000);
+                InternalCSGModelManager.HierarchyValidateTime = 0.0;
+                InternalCSGModelManager.UpdateHierarchyTime   = 0.0;
 
+                double startTime = EditorApplication.timeSinceStartup;
+                InternalCSGModelManager.ForceRebuildAll();
+                InternalCSGModelManager.OnHierarchyModified();
+                double hierarchyUpdateEndTime = EditorApplication.timeSinceStartup;
 
-				NativeMethodBindings.RebuildAll();
-				var csg_endTime = EditorApplication.timeSinceStartup;
-				text.AppendFormat(CultureInfo.InvariantCulture, "Full CSG rebuild done in {0:F} ms. ", (csg_endTime - hierarchy_update_endTime) * 1000);
-				 
-				InternalCSGModelManager.RemoveForcedUpdates(); // we already did this in rebuild all
-				InternalCSGModelManager.UpdateMeshes(text, forceUpdate: true);
+                text.AppendFormat(CultureInfo.InvariantCulture, "Full hierarchy rebuild in {0:F} ms. ", (hierarchyUpdateEndTime - startTime) * 1000);
 
-				updateSurfaces = true;
-				UpdateLoop.ResetUpdateRoutine();
-				RealtimeCSG.CSGSettings.Save();
-				InternalCSGModelManager.skipCheckForChanges = false;
+                NativeMethodBindings.RebuildAll();
+                double csgEndTime = EditorApplication.timeSinceStartup;
 
-				var scenes = new HashSet<UnityEngine.SceneManagement.Scene>();
-				foreach(var model in InternalCSGModelManager.Models)
-					scenes.Add(model.gameObject.scene);
+                text.AppendFormat(CultureInfo.InvariantCulture, "Full CSG rebuild done in {0:F} ms. ", (csgEndTime - hierarchyUpdateEndTime) * 1000);
 
-				text.AppendFormat(CultureInfo.InvariantCulture, "{0} brushes. ", Foundation.CSGManager.TreeBrushCount);
-				
-				Debug.Log(text.ToString());
-			}
-			//(x:1442.00, y:0.00, width:27.00, height:18.00)
-			TooltipUtility.SetToolTip(rebuildTooltip, currentRect);
+                InternalCSGModelManager.RemoveForcedUpdates(); // we already did this in rebuild all
+                InternalCSGModelManager.UpdateMeshes(text, true);
+
+                updateSurfaces = true;
+                UpdateLoop.ResetUpdateRoutine();
+                CSGSettings.Save();
+                InternalCSGModelManager.SkipCheckForChanges = false;
+
+                text.AppendFormat(CultureInfo.InvariantCulture, "{0} brushes. ", CSGManager.TreeBrushCount);
+
+                Debug.Log(text.ToString());
+            }
+
+            //(x:1442.00, y:0.00, width:27.00, height:18.00)
+            TooltipUtility.SetToolTip(rebuildTooltip, m_CurrentRect);
+
 #endregion
 
-			if (viewWidth >= 800)
-				layoutX -= 6; //(x:1436.00, y:0.00, width:6.00, height:6.00)
+            if(viewWidth >= 800)
+            {
+                layoutX -= 6; //(x:1436.00, y:0.00, width:6.00, height:6.00)
+            }
 
 #region "Helper Surface Flags" Mask
-			if (viewWidth >= 250)
-			{
-				GUI.changed = false;
-				{
-					prevLayoutX += 8;  // extra space
-					prevLayoutX += 26; // width of "Show wireframe" button
 
-					currentRect.width	= Mathf.Max(20, Mathf.Min(165, (viewWidth - prevLayoutX - currentRect.width)));
+            if(viewWidth >= 250)
+            {
+                GUI.changed = false;
 
-					currentRect.y		= 0;
-					currentRect.height	= layoutHeight - currentRect.y; 
-					currentRect.y		+= barSize.y;
-					layoutX -= currentRect.width;
-					currentRect.x		= layoutX;
+                prevLayoutX += 8;  // extra space
+                prevLayoutX += 26; // width of "Show wireframe" button
 
-					SurfaceVisibilityPopup.Button(sceneView, currentRect);
-					
-					//(x:1267.00, y:2.00, width:165.00, height:16.00)
-					TooltipUtility.SetToolTip(helperSurfacesTooltip, currentRect);
-				}
-				if (GUI.changed)
-				{
-					updateSurfaces = true;
-					modified = true;
-				}
-			}
+                m_CurrentRect.width = Mathf.Max(20, Mathf.Min(165, viewWidth - prevLayoutX - m_CurrentRect.width));
+
+                m_CurrentRect.y      =  0;
+                m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+                m_CurrentRect.y      += barSize.y;
+                layoutX              -= m_CurrentRect.width;
+                m_CurrentRect.x      =  layoutX;
+
+                SurfaceVisibilityPopup.Button(sceneView, m_CurrentRect);
+
+                //(x:1267.00, y:2.00, width:165.00, height:16.00)
+                TooltipUtility.SetToolTip(helperSurfacesTooltip, m_CurrentRect);
+
+                if(GUI.changed)
+                {
+                    updateSurfaces = true;
+                    modified       = true;
+                }
+            }
+
 #endregion
 
 #region "Show wireframe" button
-			GUI.changed = false;
-			currentRect.width	= 26;
-			currentRect.y		= 0;
-			currentRect.height	= layoutHeight - currentRect.y; 
-			currentRect.y		+= barSize.y;
-			layoutX -= currentRect.width;
-			currentRect.x		= layoutX;
 
-			if (showWireframe)
-			{
-				showWireframe = GUI.Toggle(currentRect, showWireframe, CSG_GUIStyleUtility.Skin.wireframe, EditorStyles.toolbarButton);
-				//(x:1237.00, y:0.00, width:26.00, height:18.00)
-			} else
-			{
-				showWireframe = GUI.Toggle(currentRect, showWireframe, CSG_GUIStyleUtility.Skin.wireframeOn, EditorStyles.toolbarButton);
-				//(x:1237.00, y:0.00, width:26.00, height:18.00)
-			}
-			TooltipUtility.SetToolTip(showWireframeTooltip, currentRect);
-			if (GUI.changed)
-			{
-				wireframeModified = true;
-				modified = true;
-			}
+            GUI.changed          =  false;
+            m_CurrentRect.width  =  26;
+            m_CurrentRect.y      =  0;
+            m_CurrentRect.height =  layoutHeight - m_CurrentRect.y;
+            m_CurrentRect.y      += barSize.y;
+            layoutX              -= m_CurrentRect.width;
+            m_CurrentRect.x      =  layoutX;
+
+            //(x:1237.00, y:0.00, width:26.00, height:18.00)
+            showWireframe = GUI.Toggle(m_CurrentRect, showWireframe, showWireframe ? CsgguiStyleUtility.Skin.wireframe : CsgguiStyleUtility.Skin.wireframeOn, EditorStyles.toolbarButton);
+
+            //(x:1237.00, y:0.00, width:26.00, height:18.00)
+            TooltipUtility.SetToolTip(showWireframeTooltip, m_CurrentRect);
+
+            if(GUI.changed)
+            {
+                wireframeModified = true;
+                modified          = true;
+            }
+
 #endregion
 
+#region "Update UVs" Button
+            if (CSGSettings.UpdateLightmapUVButtonMode == CSGSettings.UpdateLightmapUVButtonState.BottomBar || CSGSettings.UpdateLightmapUVButtonMode == CSGSettings.UpdateLightmapUVButtonState.Both)
+            {
+                if (MeshInstanceManager.DoesAnyModelUseLightmapUVs())
+                {
+                    GUI.changed = false;
+                    m_CurrentRect.width = 140;
+                    m_CurrentRect.y = 0;
+                    m_CurrentRect.height = layoutHeight - m_CurrentRect.y;
+                    m_CurrentRect.y += barSize.y;
+                    layoutX -= m_CurrentRect.width;
+                    m_CurrentRect.x = layoutX;
 
+                    GUIStyle uvButtonStyle = new GUIStyle(EditorStyles.toolbarButton);
 
+                    if (EditModeCommonGUI.NeedLightmapUVUpdate(InternalCSGModelManager.Models))
+                    {
+                        uvButtonStyle.normal.textColor = Color.red;
+                    }
+                    else
+                    {
+                        GUI.enabled = false;
+                    }
 
+                    if (GUI.Button(m_CurrentRect, "Update Lightmap UVs", uvButtonStyle))
+                    {
+                        CSGModelManager.BuildLightmapUvs();
+                    }
+
+                    GUI.enabled = true;
+
+                    if (GUI.changed)
+                    {
+                        modified = true;
+                    }
+                }
+            }
+#endregion
 
 #region Capture mouse clicks in empty space
-			var mousePoint  = Event.current.mousePosition;
-			int controlID = GUIUtility.GetControlID(BottomBarEditorOverlayHash, FocusType.Passive, barSize);
-			switch (Event.current.GetTypeForControl(controlID))
-			{
-				case EventType.MouseDown:	{ if (barSize.Contains(mousePoint)) { GUIUtility.hotControl = controlID; GUIUtility.keyboardControl = controlID; Event.current.Use(); } break; }
-				case EventType.MouseMove:	{ if (barSize.Contains(mousePoint)) { Event.current.Use(); } break; }
-				case EventType.MouseUp:		{ if (GUIUtility.hotControl == controlID) { GUIUtility.hotControl = 0; GUIUtility.keyboardControl = 0; Event.current.Use(); } break; }
-				case EventType.MouseDrag:	{ if (GUIUtility.hotControl == controlID) { Event.current.Use(); } break; }
-				case EventType.ScrollWheel: { if (barSize.Contains(mousePoint)) { Event.current.Use(); } break; }
-			}
+
+            Vector2 mousePoint = Event.current.mousePosition;
+            int     controlID  = GUIUtility.GetControlID(bottomBarEditorOverlayHash, FocusType.Passive, barSize);
+
+            switch(Event.current.GetTypeForControl(controlID))
+            {
+                case EventType.MouseDown:
+                {
+                    if(barSize.Contains(mousePoint))
+                    {
+                        GUIUtility.hotControl      = controlID;
+                        GUIUtility.keyboardControl = controlID;
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+                case EventType.MouseMove:
+                {
+                    if(barSize.Contains(mousePoint))
+                    {
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+                case EventType.MouseUp:
+                {
+                    if(GUIUtility.hotControl == controlID)
+                    {
+                        GUIUtility.hotControl      = 0;
+                        GUIUtility.keyboardControl = 0;
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+                case EventType.MouseDrag:
+                {
+                    if(GUIUtility.hotControl == controlID)
+                    {
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+                case EventType.ScrollWheel:
+                {
+                    if(barSize.Contains(mousePoint))
+                    {
+                        Event.current.Use();
+                    }
+
+                    break;
+                }
+            }
+
 #endregion
-
-
 
 #region Store modified values
-			rotationSnap = Mathf.Max(1.0f, Mathf.Abs((360 + (rotationSnap % 360))) % 360);
-			moveSnapVector.x = Mathf.Max(1.0f / 1024.0f, moveSnapVector.x);
-			moveSnapVector.y = Mathf.Max(1.0f / 1024.0f, moveSnapVector.y);
-			moveSnapVector.z = Mathf.Max(1.0f / 1024.0f, moveSnapVector.z);
-			
-			scaleSnap = Mathf.Max(MathConstants.MinimumScale, scaleSnap);
-						
-			RealtimeCSG.CSGSettings.SnapMode				= snapMode;
-			RealtimeCSG.CSGSettings.SnapVector				= moveSnapVector;
-			RealtimeCSG.CSGSettings.SnapRotation			= rotationSnap;
-			RealtimeCSG.CSGSettings.SnapScale				= scaleSnap;
-			RealtimeCSG.CSGSettings.UniformGrid				= uniformGrid;
-//			RealtimeCSG.Settings.SnapVertex					= vertexSnap;
-			RealtimeCSG.CSGSettings.GridVisible				= showGrid;
-			RealtimeCSG.CSGSettings.LockAxisX				= lockAxisX;
-			RealtimeCSG.CSGSettings.LockAxisY				= lockAxisY;
-			RealtimeCSG.CSGSettings.LockAxisZ				= lockAxisZ;
-			RealtimeCSG.CSGSettings.DistanceUnit			= distanceUnit;
-			RealtimeCSG.CSGSettings.VisibleHelperSurfaces	= helperSurfaces;
 
-			if (wireframeModified)
-			{
-				RealtimeCSG.CSGSettings.SetWireframeShown(sceneView, showWireframe);
-			}
+            rotationSnap     = Mathf.Max(1.0f, Mathf.Abs(360 + rotationSnap % 360) % 360);
+            moveSnapVector.x = Mathf.Max(1.0f / 1024.0f, moveSnapVector.x);
+            moveSnapVector.y = Mathf.Max(1.0f / 1024.0f, moveSnapVector.y);
+            moveSnapVector.z = Mathf.Max(1.0f / 1024.0f, moveSnapVector.z);
 
-			if (updateSurfaces)
-			{
-				MeshInstanceManager.UpdateHelperSurfaceVisibility(force: true);
-			}
-			
-			if (modified)
-			{
-				GUI.changed = true;
-				RealtimeCSG.CSGSettings.UpdateSnapSettings();
-				RealtimeCSG.CSGSettings.Save();
-				CSG_EditorGUIUtility.RepaintAll();
-			}
+            scaleSnap = Mathf.Max(MathConstants.MINIMUM_SCALE, scaleSnap);
+
+            CSGSettings.SnapMode              = snapMode;
+            CSGSettings.SnapVector            = moveSnapVector;
+            CSGSettings.SnapRotation          = rotationSnap;
+            CSGSettings.SnapScale             = scaleSnap;
+            CSGSettings.UniformGrid           = uniformGrid;
+            CSGSettings.GridVisible           = showGrid;
+            CSGSettings.LockAxisX             = lockAxisX;
+            CSGSettings.LockAxisY             = lockAxisY;
+            CSGSettings.LockAxisZ             = lockAxisZ;
+            CSGSettings.DistanceUnit          = distanceUnit;
+            CSGSettings.VisibleHelperSurfaces = helperSurfaces;
+
+            if(wireframeModified)
+            {
+                CSGSettings.SetWireframeShown(sceneView, showWireframe);
+            }
+
+            if(updateSurfaces)
+            {
+                MeshInstanceManager.UpdateHelperSurfaceVisibility(true);
+            }
+
+            if(modified)
+            {
+                GUI.changed = true;
+                CSGSettings.UpdateSnapSettings();
+                CSGSettings.Save();
+                CSGEditorGUIUtility.RepaintAll();
+            }
+
 #endregion
-		}
-		
-	}
+        }
+    }
 }

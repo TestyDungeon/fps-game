@@ -47,7 +47,7 @@ public class EnemyHitResponder : MonoBehaviour, IDamageable
         state.lastDamageVector = (damagePoint - source.position).normalized * damageAmount;
         deathKnockbackVector += (transform.position - source.position).normalized * damageAmount;
         //state.SetTarget(source);
-        SoundManager.PlaySound(state.enemyConfig.hurtSFX, transform.position, 0.01f, 0.7f);
+        //SoundManager.PlaySound(state.enemyConfig.hurtSFX, transform.position, 0.1f, 0.7f);
         //if(state.GetCurrentState() is EnemyFalterState && !state.movementController.isGrounded)
         //{
 //

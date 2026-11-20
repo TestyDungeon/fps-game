@@ -54,18 +54,18 @@ public class DecalManager : MonoBehaviour
 
     public void PositionDecal(int ind, Vector3 position, Quaternion rotation, Vector3 scale)
     {
-        if (decalPools == null || decalPools.Length == 0)
+        if (decalPools == null || ind < 0 || ind >= decalPools.Length)
         {
             return;
         }
 
-        DecalPool decalPool = decalPools[0];
+        DecalPool decalPool = decalPools[ind];
         if (decalPool == null || decalPool.decals == null || decalPool.decals.Count == 0)
         {
             return;
         }
 
-        GameObject decal = decalPools[ind].decals.Dequeue();
+        GameObject decal = decalPool.decals.Dequeue();
         decal.transform.position = position;
         decal.transform.rotation = rotation;
         decal.transform.localScale = scale;

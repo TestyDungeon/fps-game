@@ -82,7 +82,7 @@ public class Door : MonoBehaviour, IInteractable
                 if (locked && key == null)  
                     return InteractResult.Fail("Opened elsewhere");
                 if (locked && key != null)
-                    return InteractResult.Fail($"{key} key needed");
+                    return InteractResult.Fail($"{key.name} needed");
             }
         }
         else

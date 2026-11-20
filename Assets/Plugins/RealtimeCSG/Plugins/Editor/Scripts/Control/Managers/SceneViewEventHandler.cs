@@ -1,102 +1,100 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using InternalRealtimeCSG;
-using System;
-using System.Collections.Generic;
-using System.Collections;
-using System.Reflection;
-using System.Linq;
-using UnityEngine.SceneManagement;
 using RealtimeCSG.Helpers;
-
 
 namespace RealtimeCSG
 {
     internal sealed class SceneViewEventHandler
     {
-        static bool mousePressed;
+        private static bool m_MousePressed;
+        private static int m_PrevFocusControl;
 
-        static int prevFocusControl;
-
-        internal static void OnScene( SceneView sceneView )
+        internal static void OnScene(SceneView sceneView)
         {
-            CSGSettings.RegisterSceneView( sceneView );
+            CSGSettings.RegisterSceneView(sceneView);
 
-            if( !RealtimeCSG.CSGSettings.EnableRealtimeCSG )
+            if(!CSGSettings.EnableRealtimeCSG)
+            {
                 return;
+            }
 
-            if( EditorApplication.isPlayingOrWillChangePlaymode )
+            if(EditorApplication.isPlayingOrWillChangePlaymode)
+            {
                 return;
+            }
 
             UpdateLoop.UpdateOnSceneChange();
 
-            if( !RealtimeCSG.CSGSettings.EnableRealtimeCSG )
-                ColorSettings.isInitialized = false;
-            else if( !ColorSettings.isInitialized )
+            if(!CSGSettings.EnableRealtimeCSG)
             {
-                if( Event.current.type == EventType.Repaint )
+                ColorSettings.IsInitialized = false;
+            }
+            else if(!ColorSettings.IsInitialized)
+            {
+                if(Event.current.type == EventType.Repaint)
                 {
                     ColorSettings.Update();
                 }
             }
 
-            if( !UpdateLoop.IsActive() )
+            if(!UpdateLoop.IsActive())
+            {
                 UpdateLoop.ResetUpdateRoutine();
-
-            if( Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseDrag )
-            {
-                mousePressed = true;
-            }
-            else if( Event.current.type == EventType.MouseUp || Event.current.type == EventType.MouseMove )
-            {
-                mousePressed = false;
             }
 
-            SceneDragToolManager.OnHandleDragAndDrop( sceneView );
-            RectangleSelectionManager.Update( sceneView );
-            EditModeManager.InitSceneGUI( sceneView );
+            if(Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseDrag)
+            {
+                m_MousePressed = true;
+            }
+            else if(Event.current.type == EventType.MouseUp || Event.current.type == EventType.MouseMove)
+            {
+                m_MousePressed = false;
+            }
 
-            if( Event.current.type == EventType.Repaint )
+            SceneDragToolManager.OnHandleDragAndDrop(sceneView);
+            RectangleSelectionManager.Update(sceneView);
+            EditModeManager.InitSceneGUI();
+
+            if(Event.current.type == EventType.Repaint)
+            {
                 MeshInstanceManager.UpdateHelperSurfaces();
+            }
 
-            if( Event.current.type == EventType.Repaint )
+            if(Event.current.type == EventType.Repaint)
             {
-                SceneToolRenderer.OnPaint( sceneView );
+                SceneToolRenderer.OnPaint(sceneView);
             }
             else
-                //if (fallbackGUI)
             {
-                SceneViewBottomBarGUI.ShowGUI( sceneView );
-                SceneViewInfoGUI.DrawInfoGUI( sceneView );
+                //SceneViewBottomBarGUI.ShowGUI(sceneView);
+                SceneViewInfoGUI.DrawInfoGUI(sceneView);
             }
 
-            EditModeManager.OnSceneGUI( sceneView );
+            EditModeManager.OnSceneGUI(sceneView);
 
-            //if (fallbackGUI)
+            TooltipUtility.InitToolTip(sceneView);
+
+            if(Event.current.type == EventType.Repaint)
             {
-                TooltipUtility.InitToolTip( sceneView );
-
-                if( Event.current.type == EventType.Repaint )
-                {
-                    SceneViewBottomBarGUI.ShowGUI( sceneView, false );
-                    SceneViewInfoGUI.DrawInfoGUI( sceneView );
-                }
-
-                if( !mousePressed )
-                {
-                    Handles.BeginGUI();
-                    TooltipUtility.DrawToolTip( getLastRect: false );
-                    Handles.EndGUI();
-                }
+                //SceneViewBottomBarGUI.ShowGUI(sceneView, false);
+                SceneViewInfoGUI.DrawInfoGUI(sceneView);
             }
 
-            if( Event.current.type == EventType.Layout )
+            if(!m_MousePressed)
             {
-                var currentFocusControl = CSGHandles.FocusControl;
+                Handles.BeginGUI();
+                TooltipUtility.DrawToolTip(false);
+                Handles.EndGUI();
+            }
 
-                if( prevFocusControl != currentFocusControl )
+            if(Event.current.type == EventType.Layout)
+            {
+                int currentFocusControl = CSGHandles.FocusControl;
+
+                if(m_PrevFocusControl != currentFocusControl)
                 {
-                    prevFocusControl = currentFocusControl;
+                    m_PrevFocusControl = currentFocusControl;
                     HandleUtility.Repaint();
                 }
             }

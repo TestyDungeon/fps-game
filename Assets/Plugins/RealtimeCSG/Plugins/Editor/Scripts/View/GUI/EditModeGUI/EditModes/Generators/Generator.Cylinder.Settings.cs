@@ -1,267 +1,347 @@
 ﻿using System;
-using UnityEditor;
-using UnityEngine;
 using InternalRealtimeCSG;
 using RealtimeCSG.Legacy;
+using UnityEditor;
+using UnityEngine;
 
 namespace RealtimeCSG
 {
-	[Serializable]
+    [Serializable]
     internal sealed class GeneratorCylinderSettings : IShapeSettings
-	{
-		public Vector3[]	backupVertices			= new Vector3[0];
-		public Vector3[]	vertices				= new Vector3[0];
-		public int[]		vertexIDs				= new int[0];
-        public bool[]		onGeometryVertices		= new bool[0];	
-		
-		public int			circleSides
-		{
-			get { return Mathf.Max(3, RealtimeCSG.CSGSettings.CircleSides); }
-			set { if (RealtimeCSG.CSGSettings.CircleSides == value) return; RealtimeCSG.CSGSettings.CircleSides = value; RealtimeCSG.CSGSettings.Save(); }
-		}
-		public float		circleOffset
-		{
-			get { return RealtimeCSG.CSGSettings.CircleOffset; }
-			set { if (RealtimeCSG.CSGSettings.CircleOffset == value) return; RealtimeCSG.CSGSettings.CircleOffset = value; RealtimeCSG.CSGSettings.Save(); }
-		}
-		public bool			circleSmoothShading
-		{
-			get { return RealtimeCSG.CSGSettings.CircleSmoothShading; }
-			set { if (RealtimeCSG.CSGSettings.CircleSmoothShading == value) return; RealtimeCSG.CSGSettings.CircleSmoothShading = value; RealtimeCSG.CSGSettings.Save(); }
-		}
-		public bool			circleSingleSurfaceEnds
-		{
-			get { return RealtimeCSG.CSGSettings.CircleSingleSurfaceEnds; }
-			set { if (RealtimeCSG.CSGSettings.CircleSingleSurfaceEnds == value) return; RealtimeCSG.CSGSettings.CircleSingleSurfaceEnds = value; RealtimeCSG.CSGSettings.Save(); }
-		}
-		public bool			circleDistanceToSide 
-		{
-			get { return RealtimeCSG.CSGSettings.CircleDistanceToSide; }
-			set { if (RealtimeCSG.CSGSettings.CircleDistanceToSide == value) return; RealtimeCSG.CSGSettings.CircleDistanceToSide = value; RealtimeCSG.CSGSettings.Save(); }
-		}
-		public bool			circleRecenter
-		{
-			get { return RealtimeCSG.CSGSettings.CircleRecenter; }
-			set { if (RealtimeCSG.CSGSettings.CircleRecenter == value) return; RealtimeCSG.CSGSettings.CircleRecenter = value; RealtimeCSG.CSGSettings.Save(); }
-		}
-		public float		radiusA				= 0.0f;
-		public float		radiusB				= 0.0f;
-		
-		public void AddPoint(Vector3 position)
+    {
+        public Vector3[] backupVertices = Array.Empty<Vector3>();
+        public Vector3[] vertices = Array.Empty<Vector3>();
+        public int[] vertexIDs = Array.Empty<int>();
+        public bool[] onGeometryVertices = Array.Empty<bool>();
+
+        public int CircleSides
+        {
+            get => Mathf.Max(3, CSGSettings.CircleSides);
+            set
+            {
+                if(CSGSettings.CircleSides == value)
+                {
+                    return;
+                }
+
+                CSGSettings.CircleSides = value;
+                CSGSettings.Save();
+            }
+        }
+
+        public float CircleOffset
+        {
+            get => CSGSettings.CircleOffset;
+            set
+            {
+                if(CSGSettings.CircleOffset == value)
+                {
+                    return;
+                }
+
+                CSGSettings.CircleOffset = value;
+                CSGSettings.Save();
+            }
+        }
+
+        public bool CircleSmoothShading
+        {
+            get => CSGSettings.CircleSmoothShading;
+            set
+            {
+                if(CSGSettings.CircleSmoothShading == value)
+                {
+                    return;
+                }
+
+                CSGSettings.CircleSmoothShading = value;
+                CSGSettings.Save();
+            }
+        }
+
+        public bool CircleSingleSurfaceEnds
+        {
+            get => CSGSettings.CircleSingleSurfaceEnds;
+            set
+            {
+                if(CSGSettings.CircleSingleSurfaceEnds == value)
+                {
+                    return;
+                }
+
+                CSGSettings.CircleSingleSurfaceEnds = value;
+                CSGSettings.Save();
+            }
+        }
+
+        public bool CircleDistanceToSide
+        {
+            get => CSGSettings.CircleDistanceToSide;
+            set
+            {
+                if(CSGSettings.CircleDistanceToSide == value)
+                {
+                    return;
+                }
+
+                CSGSettings.CircleDistanceToSide = value;
+                CSGSettings.Save();
+            }
+        }
+
+        public bool CircleRecenter
+        {
+            get => CSGSettings.CircleRecenter;
+            set
+            {
+                if(CSGSettings.CircleRecenter == value)
+                {
+                    return;
+                }
+
+                CSGSettings.CircleRecenter = value;
+                CSGSettings.Save();
+            }
+        }
+
+        public float radiusA;
+        public float radiusB;
+
+        public void AddPoint(Vector3 position)
         {
             ArrayUtility.Add(ref vertices, position);
-		}
+        }
 
-		public void CalculatePlane(ref CSGPlane plane)
-		{
-		}
+        public void CalculatePlane(ref CSGPlane plane)
+        {
+        }
 
-		public float	RadiusA
-		{
-			get
-			{
-				if (vertices.Length <= 1)
-					return 0;
-				
-				return (vertices[1] - vertices[0]).magnitude;
-			}
-			set
-			{
-				if (vertices.Length <= 1)
-					return;
-				
-				var delta  = (vertices[1] - vertices[0]);
-				var radius = delta.magnitude;
-				if (radius == value)
-					return;
-				
-				delta /= radius;
-				radius = value;
-				if (radius < MathConstants.MinimumScale)
-					radius = MathConstants.MinimumScale;
-				delta *= radius;
+        public float RadiusA
+        {
+            get
+            {
+                if(vertices.Length <= 1)
+                {
+                    return 0;
+                }
 
-				vertices[1] = vertices[0] + delta;
-			}
-		}
+                return (vertices[1] - vertices[0]).magnitude;
+            }
+            set
+            {
+                if(vertices.Length <= 1)
+                {
+                    return;
+                }
 
-		public float RadiusB
-		{
-			get;
-			set;
-		}
+                Vector3 delta  = vertices[1] - vertices[0];
+                float   radius = delta.magnitude;
 
-		public void Reset()
-		{
-			backupVertices			= new Vector3[0];
-			vertices				= new Vector3[0];
+                if(radius == value)
+                {
+                    return;
+                }
 
-			circleSides				= Mathf.Max(3, RealtimeCSG.CSGSettings.CircleSides);
-			circleOffset			= RealtimeCSG.CSGSettings.CircleOffset;
-			circleSmoothShading		= RealtimeCSG.CSGSettings.CircleSmoothShading;
-			circleSingleSurfaceEnds = RealtimeCSG.CSGSettings.CircleSingleSurfaceEnds;
-			circleDistanceToSide	= RealtimeCSG.CSGSettings.CircleDistanceToSide;
-			circleRecenter			= RealtimeCSG.CSGSettings.CircleRecenter;
-		}
+                delta  /= radius;
+                radius =  value;
 
-		public void CopyBackupVertices()
-		{
-			backupVertices = new Vector3[vertices.Length];
-			Array.Copy(vertices, backupVertices, vertices.Length);
-		}
+                if(radius < MathConstants.MINIMUM_SCALE)
+                {
+                    radius = MathConstants.MINIMUM_SCALE;
+                }
 
-		public Vector3[] GetVertices(CSGPlane buildPlane, Vector3 worldPosition, Vector3 gridTangent, Vector3 gridBinormal, out bool isValid)
-		{
-			if (vertices.Length < 1)
-			{
-				isValid = false;
-				return vertices;
-			}
+                delta *= radius;
 
-			if (circleSides < 3)
-				circleSides = 3;
+                vertices[1] = vertices[0] + delta;
+            }
+        }
 
-			//var tangent = GeometryUtility.CalculateTangent(buildPlane.normal);
+        public float RadiusB { get; set; }
 
-			var vertex1 = (vertices.Length > 1) ? vertices[1] : worldPosition;
-				
-			var delta  = (vertex1 - vertices[0]);
-			radiusA = delta.magnitude;
+        public void Reset()
+        {
+            backupVertices = Array.Empty<Vector3>();
+            vertices       = Array.Empty<Vector3>();
 
-			if (radiusA <= MathConstants.DistanceEpsilon)
-			{
-				isValid = false;
-				return new Vector3[0];
-			}
+            CircleSides             = Mathf.Max(3, CSGSettings.CircleSides);
+            CircleOffset            = CSGSettings.CircleOffset;
+            CircleSmoothShading     = CSGSettings.CircleSmoothShading;
+            CircleSingleSurfaceEnds = CSGSettings.CircleSingleSurfaceEnds;
+            CircleDistanceToSide    = CSGSettings.CircleDistanceToSide;
+            CircleRecenter          = CSGSettings.CircleRecenter;
+        }
 
+        public void CopyBackupVertices()
+        {
+            backupVertices = new Vector3[vertices.Length];
+            Array.Copy(vertices, backupVertices, vertices.Length);
+        }
 
-			var matrix			= GeometryUtility.Rotate2DToPlaneMatrix(buildPlane);
-			var realVertices	= new Vector3[circleSides];
+        public Vector3[] GetVertices(CSGPlane buildPlane, Vector3 worldPosition, Vector3 gridTangent, Vector3 gridBinormal, out bool isValid)
+        {
+            if(vertices.Length < 1)
+            {
+                isValid = false;
 
-			float angle_offset = GeometryUtility.SignedAngle(gridTangent, delta / radiusA, buildPlane.normal);
-			if (circleDistanceToSide)
-			{
-				angle_offset += 90;
-				if ((circleSides & 1) != 1)
-					angle_offset += (180.0f / circleSides);
-			} else
-				angle_offset -= 90;
+                return vertices;
+            }
 
-			angle_offset += circleOffset;
-			angle_offset *= Mathf.Deg2Rad;
+            if(CircleSides < 3)
+            {
+                CircleSides = 3;
+            }
 
-			Vector3 p1 = MathConstants.zeroVector3;
-			for (int i = 0; i < circleSides; i++)
-			{
-				var angle = ((i * Mathf.PI * 2.0f) / (float)circleSides) + angle_offset;
+            Vector3 vertex1 = vertices.Length > 1 ? vertices[1] : worldPosition;
+            Vector3 delta   = vertex1 - vertices[0];
+            radiusA = delta.magnitude;
 
-				p1.x = (Mathf.Sin(angle) * radiusA);
-				p1.z = (Mathf.Cos(angle) * radiusA);
+            if(radiusA <= MathConstants.DISTANCE_EPSILON)
+            {
+                isValid = false;
 
-				realVertices[i] = p1;
-			}
+                return Array.Empty<Vector3>();
+            }
 
-			if (circleRecenter)
-			{
-				var dirx	= matrix.MultiplyVector(delta.normalized);
-				var dirz	= Vector3.Cross(MathConstants.upVector3, dirx);
+            Matrix4x4 matrix       = GeometryUtility.Rotate2DToPlaneMatrix(buildPlane);
+            Vector3[] realVertices = new Vector3[CircleSides];
 
-				float minx = float.PositiveInfinity;
-				float minz = float.PositiveInfinity;
-				float maxx = float.NegativeInfinity;
-				float maxz = float.NegativeInfinity;
-				for (int i = 0; i < circleSides; i++)
-				{
-					var point = realVertices[i];
-					var x = Vector3.Dot(point, dirx);
-					var z = Vector3.Dot(point, dirz);
-					
-					minx = Mathf.Min(x, minx);
-					minz = Mathf.Min(z, minz);
+            float angleOffset = GeometryUtility.SignedAngle(gridTangent, delta / radiusA, buildPlane.Normal);
 
-					maxx = Mathf.Max(x, maxx);
-					maxz = Mathf.Max(z, maxz);
-				}
-				
-				var scalex	= (radiusA * 2) / (maxx - minx);
-				var scalez	= (radiusA * 2) / (maxz - minz);
-				var centerx	= ((maxx + minx) * -0.5f) * dirx;
-				var centerz	= ((maxz + minz) * -0.5f) * dirz;
-			
-				for (int i = 0; i < circleSides; i++)
-				{
-					var point = realVertices[i];
-					var x = Vector3.Dot(point, dirx);
-					var z = Vector3.Dot(point, dirz);
+            if(CircleDistanceToSide)
+            {
+                angleOffset += 90;
 
+                if((CircleSides & 1) != 1)
+                {
+                    angleOffset += 180.0f / CircleSides;
+                }
+            }
+            else
+            {
+                angleOffset -= 90;
+            }
 
-					var ptx = x * dirx;
-					var ptz = z * dirz;
+            angleOffset += CircleOffset;
+            angleOffset *= Mathf.Deg2Rad;
 
-					ptx += centerx;
-					ptz += centerz;
-					ptx *= scalex;
-					ptz *= scalez;
-					realVertices[i] = ptx + ptz;
-				}
-			}
+            Vector3 p1 = MathConstants.zeroVector3;
 
-			for (int i = 0; i < circleSides; i++)
-			{
-				var point = realVertices[i];
-				realVertices[i] = GeometryUtility.ProjectPointOnPlane(buildPlane, vertices[0] + matrix.MultiplyPoint(point));
-			}
+            for(int i = 0; i < CircleSides; i++)
+            {
+                float angle = i * Mathf.PI * 2.0f / CircleSides + angleOffset;
 
-			isValid = true;
-			return realVertices;
-		}
-		
-		public void ProjectShapeOnBuildPlane(CSGPlane plane)
-		{
-			for (int i = 0; i < vertices.Length; i++)
-				vertices[i] = plane.Project(vertices[i]);
+                p1.x = Mathf.Sin(angle) * radiusA;
+                p1.z = Mathf.Cos(angle) * radiusA;
+
+                realVertices[i] = p1;
+            }
+
+            if(CircleRecenter)
+            {
+                Vector3 dirx = matrix.MultiplyVector(delta.normalized);
+                Vector3 dirz = Vector3.Cross(MathConstants.upVector3, dirx);
+
+                float minx = float.PositiveInfinity;
+                float minz = float.PositiveInfinity;
+                float maxx = float.NegativeInfinity;
+                float maxz = float.NegativeInfinity;
+
+                for(int i = 0; i < CircleSides; i++)
+                {
+                    Vector3 point = realVertices[i];
+                    float   x     = Vector3.Dot(point, dirx);
+                    float   z     = Vector3.Dot(point, dirz);
+
+                    minx = Mathf.Min(x, minx);
+                    minz = Mathf.Min(z, minz);
+
+                    maxx = Mathf.Max(x, maxx);
+                    maxz = Mathf.Max(z, maxz);
+                }
+
+                float   scalex  = radiusA * 2 / (maxx - minx);
+                float   scalez  = radiusA * 2 / (maxz - minz);
+                Vector3 centerx = (maxx + minx) * -0.5f * dirx;
+                Vector3 centerz = (maxz + minz) * -0.5f * dirz;
+
+                for(int i = 0; i < CircleSides; i++)
+                {
+                    Vector3 point = realVertices[i];
+                    float   x     = Vector3.Dot(point, dirx);
+                    float   z     = Vector3.Dot(point, dirz);
+
+                    Vector3 ptx = x * dirx;
+                    Vector3 ptz = z * dirz;
+
+                    ptx             += centerx;
+                    ptz             += centerz;
+                    ptx             *= scalex;
+                    ptz             *= scalez;
+                    realVertices[i] =  ptx + ptz;
+                }
+            }
+
+            for(int i = 0; i < CircleSides; i++)
+            {
+                realVertices[i] = GeometryUtility.ProjectPointOnPlane(buildPlane, vertices[0] + matrix.MultiplyPoint(realVertices[i]));
+            }
+
+            isValid = true;
+
+            return realVertices;
+        }
+
+        public void ProjectShapeOnBuildPlane(CSGPlane plane)
+        {
+            for(int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i] = plane.Project(vertices[i]);
+            }
         }
 
         public void MoveShape(Vector3 offset)
         {
-            for (int i = 0; i < vertices.Length; i++)
+            for(int i = 0; i < vertices.Length; i++)
+            {
                 vertices[i] = backupVertices[i] + offset;
+            }
         }
 
         public Vector3 GetCenter(CSGPlane plane)
-		{
-			return vertices[0];
-		}
+        {
+            return vertices[0];
+        }
 
-		public RealtimeCSG.AABB CalculateBounds(Quaternion rotation, Vector3 gridTangent, Vector3 gridBinormal)
-		{
-			var bounds = new RealtimeCSG.AABB();
-			bounds.Reset();
-			var radius = Mathf.Max(RadiusA, RadiusB);
-			var point1 = rotation * (vertices[0] + (gridTangent * radius) + (gridBinormal * radius));
-			var point2 = rotation * (vertices[0] - (gridTangent * radius) - (gridBinormal * radius));
-			var min = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
-			var max = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+        public AABB CalculateBounds(Quaternion rotation, Vector3 gridTangent, Vector3 gridBinormal)
+        {
+            AABB bounds = new AABB();
+            bounds.Reset();
+            float   radius = Mathf.Max(RadiusA, RadiusB);
+            Vector3 point1 = rotation * (vertices[0] + gridTangent * radius + gridBinormal * radius);
+            Vector3 point2 = rotation * (vertices[0] - gridTangent * radius - gridBinormal * radius);
+            Vector3 min    = new Vector3(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+            Vector3 max    = new Vector3(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
 
-			min.x = Mathf.Min(min.x, point1.x);
-			min.y = Mathf.Min(min.y, point1.y);
-			min.z = Mathf.Min(min.z, point1.z);
+            min.x = Mathf.Min(min.x, point1.x);
+            min.y = Mathf.Min(min.y, point1.y);
+            min.z = Mathf.Min(min.z, point1.z);
 
-			max.x = Mathf.Max(max.x, point1.x);
-			max.y = Mathf.Max(max.y, point1.y);
-			max.z = Mathf.Max(max.z, point1.z);
+            max.x = Mathf.Max(max.x, point1.x);
+            max.y = Mathf.Max(max.y, point1.y);
+            max.z = Mathf.Max(max.z, point1.z);
 
-			min.x = Mathf.Min(min.x, point2.x);
-			min.y = Mathf.Min(min.y, point2.y);
-			min.z = Mathf.Min(min.z, point2.z);
+            min.x = Mathf.Min(min.x, point2.x);
+            min.y = Mathf.Min(min.y, point2.y);
+            min.z = Mathf.Min(min.z, point2.z);
 
-			max.x = Mathf.Max(max.x, point2.x);
-			max.y = Mathf.Max(max.y, point2.y);
-			max.z = Mathf.Max(max.z, point2.z);
-			
-			bounds.Min = min;
-			bounds.Max = max;
-			return bounds;
-		}
-	}
+            max.x = Mathf.Max(max.x, point2.x);
+            max.y = Mathf.Max(max.y, point2.y);
+            max.z = Mathf.Max(max.z, point2.z);
+
+            bounds.Min = min;
+            bounds.Max = max;
+
+            return bounds;
+        }
+    }
 }

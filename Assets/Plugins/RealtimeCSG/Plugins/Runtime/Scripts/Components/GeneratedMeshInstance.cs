@@ -1,282 +1,300 @@
-﻿#pragma warning disable 0619
-using RealtimeCSG;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Serialization;
 using MeshQuery = RealtimeCSG.Foundation.MeshQuery;
 using GeneratedMeshDescription = RealtimeCSG.Foundation.GeneratedMeshDescription;
-using RealtimeCSG.Foundation;
+using static RealtimeCSG.EntityIdUtility;
 
 namespace InternalRealtimeCSG
 {
 #if UNITY_EDITOR
-	public struct MeshInstanceKey : IEqualityComparer<MeshInstanceKey>, IEquatable<MeshInstanceKey>
-	{
-		public static MeshInstanceKey GenerateKey(GeneratedMeshDescription meshDescription)
-		{
-			return new MeshInstanceKey(meshDescription.meshQuery, meshDescription.surfaceParameter, meshDescription.subMeshQueryIndex);
-		}
+    public struct MeshInstanceKey : IEqualityComparer<MeshInstanceKey>, IEquatable<MeshInstanceKey>
+    {
+        public static MeshInstanceKey GenerateKey(GeneratedMeshDescription meshDescription)
+        {
+            return new MeshInstanceKey(meshDescription.meshQuery, meshDescription.surfaceParameter, meshDescription.subMeshQueryIndex);
+        }
 
-		private MeshInstanceKey(MeshQuery meshType, int surfaceParameter, int subMeshIndex)
-		{
-			SubMeshIndex		= subMeshIndex;
-			MeshType			= meshType;
-			SurfaceParameter	= surfaceParameter;
-		}
+        private MeshInstanceKey(MeshQuery meshType, int surfaceParameter, int subMeshIndex)
+        {
+            this.subMeshIndex     = subMeshIndex;
+            this.meshType         = meshType;
+            this.surfaceParameter = surfaceParameter;
+        }
 
-		public readonly int  SubMeshIndex;
-		public int			 SurfaceParameter;
-		public readonly MeshQuery MeshType;
+        public readonly int subMeshIndex;
+        public readonly int surfaceParameter;
+        public readonly MeshQuery meshType;
 
         public override string ToString()
         {
-            return string.Format("({0} {1} {2})", SubMeshIndex, SurfaceParameter, MeshType);
+            return $"({subMeshIndex} {surfaceParameter} {meshType})";
         }
 
-        #region Comparison
+#region Comparison
+
         public override int GetHashCode()
-		{
-			var hash1 = SubMeshIndex     .GetHashCode();
-			var hash2 = SurfaceParameter .GetHashCode();
-			var hash3 = MeshType		 .GetHashCode();
-			var hash = hash1;
-			hash *= 389 + hash2;
-			hash *= 397 + hash3;
+        {
+            int hash1 = subMeshIndex.GetHashCode();
+            int hash2 = surfaceParameter.GetHashCode();
+            int hash3 = meshType.GetHashCode();
+            int hash  = hash1;
+            hash *= 389 + hash2;
+            hash *= 397 + hash3;
 
-			return hash + (hash1 ^ hash2 ^ hash3) + (hash1 + hash2 + hash3) + (hash1 * hash2 * hash3);
-		}
+            return hash + (hash1 ^ hash2 ^ hash3) + hash1 + hash2 + hash3 + hash1 * hash2 * hash3;
+        }
 
-		public int GetHashCode(MeshInstanceKey obj)
-		{
-			return obj.GetHashCode();
-		}
+        public int GetHashCode(MeshInstanceKey obj)
+        {
+            return obj.GetHashCode();
+        }
 
-		public bool Equals(MeshInstanceKey other)
-		{
-			if (System.Object.ReferenceEquals(this, other))
-				return true;
-			if (System.Object.ReferenceEquals(other, null))
-				return false;
-			return SubMeshIndex == other.SubMeshIndex &&
-				   SurfaceParameter == other.SurfaceParameter &&
-				   MeshType == other.MeshType;
-		}
+        public bool Equals(MeshInstanceKey other)
+        {
+            if(ReferenceEquals(this, other))
+            {
+                return true;
+            }
 
-		public override bool Equals(object obj)
-		{
-			if (System.Object.ReferenceEquals(this, obj))
-				return true;
-			if (!(obj is MeshInstanceKey))
-				return false;
-			MeshInstanceKey other = (MeshInstanceKey)obj;
-			if (System.Object.ReferenceEquals(other, null))
-				return false;
-			return SubMeshIndex == other.SubMeshIndex &&
-				   SurfaceParameter == other.SurfaceParameter &&
-				   MeshType == other.MeshType;
-		}
+            return subMeshIndex == other.subMeshIndex && surfaceParameter == other.surfaceParameter && meshType == other.meshType;
+        }
 
-		public bool Equals(MeshInstanceKey left, MeshInstanceKey right)
-		{
-			if (System.Object.ReferenceEquals(left, right))
-				return true;
-			if (System.Object.ReferenceEquals(left, null) ||
-				System.Object.ReferenceEquals(right, null))
-				return false;
-			return left.SubMeshIndex == right.SubMeshIndex &&
-				   left.SurfaceParameter == right.SurfaceParameter &&
-				   left.MeshType == right.MeshType;
-		}
+        public override bool Equals(object obj)
+        {
+            if(ReferenceEquals(this, obj))
+            {
+                return true;
+            }
 
-		public static bool operator ==(MeshInstanceKey left, MeshInstanceKey right)
-		{
-			if (System.Object.ReferenceEquals(left, right))
-				return true;
-			if (System.Object.ReferenceEquals(left, null) ||
-				System.Object.ReferenceEquals(right, null))
-				return false;
-			return left.SubMeshIndex == right.SubMeshIndex &&
-				   left.SurfaceParameter == right.SurfaceParameter &&
-				   left.MeshType == right.MeshType;
-		}
+            if(!(obj is MeshInstanceKey other))
+            {
+                return false;
+            }
 
-		public static bool operator !=(MeshInstanceKey left, MeshInstanceKey right)
-		{
-			if (System.Object.ReferenceEquals(left, right))
-				return false;
-			if (System.Object.ReferenceEquals(left, null) ||
-				System.Object.ReferenceEquals(right, null))
-				return true;
-			return left.SubMeshIndex != right.SubMeshIndex ||
-				   left.SurfaceParameter != right.SurfaceParameter ||
-				   left.MeshType != right.MeshType;
-		}
-		#endregion
-	}
+            return subMeshIndex == other.subMeshIndex && surfaceParameter == other.surfaceParameter && meshType == other.meshType;
+        }
+
+        public bool Equals(MeshInstanceKey left, MeshInstanceKey right)
+        {
+            if(ReferenceEquals(left, right))
+            {
+                return true;
+            }
+
+            return left.subMeshIndex == right.subMeshIndex && left.surfaceParameter == right.surfaceParameter && left.meshType == right.meshType;
+        }
+
+        public static bool operator ==(MeshInstanceKey left, MeshInstanceKey right)
+        {
+            if(ReferenceEquals(left, right))
+            {
+                return true;
+            }
+
+            return left.subMeshIndex == right.subMeshIndex && left.surfaceParameter == right.surfaceParameter && left.meshType == right.meshType;
+        }
+
+        public static bool operator !=(MeshInstanceKey left, MeshInstanceKey right)
+        {
+            if(ReferenceEquals(left, right))
+            {
+                return false;
+            }
+
+            return left.subMeshIndex != right.subMeshIndex || left.surfaceParameter != right.surfaceParameter || left.meshType != right.meshType;
+        }
+
+#endregion
+    }
 #endif
 
-	[DisallowMultipleComponent]
-	[ExecuteInEditMode]
-	public sealed class GeneratedMeshInstance : MonoBehaviour
-	{
-		[HideInInspector] public float Version = 1.00f;
+    [DisallowMultipleComponent, ExecuteInEditMode]
+    public sealed class GeneratedMeshInstance : MonoBehaviour
+    {
+        [HideInInspector] public float version = 1.00f;
 #if UNITY_EDITOR
-		public Mesh					SharedMesh;
-		public Material				RenderMaterial;
-		public PhysicsMaterial		PhysicsMaterial;
-		public RenderSurfaceType	RenderSurfaceType = (RenderSurfaceType)999;
+        public Mesh sharedMesh;
+        public Material renderMaterial;
+        public PhysicsMaterial physicsMaterial;
+        public RenderSurfaceType renderSurfaceType = (RenderSurfaceType)999;
+        public GeneratedMeshDescription meshDescription;
 
-		public GeneratedMeshDescription MeshDescription;
+        [HideInInspector] public bool hasGeneratedNormals;
+        [HideInInspector] public bool hasUV2;
+        [HideInInspector] public long lightingHashValue;
 
-		[HideInInspector] public bool   HasGeneratedNormals = false;
-		[HideInInspector] public bool	HasUV2				= false;
-        [NonSerialized]
-		[HideInInspector] public float	ResetUVTime			= float.PositiveInfinity;
-		[HideInInspector] public Int64	LightingHashValue;
-
-		[NonSerialized] [HideInInspector] public bool Dirty	= true;
-		[NonSerialized] [HideInInspector] public MeshCollider	CachedMeshCollider;
-		[NonSerialized] [HideInInspector] public MeshFilter		CachedMeshFilter;
-		[NonSerialized] [HideInInspector] public MeshRenderer	CachedMeshRenderer;
-		[NonSerialized] [HideInInspector] public System.Object	CachedMeshRendererSO;
+        [NonSerialized] public float resetUVTime = float.PositiveInfinity;
+        [NonSerialized] public bool dirty = true;
+        [NonSerialized] public MeshCollider cachedMeshCollider;
+        [NonSerialized] public MeshFilter cachedMeshFilter;
+        [NonSerialized] public MeshRenderer cachedMeshRenderer;
+        [NonSerialized] public object cachedMeshRendererSO;
 
         public void Reset()
         {
-		    RenderMaterial          = null;
-		    PhysicsMaterial         = null;
-		    RenderSurfaceType       = (RenderSurfaceType)999;
+            renderMaterial    = null;
+            physicsMaterial   = null;
+            renderSurfaceType = (RenderSurfaceType)999;
 
-		    HasGeneratedNormals     = false;
-		    HasUV2				    = false;
-            ResetUVTime			    = float.PositiveInfinity;
-		    LightingHashValue       = 0;
+            hasGeneratedNormals = false;
+            hasUV2              = false;
+            resetUVTime         = float.PositiveInfinity;
+            lightingHashValue   = 0;
 
-		    Dirty	                = true;
+            dirty = true;
 
-		    CachedMeshCollider      = null;
-		    CachedMeshFilter        = null;
-		    CachedMeshRenderer      = null;
-		    CachedMeshRendererSO    = null;
+            cachedMeshCollider   = null;
+            cachedMeshFilter     = null;
+            cachedMeshRenderer   = null;
+            cachedMeshRendererSO = null;
         }
 
-		public MeshInstanceKey GenerateKey()
-		{
-			return MeshInstanceKey.GenerateKey(MeshDescription);
-		}
+        public MeshInstanceKey GenerateKey()
+        {
+            return MeshInstanceKey.GenerateKey(meshDescription);
+        }
 
-		public bool IsValid()
-		{
-			if ((!PhysicsMaterial || PhysicsMaterial.GetInstanceIDCompat() != 0) &&
-				(!RenderMaterial  || RenderMaterial .GetInstanceIDCompat() != 0))
-			{
-                if (SharedMesh)
+        public bool IsValid()
+        {
+            if((!physicsMaterial || physicsMaterial.GetIntegerID() != 0) && (!renderMaterial || renderMaterial.GetIntegerID() != 0))
+            {
+                if(sharedMesh)
                 {
-                    if (SharedMesh.vertexCount < 0)
+                    if(sharedMesh.vertexCount < 0)
+                    {
                         return false;
-                } else
-                if (!ReferenceEquals(SharedMesh, null) &&
-                    SharedMesh.GetInstanceIDCompat() != 0)
+                    }
+                }
+                else if(!ReferenceEquals(sharedMesh, null) && sharedMesh.GetIntegerID() != 0)
+                {
                     return false;
-				return true;
-			}
-			return false;
-		}
+                }
 
-        static readonly List<Vector2> sUVList = new List<Vector2>();
-
-		internal void Awake()
-		{
-			// cannot change visibility since this might have an effect on exporter
-			this.gameObject.hideFlags = HideFlags.DontSaveInBuild;
-			this.hideFlags = HideFlags.DontSaveInBuild;
-
-
-			// Unity bug workaround
-			CachedMeshCollider = null;
-			CachedMeshFilter = null;
-			CachedMeshRenderer = null;
-			CachedMeshRendererSO = null;
-
-			// InstanceIDs are not properly remembered across domain reloads,
-			//	this causes issues on, for instance, first startup of Unity.
-			//	So we need to refresh the instanceIDs
-            if (RenderSurfaceType == RenderSurfaceType.Collider ||
-                RenderSurfaceType == RenderSurfaceType.Trigger)
-            {
-                if (!ReferenceEquals(PhysicsMaterial, null)) { if (PhysicsMaterial) MeshDescription.surfaceParameter = PhysicsMaterial.GetInstanceIDCompat(); }
-            } else
-            {
-			    if      (!ReferenceEquals(RenderMaterial,  null)) { if (RenderMaterial)  MeshDescription.surfaceParameter = RenderMaterial .GetInstanceIDCompat(); }
-			    else if (!ReferenceEquals(PhysicsMaterial, null)) { if (PhysicsMaterial) MeshDescription.surfaceParameter = PhysicsMaterial.GetInstanceIDCompat(); }
+                return true;
             }
-		}
 
-		internal void OnEnable()
-		{
-			// Workaround for when Unity gets confused with some prefab instance merging and moves
-			//	the GeneratedMeshInstances out of its GeneratedMeshes container
-			if (transform.parent &&
-				!transform.parent.GetComponent<GeneratedMeshes>())
-			{
-				this.gameObject.hideFlags = HideFlags.None;
-				try
-				{
-					UnityEngine.Object.DestroyImmediate(gameObject);
-				}
-				catch
-				{
-					// Work-around for nested prefab instance issues ..
-					if (gameObject.activeSelf)
-					{
-						gameObject.SetActive(false);
-						{
-							var childComponents = gameObject.GetComponentsInChildren<MonoBehaviour>();
-							foreach (var component in childComponents)
-								UnityEngine.Object.DestroyImmediate(component);
-						}
-						{
-							var childComponents = gameObject.GetComponentsInChildren<Component>();
-							foreach (var component in childComponents)
-							{
-								if (!(component is Transform))
-									UnityEngine.Object.DestroyImmediate(component);
-							}
-						}
-						gameObject.name = "removed";
-					}
-				}
-			}
+            return false;
+        }
 
-            if (SharedMesh)
+        private static readonly List<Vector2> sUVList = new List<Vector2>();
+
+        internal void Awake()
+        {
+            // cannot change visibility since this might have an effect on exporter
+            gameObject.hideFlags = HideFlags.DontSaveInBuild;
+            hideFlags            = HideFlags.DontSaveInBuild;
+
+            // Unity bug workaround
+            cachedMeshCollider   = null;
+            cachedMeshFilter     = null;
+            cachedMeshRenderer   = null;
+            cachedMeshRendererSO = null;
+
+            // InstanceIDs are not properly remembered across domain reloads,
+            // this causes issues on, for instance, first startup of Unity.
+            // So we need to refresh the instanceIDs
+            if(renderSurfaceType == RenderSurfaceType.Collider || renderSurfaceType == RenderSurfaceType.Trigger)
             {
-                SharedMesh.GetUVs(1, sUVList);
-                HasUV2 = sUVList != null && sUVList.Count == SharedMesh.vertexCount;
-            } else
-                HasUV2 = false;
-		}
+                if(!ReferenceEquals(physicsMaterial, null))
+                {
+                    if(physicsMaterial)
+                    {
+                        meshDescription.surfaceParameter = physicsMaterial.GetIntegerID();
+                    }
+                }
+            }
+            else
+            {
+                if(!ReferenceEquals(renderMaterial, null))
+                {
+                    if(renderMaterial)
+                    {
+                        meshDescription.surfaceParameter = renderMaterial.GetIntegerID();
+                    }
+                }
+                else if(!ReferenceEquals(physicsMaterial, null))
+                {
+                    if(physicsMaterial)
+                    {
+                        meshDescription.surfaceParameter = physicsMaterial.GetIntegerID();
+                    }
+                }
+            }
+        }
+
+        internal void OnEnable()
+        {
+            // Workaround for when Unity gets confused with some prefab instance merging and moves
+            //    the GeneratedMeshInstances out of its GeneratedMeshes container
+            if(transform.parent && !transform.parent.GetComponent<GeneratedMeshes>())
+            {
+                gameObject.hideFlags = HideFlags.None;
+
+                try
+                {
+                    DestroyImmediate(gameObject);
+                }
+                catch
+                {
+                    // Work-around for nested prefab instance issues ..
+                    if(gameObject.activeSelf)
+                    {
+                        gameObject.SetActive(false);
+
+                        MonoBehaviour[] childBehaviours = gameObject.GetComponentsInChildren<MonoBehaviour>();
+
+                        foreach(MonoBehaviour component in childBehaviours)
+                        {
+                            DestroyImmediate(component);
+                        }
+
+                        Component[] childComponents = gameObject.GetComponentsInChildren<Component>();
+
+                        foreach(Component component in childComponents)
+                        {
+                            if(!(component is Transform))
+                            {
+                                DestroyImmediate(component);
+                            }
+                        }
+
+                        gameObject.name = "removed";
+                    }
+                }
+            }
+
+            if(sharedMesh)
+            {
+                sharedMesh.GetUVs(1, sUVList);
+                hasUV2 = sUVList != null && sUVList.Count == sharedMesh.vertexCount;
+            }
+            else
+            {
+                hasUV2 = false;
+            }
+        }
 
         public void FindMissingSharedMesh()
         {
-            MeshCollider meshCollider;
-            if (this.TryGetComponent(out meshCollider))
+            if(TryGetComponent(out MeshCollider meshCollider))
             {
-                SharedMesh = meshCollider.sharedMesh;
+                sharedMesh = meshCollider.sharedMesh;
+
                 return;
             }
-            MeshFilter meshFilter;
-            if (this.TryGetComponent(out meshFilter))
+
+            if(TryGetComponent(out MeshFilter meshFilter))
             {
-                SharedMesh = meshFilter.sharedMesh;
+                sharedMesh = meshFilter.sharedMesh;
             }
         }
 #else
         void Awake()
-		{
-			this.hideFlags = HideFlags.DontSaveInBuild;
-		}
+        {
+            this.hideFlags = HideFlags.DontSaveInBuild;
+        }
 #endif
-	}
+    }
 }
-

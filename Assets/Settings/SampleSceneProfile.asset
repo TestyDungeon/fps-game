@@ -112,7 +112,32 @@ MonoBehaviour:
   - {fileID: 7391319092446245454}
   - {fileID: -3357603926938260329}
   - {fileID: 3206835429018735595}
-  - {fileID: 5504378189377846951}
+  - {fileID: 405014389066136804}
+--- !u!114 &405014389066136804
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2c66cc6eda348a499a54315072d45e1, type: 3}
+  m_Name: Pixelation
+  m_EditorClassIdentifier: Assembly-CSharp::PSX.Pixelation
+  active: 1
+  widthPixelation:
+    m_OverrideState: 1
+    m_Value: 1280
+  heightPixelation:
+    m_OverrideState: 1
+    m_Value: 720
+  colorPrecision:
+    m_OverrideState: 1
+    m_Value: 128
+  enabled:
+    m_OverrideState: 1
+    m_Value: 1
 --- !u!114 &849379129802519247
 MonoBehaviour:
   m_ObjectHideFlags: 3

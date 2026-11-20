@@ -1,390 +1,459 @@
-using UnityEditor;
-using UnityEngine;
 using System.Collections.Generic;
 using InternalRealtimeCSG;
 using RealtimeCSG.Components;
+using RealtimeCSG.Legacy;
+using UnityEditor;
+using UnityEngine;
 
 namespace RealtimeCSG
 {
-	internal sealed class SceneDragToolMeshDragOnSurface : ISceneDragTool
-	{
-		SelectedBrushSurface		hoverBrushSurface			= null;
-		Vector3						hoverPosition;
-		Quaternion					hoverRotation;
-		Transform					hoverParent;
-		int							hoverSiblingIndex;
-		List<GameObject>			dragGameObjects				= null;
-		List<GameObject>			visualDragGameObject		= null;
-		Vector3[]					projectedBounds				= null;
-		bool						haveNoParent				= false;
-		PrefabSourceAlignment		sourceSurfaceAlignment		= PrefabSourceAlignment.AlignedFront;
-		PrefabDestinationAlignment	destinationSurfaceAlignment	= PrefabDestinationAlignment.AlignToSurface;
-		
-		Vector3		prevForcedGridCenter	= MathConstants.zeroVector3;
-		Quaternion	prevForcedGridRotation	= MathConstants.identityQuaternion;
+    internal sealed class SceneDragToolMeshDragOnSurface : ISceneDragTool
+    {
+        private SelectedBrushSurface _hoverBrushSurface;
+        private Vector3 _hoverPosition;
+        private Quaternion _hoverRotation;
+        private Transform _hoverParent;
+        private int _hoverSiblingIndex;
+        private List<GameObject> _dragGameObjects;
+        private List<GameObject> _visualDragGameObject;
+        private Vector3[] _projectedBounds;
+        private bool _haveNoParent;
+        private PrefabSourceAlignment _sourceSurfaceAlignment = PrefabSourceAlignment.AlignedFront;
+        private PrefabDestinationAlignment _destinationSurfaceAlignment = PrefabDestinationAlignment.AlignToSurface;
 
-		#region ValidateDrop
-		public bool ValidateDrop(SceneView sceneView)
-		{
-			if (!sceneView)
-				return false;
+        private Vector3 _prevForcedGridCenter = MathConstants.zeroVector3;
+        private Quaternion _prevForcedGridRotation = MathConstants.identityQuaternion;
 
-			Reset();
-			if (DragAndDrop.objectReferences == null ||
-				DragAndDrop.objectReferences.Length == 0)
-			{
-				dragGameObjects = null;
-				return false;
-			}
+#region ValidateDrop
 
-			bool found = false;
-			dragGameObjects = new List<GameObject>();
-			foreach (var obj in DragAndDrop.objectReferences)
-			{
-				var gameObject = obj as GameObject;
-				if (gameObject == null)
-					continue;
+        public bool ValidateDrop(SceneView sceneView)
+        {
+            if(!sceneView)
+            {
+                return false;
+            }
 
-				if (!CSGPrefabUtility.IsPrefabAsset(gameObject))
-					continue;
+            Reset();
 
-				dragGameObjects.Add(gameObject);
+            if(DragAndDrop.objectReferences == null || DragAndDrop.objectReferences.Length == 0)
+            {
+                _dragGameObjects = null;
 
-				if (gameObject.GetComponentInChildren<Renderer>() != null)
-					found = true;
-			}
-			if (!found || dragGameObjects.Count != 1)
-			{
-				dragGameObjects = null;
-				return false;
-			}
+                return false;
+            }
 
-			var dragGameObjectBounds = new AABB();
-			dragGameObjectBounds.Reset();
-			foreach (var gameObject in dragGameObjects)
-			{
-				var renderers = gameObject.GetComponentsInChildren<Renderer>();
-				if (renderers.Length == 0)
-					continue;
-				foreach(var renderer in renderers)
-				{
-					var bounds = renderer.bounds;
-					dragGameObjectBounds.Extend(bounds.min);
-					dragGameObjectBounds.Extend(bounds.max);
-				}
-			}
+            bool found = false;
+            _dragGameObjects = new List<GameObject>();
 
-			if (!dragGameObjectBounds.Valid)
-				dragGameObjectBounds.Extend(MathConstants.zeroVector3);
-						
-			projectedBounds = new Vector3[8];
-			BoundsUtilities.GetBoundsCornerPoints(dragGameObjectBounds, projectedBounds);
-			/*
-			var upPlane = new Plane(MathConstants.upVector3, MathConstants.zeroVector3);
-			for (int i = 7; i >= 0; i--)
-			{
-				projectedBounds[i] = upPlane.Project(projectedBounds[i]);
-				for (int j = i+1; j < projectedBounds.Length; j++)
-				{
-					if (projectedBounds[i] == projectedBounds[j])
-					{
-						ArrayUtility.RemoveAt(ref projectedBounds, j);
-						break;
-					}
-				}
-			}*/
+            foreach(Object obj in DragAndDrop.objectReferences)
+            {
+                GameObject gameObject = obj as GameObject;
 
-			haveNoParent = false;
-			return true;
-		}
-        #endregion
+                if(gameObject == null)
+                {
+                    continue;
+                }
 
-        #region ValidateDropPoint
-		public bool ValidateDropPoint(SceneView sceneView)
-		{
-			return true;
-		}
-        #endregion
+                if(!CSGPrefabUtility.IsPrefabAsset(gameObject))
+                {
+                    continue;
+                }
 
-        #region Reset
-		public void Reset()
-		{
-			CleanUp();
-			hoverBrushSurface	= null;
-			dragGameObjects		= null;
+                _dragGameObjects.Add(gameObject);
 
-			hoverPosition = MathConstants.zeroVector3;
-			hoverRotation = MathConstants.identityQuaternion;
-			hoverParent = null;
-			hoverSiblingIndex = int.MaxValue;
-		}
-        #endregion
+                if(gameObject.GetComponentInChildren<Renderer>() != null)
+                {
+                    found = true;
+                }
+            }
 
-		void CleanUp()
-		{
-			if (visualDragGameObject != null)
-			{
-				for (int i = visualDragGameObject.Count - 1; i >= 0; i--)
-				{
-					if (!visualDragGameObject[i])
-						continue;
-					GameObject.DestroyImmediate(visualDragGameObject[i]);
-				}
-			}
-			visualDragGameObject = null;
-		}
+            if(!found || _dragGameObjects.Count != 1)
+            {
+                _dragGameObjects = null;
 
-		void DisableVisualObjects()
-		{
-			if (visualDragGameObject != null)
-			{
-				for (int i = visualDragGameObject.Count - 1; i >= 0; i--)
-				{
-					var obj = visualDragGameObject[i];
-					if (obj == null || !obj)
-						continue;
-					if (obj.activeSelf)
-					{
-						obj.SetActive(false);
-					}
-				}
-			}
-		}
+                return false;
+            }
 
-		void EnableVisualObjects()
-		{
-			if (visualDragGameObject == null ||
-				visualDragGameObject.Count != dragGameObjects.Count)
-			{
-				CreateVisualObjects();
-			} else
-			{
-				for (int i = 0; i < dragGameObjects.Count; i++)
-				{
-					if (visualDragGameObject[i] == null || !visualDragGameObject[i])
-						continue;
-					visualDragGameObject[i].SetActive(dragGameObjects[i].activeSelf);
-				}
-			}
+            AABB dragGameObjectBounds = new AABB();
+            dragGameObjectBounds.Reset();
 
-			int counter = 0;
-			foreach (var obj in visualDragGameObject)
-			{
-				if (obj == null || !obj)
-					continue;
-				var scale = Vector3.one;
-				var rotation = hoverRotation;
-				var position = hoverPosition;
-#if UNITY_2018_3_OR_NEWER
-				if (CSGPrefabUtility.IsPrefabInstance(obj))
-				{
-					var outer = CSGPrefabUtility.GetOutermostPrefabInstanceRoot(obj);
-					var prefabAsset = CSGPrefabUtility.GetPrefabAsset(outer);
-					var transform = prefabAsset.transform;
-					
-					rotation *= transform.localRotation;
-					//position += transform.localPosition;
-					scale = transform.localScale;
-				}
-#endif
-				obj.transform.rotation = rotation;
-				obj.transform.position = position;
-				obj.transform.localScale = scale;
-				//	if (hoverParent != null && !CSGPrefabUtility.IsPrefabAsset(hoverParent.gameObject))
-				//		obj.transform.SetParent(hoverParent, true);
-				obj.transform.SetSiblingIndex(hoverSiblingIndex + counter);
-				counter++;
-			}
-		}
-		
-		void CreateVisualObjects()
-		{
-			CleanUp();
-			
-			prevForcedGridCenter = RealtimeCSG.CSGGrid.ForcedGridCenter;
-			prevForcedGridRotation = RealtimeCSG.CSGGrid.ForcedGridRotation;
+            foreach(GameObject gameObject in _dragGameObjects)
+            {
+                Renderer[] renderers = gameObject.GetComponentsInChildren<Renderer>();
 
-			sourceSurfaceAlignment = PrefabSourceAlignment.AlignedFront;
-			destinationSurfaceAlignment = PrefabDestinationAlignment.Default;
+                if(renderers.Length == 0)
+                {
+                    continue;
+                }
 
-			
-			visualDragGameObject = new List<GameObject>();
+                foreach(Renderer renderer in renderers)
+                {
+                    Bounds bounds = renderer.bounds;
+                    dragGameObjectBounds.Extend(bounds.min);
+                    dragGameObjectBounds.Extend(bounds.max);
+                }
+            }
 
-			foreach (var obj in dragGameObjects)
-			{
-				var copy = CSGPrefabUtility.Instantiate(obj);
-				if (!copy)
-					continue;
+            if(!dragGameObjectBounds.Valid)
+            {
+                dragGameObjectBounds.Extend(MathConstants.zeroVector3);
+            }
 
-				copy.name = obj.name;
-				visualDragGameObject.Add(copy);
-			}
-		}
+            _projectedBounds = new Vector3[8];
+            BoundsUtilities.GetBoundsCornerPoints(dragGameObjectBounds, _projectedBounds);
 
-        #region DragUpdated
-		public bool DragUpdated(SceneView sceneView, Transform transformInInspector, Rect selectionRect)
-		{
-			try
-			{
-				DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+            _haveNoParent = false;
 
-				hoverBrushSurface	= null;
-				hoverParent			= (transformInInspector == null) ? null : transformInInspector.parent;
-				hoverSiblingIndex	= (transformInInspector == null) ? int.MaxValue : transformInInspector.transform.GetSiblingIndex();
+            return true;
+        }
 
-				float middle = (selectionRect.yMax + selectionRect.yMin) * 0.5f;
-				if (Event.current.mousePosition.y > middle)
-					hoverSiblingIndex++;
+#endregion
 
-				hoverRotation = MathConstants.identityQuaternion;
-				hoverPosition = MathConstants.zeroVector3;
-				haveNoParent = true;
-				return true;
-			}
-			finally
-			{
-				if (!UpdateLoop.IsActive())
-					UpdateLoop.ResetUpdateRoutine();
-			}
-		}
+#region ValidateDropPoint
 
-		public bool DragUpdated(SceneView sceneView)
-		{
-			try
-			{
-				DisableVisualObjects();
-				DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-				
-                var camera              = sceneView.camera;
-				var intersection		= SceneQueryUtility.FindMeshIntersection(camera, Event.current.mousePosition);
-				var normal				= intersection.worldPlane.normal;
+        public bool ValidateDropPoint(SceneView sceneView)
+        {
+            return true;
+        }
 
-				hoverPosition			= intersection.worldIntersection;
-				hoverParent				= SelectionUtility.FindParentToAssignTo(intersection);
-				hoverBrushSurface		= intersection.brush != null ? new SelectedBrushSurface(intersection.brush, intersection.surfaceIndex, intersection.worldPlane) : null;
-				hoverRotation			= SelectionUtility.FindDragOrientation(sceneView, normal, sourceSurfaceAlignment, destinationSurfaceAlignment);
-				haveNoParent			= (hoverParent == null);
-				hoverSiblingIndex		= int.MaxValue;
+#endregion
 
-				RealtimeCSG.CSGGrid.SetForcedGrid(camera, intersection.worldPlane);
+#region Reset
+
+        public void Reset()
+        {
+            CleanUp();
+            _hoverBrushSurface = null;
+            _dragGameObjects   = null;
+
+            _hoverPosition     = MathConstants.zeroVector3;
+            _hoverRotation     = MathConstants.identityQuaternion;
+            _hoverParent       = null;
+            _hoverSiblingIndex = int.MaxValue;
+        }
+
+#endregion
+
+        private void CleanUp()
+        {
+            if(_visualDragGameObject != null)
+            {
+                for(int i = _visualDragGameObject.Count - 1; i >= 0; i--)
+                {
+                    if(!_visualDragGameObject[i])
+                    {
+                        continue;
+                    }
+
+                    Object.DestroyImmediate(_visualDragGameObject[i]);
+                }
+            }
+
+            _visualDragGameObject = null;
+        }
+
+        private void DisableVisualObjects()
+        {
+            if(_visualDragGameObject != null)
+            {
+                for(int i = _visualDragGameObject.Count - 1; i >= 0; i--)
+                {
+                    GameObject obj = _visualDragGameObject[i];
+
+                    if(obj == null || !obj)
+                    {
+                        continue;
+                    }
+
+                    if(obj.activeSelf)
+                    {
+                        obj.SetActive(false);
+                    }
+                }
+            }
+        }
+
+        private void EnableVisualObjects()
+        {
+            if(_visualDragGameObject == null || _visualDragGameObject.Count != _dragGameObjects.Count)
+            {
+                CreateVisualObjects();
+            }
+            else
+            {
+                for(int i = 0; i < _dragGameObjects.Count; i++)
+                {
+                    if(_visualDragGameObject[i] == null || !_visualDragGameObject[i])
+                    {
+                        continue;
+                    }
+
+                    _visualDragGameObject[i].SetActive(_dragGameObjects[i].activeSelf);
+                }
+            }
+
+            int counter = 0;
+
+            foreach(GameObject obj in _visualDragGameObject)
+            {
+                if(obj == null || !obj)
+                {
+                    continue;
+                }
+
+                Vector3    scale    = Vector3.one;
+                Quaternion rotation = _hoverRotation;
+                Vector3    position = _hoverPosition;
+
+                if(CSGPrefabUtility.IsPrefabInstance(obj))
+                {
+                    GameObject outer       = CSGPrefabUtility.GetOutermostPrefabInstanceRoot(obj);
+                    GameObject prefabAsset = CSGPrefabUtility.GetPrefabAsset(outer);
+                    Transform  transform   = prefabAsset.transform;
+
+                    rotation *= transform.localRotation;
+                    scale    =  transform.localScale;
+                }
+
+                obj.transform.rotation   = rotation;
+                obj.transform.position   = position;
+                obj.transform.localScale = scale;
+
+                obj.transform.SetSiblingIndex(_hoverSiblingIndex + counter);
+                counter++;
+            }
+        }
+
+        private void CreateVisualObjects()
+        {
+            CleanUp();
+
+            _prevForcedGridCenter   = CSGGrid.ForcedGridCenter;
+            _prevForcedGridRotation = CSGGrid.ForcedGridRotation;
+
+            _sourceSurfaceAlignment      = PrefabSourceAlignment.AlignedFront;
+            _destinationSurfaceAlignment = PrefabDestinationAlignment.Default;
+
+            _visualDragGameObject = new List<GameObject>();
+
+            foreach(GameObject obj in _dragGameObjects)
+            {
+                GameObject copy = CSGPrefabUtility.Instantiate(obj);
+
+                if(!copy)
+                {
+                    continue;
+                }
+
+                copy.name = obj.name;
+                _visualDragGameObject.Add(copy);
+            }
+        }
+
+#region DragUpdated
+
+        public bool DragUpdated(SceneView sceneView, Transform transformInInspector, Rect selectionRect)
+        {
+            try
+            {
+                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+                _hoverBrushSurface = null;
+                _hoverParent       = transformInInspector == null ? null : transformInInspector.parent;
+                _hoverSiblingIndex = transformInInspector == null ? int.MaxValue : transformInInspector.transform.GetSiblingIndex();
+
+                float middle = (selectionRect.yMax + selectionRect.yMin) * 0.5f;
+
+                if(Event.current.mousePosition.y > middle)
+                {
+                    _hoverSiblingIndex++;
+                }
+
+                _hoverRotation = MathConstants.identityQuaternion;
+                _hoverPosition = MathConstants.zeroVector3;
+                _haveNoParent  = true;
+
+                return true;
+            }
+            finally
+            {
+                if(!UpdateLoop.IsActive())
+                {
+                    UpdateLoop.ResetUpdateRoutine();
+                }
+            }
+        }
+
+        public bool DragUpdated(SceneView sceneView)
+        {
+            try
+            {
+                DisableVisualObjects();
+                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+
+                Camera camera = sceneView.camera;
+
+                LegacyBrushIntersection intersection = SceneQueryUtility.FindMeshIntersection(camera, Event.current.mousePosition);
+
+                Vector3 normal = intersection.worldPlane.Normal;
+
+                _hoverPosition     = intersection.worldIntersection;
+                _hoverParent       = SelectionUtility.FindParentToAssignTo(intersection);
+                _hoverBrushSurface = intersection.brush != null ? new SelectedBrushSurface(intersection.brush, intersection.surfaceIndex, intersection.worldPlane) : null;
+                _hoverRotation     = SelectionUtility.FindDragOrientation(sceneView, normal, _sourceSurfaceAlignment, _destinationSurfaceAlignment);
+
+                _haveNoParent      = _hoverParent == null;
+                _hoverSiblingIndex = int.MaxValue;
+
+                CSGGrid.SetForcedGrid(camera, intersection.worldPlane);
 
                 // Since we're snapping points to grid and do not have a relative distance, relative snapping makes no sense
-                var doGridSnapping	= RealtimeCSG.CSGSettings.ActiveSnappingMode != SnapMode.None;
-				if (doGridSnapping)
-				{
-					var localPoints = new Vector3[8];
-					var localPlane	= intersection.worldPlane;
-					for (var i = 0; i < localPoints.Length; i++)
-						localPoints[i] = GeometryUtility.ProjectPointOnPlane(localPlane, (hoverRotation * projectedBounds[i]) + hoverPosition);
+                bool doGridSnapping = CSGSettings.ActiveSnappingMode != SnapMode.None;
 
-					hoverPosition += RealtimeCSG.CSGGrid.SnapDeltaToGrid(camera, MathConstants.zeroVector3, localPoints);
-				}
-				hoverPosition	= GeometryUtility.ProjectPointOnPlane(intersection.worldPlane, hoverPosition);// + (normal * 0.01f);
+                if(doGridSnapping)
+                {
+                    Vector3[] localPoints = new Vector3[8];
+                    CSGPlane  localPlane  = intersection.worldPlane;
 
-				EnableVisualObjects();
-				return true;
-			}
-			finally
-			{
-				if (!UpdateLoop.IsActive())
-					UpdateLoop.ResetUpdateRoutine();
-			}
-		}
-        #endregion
-		
-        #region DragPerform
-		public void DragPerform(SceneView sceneView)
-		{
-			try
-			{
-				if (haveNoParent)
-				{
-					if (visualDragGameObject == null)
-					{
-						CreateVisualObjects();
-					}
-				}
+                    for(int i = 0; i < localPoints.Length; i++)
+                    {
+                        localPoints[i] = GeometryUtility.ProjectPointOnPlane(localPlane, _hoverRotation * _projectedBounds[i] + _hoverPosition);
+                    }
 
-				if (visualDragGameObject != null)
-				{
-					var selection = new List<GameObject>();
-					for (int i = visualDragGameObject.Count - 1; i >= 0; i--)
-					{
-						if (!visualDragGameObject[i])
-							continue;
-						if (visualDragGameObject[i].activeSelf)
-						{
-							Undo.RegisterCreatedObjectUndo(visualDragGameObject[i], "Instantiated prefab");
-							selection.Add(visualDragGameObject[i]);
-						} else
-						{
-							GameObject.DestroyImmediate(visualDragGameObject[i]);
-						}
-					}
-					visualDragGameObject = null;
+                    _hoverPosition += CSGGrid.SnapDeltaToGrid(camera, MathConstants.zeroVector3, localPoints);
+                }
 
-					if (selection.Count > 0)
-					{
-						UnityEditor.Selection.objects = selection.ToArray();
-					}
-				}
+                _hoverPosition = GeometryUtility.ProjectPointOnPlane(intersection.worldPlane, _hoverPosition);
 
-				for (int i = 0; i < SceneView.sceneViews.Count; i++)
-				{
-					var sceneview = SceneView.sceneViews[i] as SceneView;
-					if (sceneview == null)
-						continue;
+                EnableVisualObjects();
 
-					if (sceneview.camera.pixelRect.Contains(Event.current.mousePosition))
-						sceneview.Focus();
-				}
-				visualDragGameObject = null;
-			}
-			finally
-			{
-				RealtimeCSG.CSGGrid.ForcedGridCenter	= prevForcedGridCenter;
-				RealtimeCSG.CSGGrid.ForcedGridRotation	= prevForcedGridRotation;
-				RealtimeCSG.CSGGrid.ForceGrid			= false;
-			}
-		}
-        #endregion
+                return true;
+            }
+            finally
+            {
+                if(!UpdateLoop.IsActive())
+                {
+                    UpdateLoop.ResetUpdateRoutine();
+                }
+            }
+        }
 
-        #region DragExited
-		public void DragExited(SceneView sceneView)
-		{
-			try
-			{
-				CleanUp();
-				HandleUtility.Repaint();
-			}
-			finally
-			{
-				RealtimeCSG.CSGGrid.ForcedGridCenter	= prevForcedGridCenter;
-				RealtimeCSG.CSGGrid.ForcedGridRotation = prevForcedGridRotation;
-				RealtimeCSG.CSGGrid.ForceGrid			= false;
-			}
-		}
-        #endregion
+#endregion
 
-        #region Paint
-		public void OnPaint(Camera camera)
-		{
-			RealtimeCSG.CSGGrid.RenderGrid(camera);
-			if (hoverBrushSurface == null)
-				return;
-			
-			var brush = hoverBrushSurface.brush;
-			if (brush.ChildData == null ||
-				!brush.ChildData.ModelTransform)
-				return;
-				
-			var highlight_surface		= hoverBrushSurface.surfaceIndex;
-			var brush_transformation	= brush.compareTransformation.localToWorldMatrix;
-			CSGRenderer.DrawSelectedBrush(brush.brushNodeID, brush.Shape, 
-											brush_transformation, ColorSettings.WireframeOutline, 
-											highlight_surface, 
-											false, GUIConstants.oldLineScale);
-		}
-        #endregion
-	}
+#region DragPerform
+
+        public void DragPerform(SceneView sceneView)
+        {
+            try
+            {
+                if(_haveNoParent)
+                {
+                    if(_visualDragGameObject == null)
+                    {
+                        CreateVisualObjects();
+                    }
+                }
+
+                if(_visualDragGameObject != null)
+                {
+                    List<GameObject> selection = new List<GameObject>();
+
+                    for(int i = _visualDragGameObject.Count - 1; i >= 0; i--)
+                    {
+                        if(!_visualDragGameObject[i])
+                        {
+                            continue;
+                        }
+
+                        if(_visualDragGameObject[i].activeSelf)
+                        {
+                            Undo.RegisterCreatedObjectUndo(_visualDragGameObject[i], "Instantiated prefab");
+                            selection.Add(_visualDragGameObject[i]);
+                        }
+                        else
+                        {
+                            Object.DestroyImmediate(_visualDragGameObject[i]);
+                        }
+                    }
+
+                    _visualDragGameObject = null;
+
+                    if(selection.Count > 0)
+                    {
+                        Selection.objects = selection.ToArray();
+                    }
+                }
+
+                for(int i = 0; i < SceneView.sceneViews.Count; i++)
+                {
+                    SceneView sceneview = SceneView.sceneViews[i] as SceneView;
+
+                    if(sceneview == null)
+                    {
+                        continue;
+                    }
+
+                    if(sceneview.camera.pixelRect.Contains(Event.current.mousePosition))
+                    {
+                        sceneview.Focus();
+                    }
+                }
+
+                _visualDragGameObject = null;
+            }
+            finally
+            {
+                CSGGrid.ForcedGridCenter   = _prevForcedGridCenter;
+                CSGGrid.ForcedGridRotation = _prevForcedGridRotation;
+                CSGGrid.ForceGrid          = false;
+            }
+        }
+
+#endregion
+
+#region DragExited
+
+        public void DragExited(SceneView sceneView)
+        {
+            try
+            {
+                CleanUp();
+                HandleUtility.Repaint();
+            }
+            finally
+            {
+                CSGGrid.ForcedGridCenter   = _prevForcedGridCenter;
+                CSGGrid.ForcedGridRotation = _prevForcedGridRotation;
+                CSGGrid.ForceGrid          = false;
+            }
+        }
+
+#endregion
+
+#region Paint
+
+        public void OnPaint(Camera camera)
+        {
+            CSGGrid.RenderGrid(camera);
+
+            if(_hoverBrushSurface == null)
+            {
+                return;
+            }
+
+            CSGBrush brush = _hoverBrushSurface.brush;
+
+            if(brush.childData == null || !brush.childData.modelTransform)
+            {
+                return;
+            }
+
+            int       highlightSurface    = _hoverBrushSurface.surfaceIndex;
+            Matrix4x4 brushTransformation = brush.compareTransformation.localToWorldMatrix;
+
+            CSGRenderer.DrawSelectedBrush(brush.brushNodeID, brush.shape, brushTransformation, ColorSettings.WireframeOutline, highlightSurface, false, GUIConstants.OLD_LINE_SCALE);
+        }
+
+#endregion
+    }
 }

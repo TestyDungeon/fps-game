@@ -1,8 +1,14 @@
 namespace RealtimeCSG.Foundation
 {
-    internal static class Versioning
+    public struct Version
     {
-        public const string PluginVersion       = "1_601";
-        public const string PluginDLLVersion    = "1_559";
+        public byte Major { get; set; }
+        public byte Minor { get; set; }
+        public byte Revision { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Major}.{Minor}.{Revision}";
+        }
     }
 }

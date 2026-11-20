@@ -1,21 +1,18 @@
 using System;
-using UnityEngine;
-using InternalRealtimeCSG;
-using UnityEngine.Rendering;
 
 namespace RealtimeCSG
 {
 #if UNITY_EDITOR
-	[Serializable]
-	public sealed class ParentNodeData : HierarchyItem
-	{
-		public bool ChildrenModified = true;
+    [Serializable]
+    public sealed class ParentNodeData : HierarchyItem
+    {
+        public bool childrenModified = true;
 
-		public override void Reset()
-		{
-			base.Reset();
-			ChildrenModified = true;
-		}
-	}
+        public override void Reset()
+        {
+            base.Reset();
+            childrenModified = true;
+        }
+    }
 #endif
 }

@@ -1,28 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace RealtimeCSG
 {
-	internal interface IEditMode
-	{
-		bool UsesUnitySelection { get; }
-		bool IgnoreUnityRect	{ get; }
+    internal interface IEditMode
+    {
+        bool UsesUnitySelection { get; }
+        bool IgnoreUnityRect { get; }
 
-		void HandleEvents		(SceneView sceneView, Rect rect);
-		
-		Rect GetLastSceneGUIRect();
-		bool OnSceneGUI			(Rect windowRect);
-		void OnInspectorGUI		(EditorWindow window, float height);
+        void HandleEvents(SceneView sceneView, Rect rect);
 
-		void OnDisableTool		();
-		void OnEnableTool		();
-		bool UndoRedoPerformed	();
-		bool DeselectAll		();
+        Rect GetLastSceneGUIRect();
+        bool OnSceneGUI(Rect windowRect);
+        void OnInspectorGUI(EditorWindow window, float height);
 
-		void SetTargets			(FilteredSelection filteredSelection);
-	
-	}
+        void OnDisableTool();
+        void OnEnableTool();
+        bool UndoRedoPerformed();
+        bool DeselectAll();
+
+        void SetTargets(FilteredSelection filteredSelection);
+    }
 }

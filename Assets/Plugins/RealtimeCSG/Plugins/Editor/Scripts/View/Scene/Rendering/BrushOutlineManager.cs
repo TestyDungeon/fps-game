@@ -1,125 +1,151 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using RealtimeCSG;
 using RealtimeCSG.Components;
 
 namespace InternalRealtimeCSG
 {
-	internal class BrushOutlineManager
-	{
-		private static readonly Dictionary<int, GeometryWireframe> OutlineCache = new Dictionary<int, GeometryWireframe>();
+    internal class BrushOutlineManager
+    {
+        private static readonly Dictionary<int, GeometryWireframe> outlineCache =
+            new Dictionary<int, GeometryWireframe>();
 
-		#region ClearOutlines
-		public static void ClearOutlines()
-		{
-			OutlineCache.Clear();
-		}
-		#endregion
+#region ClearOutlines
 
-		#region ForceUpdateOutlines
-		public static void ForceUpdateOutlines(int brushNodeId)
-		{
-			var externalOutlineGeneration = InternalCSGModelManager.External.GetBrushOutlineGeneration(brushNodeId);
-			var outline = new GeometryWireframe();
-			if (!InternalCSGModelManager.External.GetBrushOutline(brushNodeId, out outline))
-				return;
+        public static void ClearOutlines()
+        {
+            outlineCache.Clear();
+        }
 
-			outline.outlineGeneration = externalOutlineGeneration;
-			OutlineCache[brushNodeId] = outline;
-		}
-		#endregion
+#endregion
 
-		#region GetBrushOutline
-		public static GeometryWireframe GetBrushOutline(int brushNodeId)
-		{
-			if (brushNodeId == CSGNode.InvalidNodeID)
-				return null;
+#region ForceUpdateOutlines
 
-			var externalOutlineGeneration = InternalCSGModelManager.External.GetBrushOutlineGeneration(brushNodeId);
+        public static void ForceUpdateOutlines(int brushNodeId)
+        {
+            ulong externalOutlineGeneration = InternalCSGModelManager.External.getBrushOutlineGeneration(brushNodeId);
 
-			GeometryWireframe outline;
-			if (!OutlineCache.TryGetValue(brushNodeId, out outline))
-				externalOutlineGeneration = externalOutlineGeneration - 1;
-			
-			if (outline != null &&
-				externalOutlineGeneration == outline.outlineGeneration)
-				return outline;
+            if(!InternalCSGModelManager.External.getBrushOutline(brushNodeId, out GeometryWireframe outline))
+            {
+                return;
+            }
 
-			outline = new GeometryWireframe();
-			if (!InternalCSGModelManager.External.GetBrushOutline(brushNodeId, out outline))
-				return null;
-			
-			outline.outlineGeneration = externalOutlineGeneration;
-			OutlineCache[brushNodeId] = outline;
-			return outline;
-		}
+            outline.outlineGeneration = externalOutlineGeneration;
+            outlineCache[brushNodeId] = outline;
+        }
 
-		public static GeometryWireframe[] GetBrushOutlines(int[] brushNodeIDs)
-		{
-			var wireframes = new GeometryWireframe[brushNodeIDs.Length];
+#endregion
 
-			for (var i = 0; i < brushNodeIDs.Length; i++)
-			{
-				var brushNodeId = brushNodeIDs[i];
-				if (brushNodeId == CSGNode.InvalidNodeID)
-				{
-					wireframes[i] = null;
-					continue;
-				}
-				var externalOutlineGeneration = InternalCSGModelManager.External.GetBrushOutlineGeneration(brushNodeId);
+#region GetBrushOutline
 
-				GeometryWireframe outline;
-				if (!OutlineCache.TryGetValue(brushNodeId, out outline))
-					externalOutlineGeneration = externalOutlineGeneration - 1;
-				
-				if (outline == null ||
-					externalOutlineGeneration != outline.outlineGeneration)
-				{
-					if (!InternalCSGModelManager.External.GetBrushOutline(brushNodeId, out outline))
-					{
-						outline = null;
-					} else
-					{
-						outline.outlineGeneration = externalOutlineGeneration;
-						OutlineCache[brushNodeId] = outline;
-					}
-				}
-				wireframes[i] = outline;
-			}
-			return wireframes;
-		}
-		#endregion
+        public static GeometryWireframe GetBrushOutline(int brushNodeId)
+        {
+            if(brushNodeId == CSGNode.INVALID_NODE_ID)
+            {
+                return null;
+            }
 
-		#region GetSurfaceOutline
-		public static GeometryWireframe[] GetSurfaceOutlines(SelectedBrushSurface[] selectedSurfaces)
-		{
-			if (selectedSurfaces == null || selectedSurfaces.Length == 0)
-				return new GeometryWireframe[0];
+            ulong externalOutlineGeneration = InternalCSGModelManager.External.getBrushOutlineGeneration(brushNodeId);
 
-			var wireframes = new GeometryWireframe[selectedSurfaces.Length];
-			for (var i = 0; i < selectedSurfaces.Length; i++)
-			{
-				var brush = selectedSurfaces[i].brush;
-				if (!brush || brush.brushNodeID == CSGNode.InvalidNodeID) 
-				{
-					wireframes[i] = null;
-					continue;
-				}
+            if(!outlineCache.TryGetValue(brushNodeId, out GeometryWireframe outline))
+            {
+                externalOutlineGeneration -= 1;
+            }
 
-				var brushNodeId		= brush.brushNodeID;
-				var surfaceIndex	= selectedSurfaces[i].surfaceIndex;
-				
-				GeometryWireframe outline;
-				if (!InternalCSGModelManager.External.GetSurfaceOutline(brushNodeId,
-																	    surfaceIndex,
-																	    out outline))
-				{
-					outline = null;
-				}
-				wireframes[i] = outline;
-			}
-			return wireframes;
-		}
-		#endregion
+            if(outline != null && externalOutlineGeneration == outline.outlineGeneration)
+            {
+                return outline;
+            }
 
-	}
+            if(!InternalCSGModelManager.External.getBrushOutline(brushNodeId, out outline))
+            {
+                return null;
+            }
+
+            outline = new GeometryWireframe();
+
+            outline.outlineGeneration = externalOutlineGeneration;
+            outlineCache[brushNodeId] = outline;
+
+            return outline;
+        }
+
+        public static GeometryWireframe[] GetBrushOutlines(int[] brushNodeIDs)
+        {
+            GeometryWireframe[] wireframes = new GeometryWireframe[brushNodeIDs.Length];
+
+            for(int i = 0; i < brushNodeIDs.Length; i++)
+            {
+                int brushNodeId = brushNodeIDs[i];
+
+                if(brushNodeId == CSGNode.INVALID_NODE_ID)
+                {
+                    wireframes[i] = null;
+
+                    continue;
+                }
+
+                ulong externalOutlineGeneration = InternalCSGModelManager.External.getBrushOutlineGeneration(brushNodeId);
+
+                if(!outlineCache.TryGetValue(brushNodeId, out GeometryWireframe outline))
+                {
+                    externalOutlineGeneration -= 1;
+                }
+
+                if(outline == null || externalOutlineGeneration != outline.outlineGeneration)
+                {
+                    if(!InternalCSGModelManager.External.getBrushOutline(brushNodeId, out outline))
+                    {
+                        outline = null;
+                    }
+                    else
+                    {
+                        outline.outlineGeneration = externalOutlineGeneration;
+                        outlineCache[brushNodeId] = outline;
+                    }
+                }
+
+                wireframes[i] = outline;
+            }
+
+            return wireframes;
+        }
+
+#endregion
+
+#region GetSurfaceOutline
+
+        public static GeometryWireframe[] GetSurfaceOutlines(SelectedBrushSurface[] selectedSurfaces)
+        {
+            if(selectedSurfaces == null || selectedSurfaces.Length == 0)
+            {
+                return Array.Empty<GeometryWireframe>();
+            }
+
+            GeometryWireframe[] wireframes = new GeometryWireframe[selectedSurfaces.Length];
+
+            for(int i = 0; i < selectedSurfaces.Length; i++)
+            {
+                CSGBrush brush = selectedSurfaces[i].brush;
+
+                if(!brush || brush.brushNodeID == CSGNode.INVALID_NODE_ID)
+                {
+                    wireframes[i] = null;
+
+                    continue;
+                }
+
+                if(!InternalCSGModelManager.External.getSurfaceOutline(brush.brushNodeID, selectedSurfaces[i].surfaceIndex, out GeometryWireframe outline))
+                {
+                    outline = null;
+                }
+
+                wireframes[i] = outline;
+            }
+
+            return wireframes;
+        }
+
+#endregion
+    }
 }

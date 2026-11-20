@@ -5,158 +5,190 @@ using RealtimeCSG.Legacy;
 
 namespace RealtimeCSG
 {
-	internal class ControlMeshSelection
-	{
-        [SerializeField] public SelectState[]   Points;
-        [SerializeField] public SelectState[]   Edges;
-        [SerializeField] public SelectState[]   Polygons;
-		
+    internal class ControlMeshSelection
+    {
+        public SelectState[] points;
+        public SelectState[] edges;
+        public SelectState[] polygons;
+
         public void CopyTo(ControlMeshSelection other)
         {
-			if (other == null)
-				return;
-
-            if (Points != null)
+            if(other == null)
             {
-				if (other.Points == null || Points.Length != other.Points.Length)
-					other.Points = new SelectState[Points.Length];
-                Array.Copy(Points, other.Points, Points.Length);
+                return;
             }
 
-            if (Edges != null)
+            if(points != null)
             {
-                if (other.Edges == null || Edges.Length != other.Edges.Length)
-					other.Edges = new SelectState[Edges.Length];
-                Array.Copy(Edges, other.Edges, Edges.Length);
+                if(other.points == null || points.Length != other.points.Length)
+                {
+                    other.points = new SelectState[points.Length];
+                }
+
+                Array.Copy(points, other.points, points.Length);
             }
 
-            if (Polygons != null)
+            if(edges != null)
             {
-				if (other.Polygons == null || Polygons.Length != other.Polygons.Length)
-					other.Polygons = new SelectState[Polygons.Length];
-                Array.Copy(Polygons, other.Polygons, Polygons.Length);
+                if(other.edges == null || edges.Length != other.edges.Length)
+                {
+                    other.edges = new SelectState[edges.Length];
+                }
+
+                Array.Copy(edges, other.edges, edges.Length);
+            }
+
+            if(polygons != null)
+            {
+                if(other.polygons == null || polygons.Length != other.polygons.Length)
+                {
+                    other.polygons = new SelectState[polygons.Length];
+                }
+
+                Array.Copy(polygons, other.polygons, polygons.Length);
             }
         }
-		
-		public ControlMeshSelection Clone()
-		{
-			var clone = new ControlMeshSelection();
-			CopyTo(clone);
-			return clone;
-		}
 
-		public void Clear()
-		{
-            Points = null;
-            Edges = null;
-            Polygons = null;
-		}
+        public ControlMeshSelection Clone()
+        {
+            ControlMeshSelection clone = new ControlMeshSelection();
+            CopyTo(clone);
 
-		public void DeselectAll()
-		{
-			if (Points != null)
-				Array.Clear(Points, 0, Points.Length);
-			if (Edges != null)
-				Array.Clear(Edges, 0, Edges.Length);
-			if (Polygons != null)
-				Array.Clear(Polygons, 0, Polygons.Length);
+            return clone;
+        }
 
-		}
-		
+        public void Clear()
+        {
+            points   = null;
+            edges    = null;
+            polygons = null;
+        }
+
+        public void DeselectAll()
+        {
+            if(points != null)
+            {
+                Array.Clear(points, 0, points.Length);
+            }
+
+            if(edges != null)
+            {
+                Array.Clear(edges, 0, edges.Length);
+            }
+
+            if(polygons != null)
+            {
+                Array.Clear(polygons, 0, polygons.Length);
+            }
+        }
+
         public bool Equals(ControlMeshSelection other)
         {
-            if (Points != null)
+            if(points != null)
             {
-                for (var p = 0; p < Points.Length; p++)
+                for(int p = 0; p < points.Length; p++)
                 {
-                    if (Points[p] != other.Points[p])
+                    if(points[p] != other.points[p])
+                    {
                         return false;
+                    }
                 }
             }
 
-            if (other.Edges != null)
+            if(other.edges != null)
             {
-                for (var e = 0; e < Edges.Length; e++)
+                for(int e = 0; e < edges.Length; e++)
                 {
-                    if (Edges[e] != other.Edges[e])
+                    if(edges[e] != other.edges[e])
+                    {
                         return false;
+                    }
                 }
             }
 
-            if (other.Polygons != null)
+            if(other.polygons != null)
             {
-                for (var e = 0; e < Polygons.Length; e++)
+                for(int e = 0; e < polygons.Length; e++)
                 {
-                    if (Polygons[e] != other.Polygons[e])
+                    if(polygons[e] != other.polygons[e])
+                    {
                         return false;
+                    }
                 }
             }
+
             return true;
         }
-	}
+    }
 
     internal partial class ControlMeshState
     {
-		// selection
-
-		public readonly ControlMeshSelection Selection = new ControlMeshSelection();
+        // selection
+        public readonly ControlMeshSelection selection = new ControlMeshSelection();
 
         // backup stuff
-
-		public readonly ControlMeshSelection SelectionBackup = new ControlMeshSelection();
+        public readonly ControlMeshSelection selectionBackup = new ControlMeshSelection();
 
         public void BackupSelection()
-        {	
-			Selection.CopyTo(SelectionBackup);
+        {
+            selection.CopyTo(selectionBackup);
         }
 
         public void RevertSelection()
         {
-			SelectionBackup.CopyTo(Selection);
-		}
+            selectionBackup.CopyTo(selection);
+        }
 
         public void DestroySelectionBackup()
         {
-            SelectionBackup.Clear();
+            selectionBackup.Clear();
         }
 
         public bool HasSelectionChanged()
         {
-			return !Selection.Equals(SelectionBackup);
+            return !selection.Equals(selectionBackup);
         }
 
         public float GetClosestEdgeDistance(CSGPlane cameraPlane, int pointIndex0, int pointIndex1)
         {
-            if (pointIndex0 < 0 || pointIndex0 >= WorldPoints.Length ||
-                pointIndex1 < 0 || pointIndex1 >= WorldPoints.Length)
-                return float.PositiveInfinity;
-
-            var point0 = WorldPoints[pointIndex0];
-            var point1 = WorldPoints[pointIndex1];
-			
-			var mousePoint = Event.current.mousePosition;
-            var minDistance = CameraUtility.DistanceToLine(cameraPlane, mousePoint, point0, point1) * 3.0f;
-            if (!(Mathf.Abs(minDistance) < 4.0f))
-				return minDistance;
-
-            var surfaceIndex1 = EdgeSurfaces[pointIndex0];
-            var surfaceIndex2 = EdgeSurfaces[pointIndex1];
-			 
-            for (var p = 0; p < PolygonCenterPoints.Length; p++)
+            if(pointIndex0 < 0 || pointIndex0 >= worldPoints.Length || pointIndex1 < 0 || pointIndex1 >= worldPoints.Length)
             {
-                if (p != surfaceIndex1 &&
-                    p != surfaceIndex2)
+                return float.PositiveInfinity;
+            }
+
+            Vector3 point0 = worldPoints[pointIndex0];
+            Vector3 point1 = worldPoints[pointIndex1];
+
+            Vector2 mousePoint  = Event.current.mousePosition;
+            float   minDistance = CameraUtility.DistanceToLine(cameraPlane, mousePoint, point0, point1) * 3.0f;
+
+            if(!(Mathf.Abs(minDistance) < 4.0f))
+            {
+                return minDistance;
+            }
+
+            int surfaceIndex1 = edgeSurfaces[pointIndex0];
+            int surfaceIndex2 = edgeSurfaces[pointIndex1];
+
+            for(int p = 0; p < polygonCenterPoints.Length; p++)
+            {
+                if(p != surfaceIndex1 && p != surfaceIndex2)
+                {
                     continue;
+                }
 
-                var polygonCenterPoint          = PolygonCenterPoints[p];
-                var polygonCenterPointOnLine    = GeometryUtility.ProjectPointOnInfiniteLine(PolygonCenterPoints[p], point0, (point1 - point0).normalized);
-                var direction                   = (polygonCenterPointOnLine - polygonCenterPoint).normalized;
+                Vector3 polygonCenterPoint = polygonCenterPoints[p];
 
-                var nudgedPoint0 = point0 - (direction * 0.05f);
-                var nudgedPoint1 = point1 - (direction * 0.05f);
+                Vector3 polygonCenterPointOnLine = GeometryUtility.ProjectPointOnInfiniteLine(polygonCenterPoints[p], point0, (point1 - point0).normalized);
 
-                var otherDistance = CameraUtility.DistanceToLine(cameraPlane, mousePoint, nudgedPoint0, nudgedPoint1);
-                if (otherDistance < minDistance)
+                Vector3 direction = (polygonCenterPointOnLine - polygonCenterPoint).normalized;
+
+                Vector3 nudgedPoint0 = point0 - direction * 0.05f;
+                Vector3 nudgedPoint1 = point1 - direction * 0.05f;
+
+                float otherDistance = CameraUtility.DistanceToLine(cameraPlane, mousePoint, nudgedPoint0, nudgedPoint1);
+
+                if(otherDistance < minDistance)
                 {
                     minDistance = otherDistance;
                 }
@@ -165,33 +197,43 @@ namespace RealtimeCSG
             return minDistance;
         }
 
-
         public HashSet<short> GetSelectedPointIndices()
         {
-            var indices = new HashSet<short>();
+            HashSet<short> indices = new HashSet<short>();
 
             indices.Clear();
-            for (var p = 0; p < Selection.Points.Length; p++)
+
+            for(int p = 0; p < selection.points.Length; p++)
             {
-                if ((Selection.Points[p] & SelectState.Selected) != SelectState.Selected)
+                if((selection.points[p] & SelectState.Selected) != SelectState.Selected)
+                {
                     continue;
+                }
+
                 indices.Add((short)p);
             }
-            for (var e = 0; e < Selection.Edges.Length; e++)
-            {
-                if ((Selection.Edges[e] & SelectState.Selected) != SelectState.Selected)
-                    continue;
-				
-                indices.Add((short)Edges[(e * 2) + 0]);
-                indices.Add((short)Edges[(e * 2) + 1]);
-            }
-            for (var p = 0; p < Selection.Polygons.Length; p++)
-            {
-                if ((Selection.Polygons[p] & SelectState.Selected) != SelectState.Selected)
-                    continue;
 
-                var pointIndices = PolygonPointIndices[p];
-                for (var i = 0; i < pointIndices.Length; i++)
+            for(int e = 0; e < selection.edges.Length; e++)
+            {
+                if((selection.edges[e] & SelectState.Selected) != SelectState.Selected)
+                {
+                    continue;
+                }
+
+                indices.Add((short)edges[e * 2 + 0]);
+                indices.Add((short)edges[e * 2 + 1]);
+            }
+
+            for(int p = 0; p < selection.polygons.Length; p++)
+            {
+                if((selection.polygons[p] & SelectState.Selected) != SelectState.Selected)
+                {
+                    continue;
+                }
+
+                int[] pointIndices = polygonPointIndices[p];
+
+                for(int i = 0; i < pointIndices.Length; i++)
                 {
                     indices.Add((short)pointIndices[i]);
                 }

@@ -1,424 +1,523 @@
 ﻿using System;
 using System.Collections.Generic;
+using RealtimeCSG.Components;
 using UnityEditor;
 using UnityEngine;
-using InternalRealtimeCSG;
-using RealtimeCSG.Components;
+using UnityEngine.Serialization;
 
 namespace RealtimeCSG
 {
-	[Serializable]
-	internal sealed class FilteredSelection// : ScriptableObject
-	{
-		[SerializeField] public Transform[]		OtherTargets			= new Transform[0];
-		[SerializeField] public CSGNode[]		NodeTargets				= new CSGNode[0];
-		[SerializeField] public CSGBrush[]		BrushTargets			= new CSGBrush[0];
-		[SerializeField] public CSGOperation[]	OperationTargets		= new CSGOperation[0];
-		[SerializeField] public CSGModel[]		ModelTargets			= new CSGModel[0];
+    [Serializable]
+    internal sealed class FilteredSelection
+    {
+        [SerializeField] public Transform[] otherTargets = Array.Empty<Transform>();
+        [SerializeField] public CSGNode[] nodeTargets = Array.Empty<CSGNode>();
+        [SerializeField] public CSGBrush[] brushTargets = Array.Empty<CSGBrush>();
+        [SerializeField] public CSGOperation[] operationTargets = Array.Empty<CSGOperation>();
+        [SerializeField] public CSGModel[] modelTargets = Array.Empty<CSGModel>();
+        [SerializeField] public CSGNode[] removedNodes = Array.Empty<CSGNode>();
+        [SerializeField] public Transform[] removedOthers = Array.Empty<Transform>();
+        [SerializeField] public CSGNode[] addedNodes = Array.Empty<CSGNode>();
+        [SerializeField] public Transform[] addedOthers = Array.Empty<Transform>();
 
-		[SerializeField] public CSGNode[]		RemovedNodes			= new CSGNode[0];
-		[SerializeField] public Transform[]		RemovedOthers			= new Transform[0];
+        public HashSet<CSGBrush> GetAllContainedBrushes()
+        {
+            HashSet<CSGBrush> brushes = new HashSet<CSGBrush>();
 
-		[SerializeField] public CSGNode[]		AddedNodes				= new CSGNode[0];
-		[SerializeField] public Transform[]		AddedOthers				= new Transform[0];
+            if(brushTargets != null && brushTargets.Length > 0)
+            {
+                CSGBrush[] targets = brushTargets;
 
-		public HashSet<CSGBrush> GetAllContainedBrushes()
-		{
-			var brushes = new HashSet<CSGBrush>();
-			if (this.BrushTargets != null &&
-				this.BrushTargets.Length > 0)
-			{
-				var brush_targets = this.BrushTargets;
-				for (int i = 0; i < brush_targets.Length; i++)
-				{
-					var brush = brush_targets[i];
-					if ((brush.Flags & BrushFlags.InfiniteBrush) == BrushFlags.InfiniteBrush)
-						continue;
-					brush.EnsureInitialized();
-					if (brush.ControlMesh == null ||
-						brush.Shape == null)
-						continue;
-					brushes.Add(brush);
-				}
-			}
-			if (this.OperationTargets != null &&
-				this.OperationTargets.Length > 0)
-			{
-				var operation_targets = this.OperationTargets;
-				for (int i = 0; i < operation_targets.Length; i++)
-				{
-					var operation = operation_targets[i];
-					var operation_brushes = operation.GetComponentsInChildren<CSGBrush>();
-					for (int j = 0; j < operation_brushes.Length; j++)
-					{
-						var brush = operation_brushes[j];
-						if ((brush.Flags & BrushFlags.InfiniteBrush) == BrushFlags.InfiniteBrush)
-							continue;
-						brush.EnsureInitialized();
-						if (brush.ControlMesh == null ||
-							brush.Shape == null)
-							continue;
-						brushes.Add(brush);
-					}
-				}
-			}
-			if (this.ModelTargets != null &&
-				this.ModelTargets.Length > 0)
-			{
-				var model_targets = this.ModelTargets;
-				for (int i = 0; i < model_targets.Length; i++)
-				{
-					var model = model_targets[i];
-					var model_brushes = model.GetComponentsInChildren<CSGBrush>();
-					for (int j = 0; j < model_brushes.Length; j++)
-					{
-						var brush = model_brushes[j];
-						if ((brush.Flags & BrushFlags.InfiniteBrush) == BrushFlags.InfiniteBrush)
-							continue;
-						brush.EnsureInitialized();
-						if (brush.ControlMesh == null ||
-							brush.Shape == null)
-							continue;
-						brushes.Add(brush);
-					}
-				}
-			}
-			return brushes;
-		} 
+                for(int i = 0; i < targets.Length; i++)
+                {
+                    CSGBrush brush = targets[i];
 
-		public List<Transform> GetAllTopTransforms()
-		{
-			var transforms = new List<Transform>();
-			if (this.BrushTargets != null &&
-				this.BrushTargets.Length > 0)
-			{
-				foreach (var brush in this.BrushTargets)
-				{
-					transforms.Add(brush.transform);
-				}
-			}
-			if (this.OperationTargets != null &&
-				this.OperationTargets.Length > 0)
-			{
-				foreach (var operation in this.OperationTargets)
-				{
-					transforms.Add(operation.transform);
-				}
-			}
-			if (this.ModelTargets != null &&
-				this.ModelTargets.Length > 0)
-			{
-				foreach (var model in this.ModelTargets)
-				{
-					transforms.Add(model.transform);
-				}
-			}
-			
-			if (this.OtherTargets != null && 
-				this.OtherTargets.Length > 0)
-				transforms.AddRange(this.OtherTargets);
+                    if((brush.flags & BrushFlags.InfiniteBrush) == BrushFlags.InfiniteBrush)
+                    {
+                        continue;
+                    }
 
-			for (int i = transforms.Count - 1; i >= 0; i--)
-			{
-				bool found = false;
-				var iterator = transforms[i].parent;
-				while (iterator != null)
-				{
-					if (transforms.Contains(iterator))
-					{
-						found = true;
-						break;
-					}
-					iterator = iterator.parent;
-				}
-				if (found)
-					transforms.RemoveAt(i);
-			}
-			return transforms;
-		}
-		
-		bool Validate()
-		{
-			bool modified = false;
-			if (this.OtherTargets != null &&
-				this.OtherTargets.Length > 0) 
-			{
-				for (int i = this.OtherTargets.Length - 1; i >= 0; i--)
-				{
-					if (!this.OtherTargets[i])
-					{
-						ArrayUtility.RemoveAt(ref this.OtherTargets, i);
-						modified = true;
-					}
-				}
-				if (this.OtherTargets.Length == 0)
-					this.OtherTargets = new Transform[0];
-			}
-			if (this.NodeTargets != null &&
-				this.NodeTargets.Length > 0) 
-			{
-				for (int i = this.NodeTargets.Length - 1; i >= 0; i--)
-				{
-					if (!this.NodeTargets[i])
-					{
-						ArrayUtility.RemoveAt(ref this.NodeTargets, i);
-						modified = true;
-					}
-				}
-				if (this.NodeTargets.Length == 0)
-				{
-					this.NodeTargets = new CSGNode[0];
-					this.ModelTargets = new CSGModel[0];
-					this.BrushTargets = new CSGBrush[0];
-					this.OperationTargets = new CSGOperation[0];
-				} else
-				{
-					if (this.BrushTargets != null &&
-						this.BrushTargets.Length > 0)
-					{
-						for (int i = this.BrushTargets.Length - 1; i >= 0; i--)
-						{
-							if (!this.BrushTargets[i])
-							{
-								ArrayUtility.RemoveAt(ref this.BrushTargets, i);
-								modified = true;
-							}
-						}
-						if (this.BrushTargets.Length == 0)
-							this.BrushTargets = new CSGBrush[0];
-					}
-					if (this.OperationTargets != null &&
-						this.OperationTargets.Length > 0)
-					{
-						for (int i = this.OperationTargets.Length - 1; i >= 0; i--)
-						{
-							if (!this.OperationTargets[i])
-							{
-								ArrayUtility.RemoveAt(ref this.OperationTargets, i);
-								modified = true;
-							}
-						}
-						if (this.OperationTargets.Length == 0)
-							this.OperationTargets = new CSGOperation[0];
-					}
-					if (this.ModelTargets != null &&
-						this.ModelTargets.Length > 0)
-					{
-						for (int i = this.ModelTargets.Length - 1; i >= 0; i--)
-						{
-							if (!this.ModelTargets[i])
-							{
-								ArrayUtility.RemoveAt(ref this.ModelTargets, i);
-								modified = true;
-							}
-						}
-						if (this.ModelTargets.Length == 0)
-							this.ModelTargets = new CSGModel[0];
-					}
-				}
-			}
-			return modified;
-		}
-		
-		public bool UpdateSelection(HashSet<CSGNode> newTargetNodes, HashSet<Transform> newTargetOthers)
-		{
-			if (newTargetNodes  == null)
-				newTargetNodes  = new HashSet<CSGNode>();
-			if (newTargetOthers  == null)
-				newTargetOthers  = new HashSet<Transform>();
+                    brush.EnsureInitialized();
 
-			this.RemovedNodes	= null;
-			this.RemovedOthers	= null;
+                    if(brush.controlMesh == null || brush.shape == null)
+                    {
+                        continue;
+                    }
 
-			this.AddedNodes		= null;
-			this.AddedOthers	= null;
+                    brushes.Add(brush);
+                }
+            }
 
-			var foundRemovedNodes	= new List<CSGNode>();
-			if (this.NodeTargets != null &&
-				this.NodeTargets.Length > 0)
-			{
-				if (newTargetNodes.Count == 0)
-				{
-					foundRemovedNodes.AddRange(this.NodeTargets);
-				} else
-				{
-					for (int i = 0; i < this.NodeTargets.Length; i++)
-					{
-						if (!this.NodeTargets[i] ||
-							!newTargetNodes.Contains(this.NodeTargets[i]))
-						{
-							foundRemovedNodes.Add(this.NodeTargets[i]);
-						}
-					}
-				}
-			}
-			
-			var foundRemovedOthers	= new List<Transform>();
-			if (this.OtherTargets != null &&
-				this.OtherTargets.Length > 0)
-			{
-				if (newTargetOthers.Count == 0)
-				{
-					foundRemovedOthers.AddRange(this.OtherTargets);
-				} else
-				{
-					for (int i = 0; i < this.OtherTargets.Length; i++)
-					{
-						if (!this.OtherTargets[i] ||
-							!newTargetOthers.Contains(this.OtherTargets[i]))
-						{
-							foundRemovedOthers.Add(this.OtherTargets[i]);
-						}
-					}
-				}
-			}
+            if(operationTargets != null && operationTargets.Length > 0)
+            {
+                CSGOperation[] targets = operationTargets;
 
-			var originalTargetNodeCount		= (this.NodeTargets  == null) ? 0 : this.NodeTargets.Length;
-			var originalTargetOtherCount	= (this.OtherTargets == null) ? 0 : this.OtherTargets.Length;
+                for(int i = 0; i < targets.Length; i++)
+                {
+                    CSGOperation operation        = targets[i];
+                    CSGBrush[]   operationBrushes = operation.GetComponentsInChildren<CSGBrush>();
 
-			// If our counts are the same and nothing is removed (and nothing could've been added), nothing has changed.
-			if (newTargetNodes .Count == originalTargetNodeCount &&
-				newTargetOthers.Count == originalTargetOtherCount &&
-				foundRemovedNodes.Count == 0 &&
-				foundRemovedOthers.Count == 0)
-			{
-				return false;
-			}
+                    for(int j = 0; j < operationBrushes.Length; j++)
+                    {
+                        CSGBrush brush = operationBrushes[j];
 
-			Validate();
+                        if((brush.flags & BrushFlags.InfiniteBrush) == BrushFlags.InfiniteBrush)
+                        {
+                            continue;
+                        }
 
-			foreach(var node in foundRemovedNodes)
-			{
-				ArrayUtility.Remove(ref this.NodeTargets, node);
+                        brush.EnsureInitialized();
 
-				var brush = node as CSGBrush;
-				if (brush != null)
-				{
-					ArrayUtility.Remove(ref this.BrushTargets, brush);
-					continue;
-				}
-				var operation = node as CSGOperation;
-				if (node is CSGOperation)
-				{
-					ArrayUtility.Remove(ref this.OperationTargets, operation);
-					continue;
-				}
-				var model = node as CSGModel;
-				if (node is CSGModel)
-				{					
-					ArrayUtility.Remove(ref this.ModelTargets, model);
-					continue;
-				}
-			}
+                        if(brush.controlMesh == null || brush.shape == null)
+                        {
+                            continue;
+                        }
 
-			foreach (var other in foundRemovedOthers)
-			{
-				ArrayUtility.Remove(ref this.OtherTargets, other);
-			}
-			
-			var foundAddedNodes	= new List<CSGNode>();
-			foreach (var node in newTargetNodes)
-			{
-				if (this.NodeTargets != null &&
-					ArrayUtility.Contains(this.NodeTargets, node))
-					continue;
+                        brushes.Add(brush);
+                    }
+                }
+            }
 
-				if (this.NodeTargets == null)
-				{
-					this.NodeTargets = new CSGNode[] { node };
-				} else
-				{
-					ArrayUtility.Add(ref this.NodeTargets, node);
-				}
+            if(modelTargets != null && modelTargets.Length > 0)
+            {
+                CSGModel[] targets = modelTargets;
 
-				foundAddedNodes.Add(node);
+                for(int i = 0; i < targets.Length; i++)
+                {
+                    CSGModel   model        = targets[i];
+                    CSGBrush[] modelBrushes = model.GetComponentsInChildren<CSGBrush>();
 
-				if (CSGPrefabUtility.IsPrefabAsset(node.gameObject))
-					continue;
+                    for(int j = 0; j < modelBrushes.Length; j++)
+                    {
+                        CSGBrush brush = modelBrushes[j];
 
-				var brush = node as CSGBrush;
-				if (brush != null)
-				{					
-					if (this.BrushTargets == null)
-						this.BrushTargets = new CSGBrush[] { brush };
-					else
-						ArrayUtility.Add(ref this.BrushTargets, brush);
-					continue;
-				}
-				var operation = node as CSGOperation;
-				if (node is CSGOperation)
-				{
-					if (this.OperationTargets == null)
-						this.OperationTargets = new CSGOperation[] { operation };
-					else
-						ArrayUtility.Add(ref this.OperationTargets, operation);
-					continue;
-				}
-				var model = node as CSGModel;
-				if (node is CSGModel)
-				{					
-					if (this.ModelTargets == null)
-						this.ModelTargets = new CSGModel[] { model };
-					else
-						ArrayUtility.Add(ref this.ModelTargets, model);
-					continue;
-				}
-			}
-			
-			var foundAddedOthers	= new List<Transform>();
-			foreach (var other in newTargetOthers)
-			{
-				if (this.OtherTargets != null &&
-					ArrayUtility.Contains(this.OtherTargets, other))
-					continue;
-								
-				if (this.OtherTargets == null)
-					this.OtherTargets = new Transform[] { other };
-				else
-					ArrayUtility.Add(ref this.OtherTargets, other);
-				foundAddedOthers.Add(other);
-			}
+                        if((brush.flags & BrushFlags.InfiniteBrush) == BrushFlags.InfiniteBrush)
+                        {
+                            continue;
+                        }
 
-			for (int i = foundAddedNodes.Count - 1; i >= 0; i--)
-			{
-				var node = foundAddedNodes[i];
-				var brush = node as CSGBrush;
-				if (brush != null)
-				{
-					if (brush.ChildData == null ||
-						brush.ChildData.Model == null)
-						continue;
+                        brush.EnsureInitialized();
 
-					var childModel = brush.ChildData.Model;
-                    if (ModelTraits.IsModelEditable(childModel))
-						SelectionUtility.LastUsedModel = childModel;
-					break;
-				}
-				var operation = node as CSGOperation;
-				if (operation != null)
-				{
-					if (operation.ChildData == null ||
-						operation.ChildData.Model == null)
-						continue;
+                        if(brush.controlMesh == null || brush.shape == null)
+                        {
+                            continue;
+                        }
 
-					SelectionUtility.LastUsedModel = operation.ChildData.Model;
-					break;
-				}
-				var model = node as CSGModel;
-                if (ModelTraits.IsModelEditable(model))
-				{
-					SelectionUtility.LastUsedModel = model;
-					break;
-				}
-			}
+                        brushes.Add(brush);
+                    }
+                }
+            }
 
-			this.RemovedNodes	= foundRemovedNodes.ToArray();
-			this.RemovedOthers	= foundRemovedOthers.ToArray();
+            return brushes;
+        }
 
-			this.AddedNodes		= foundAddedNodes.ToArray();
-			this.AddedOthers	= foundAddedOthers.ToArray();
+        public List<Transform> GetAllTopTransforms()
+        {
+            List<Transform> transforms = new List<Transform>();
 
-			return (foundAddedNodes.Count > 0 || foundRemovedNodes.Count > 0 || foundAddedOthers.Count > 0 || foundRemovedOthers.Count > 0);
-		}
-	}
+            if(brushTargets != null && brushTargets.Length > 0)
+            {
+                foreach(CSGBrush brush in brushTargets)
+                {
+                    transforms.Add(brush.transform);
+                }
+            }
+
+            if(operationTargets != null && operationTargets.Length > 0)
+            {
+                foreach(CSGOperation operation in operationTargets)
+                {
+                    transforms.Add(operation.transform);
+                }
+            }
+
+            if(modelTargets != null && modelTargets.Length > 0)
+            {
+                foreach(CSGModel model in modelTargets)
+                {
+                    transforms.Add(model.transform);
+                }
+            }
+
+            if(otherTargets != null && otherTargets.Length > 0)
+            {
+                transforms.AddRange(otherTargets);
+            }
+
+            for(int i = transforms.Count - 1; i >= 0; i--)
+            {
+                bool      found    = false;
+                Transform iterator = transforms[i].parent;
+
+                while(iterator != null)
+                {
+                    if(transforms.Contains(iterator))
+                    {
+                        found = true;
+
+                        break;
+                    }
+
+                    iterator = iterator.parent;
+                }
+
+                if(found)
+                {
+                    transforms.RemoveAt(i);
+                }
+            }
+
+            return transforms;
+        }
+
+        private bool Validate()
+        {
+            bool modified = false;
+
+            if(otherTargets != null && otherTargets.Length > 0)
+            {
+                for(int i = otherTargets.Length - 1; i >= 0; i--)
+                {
+                    if(!otherTargets[i])
+                    {
+                        ArrayUtility.RemoveAt(ref otherTargets, i);
+                        modified = true;
+                    }
+                }
+
+                if(otherTargets.Length == 0)
+                {
+                    otherTargets = Array.Empty<Transform>();
+                }
+            }
+
+            if(nodeTargets != null && nodeTargets.Length > 0)
+            {
+                for(int i = nodeTargets.Length - 1; i >= 0; i--)
+                {
+                    if(!nodeTargets[i])
+                    {
+                        ArrayUtility.RemoveAt(ref nodeTargets, i);
+                        modified = true;
+                    }
+                }
+
+                if(nodeTargets.Length == 0)
+                {
+                    nodeTargets      = Array.Empty<CSGNode>();
+                    modelTargets     = Array.Empty<CSGModel>();
+                    brushTargets     = Array.Empty<CSGBrush>();
+                    operationTargets = Array.Empty<CSGOperation>();
+                }
+                else
+                {
+                    if(brushTargets != null && brushTargets.Length > 0)
+                    {
+                        for(int i = brushTargets.Length - 1; i >= 0; i--)
+                        {
+                            if(!brushTargets[i])
+                            {
+                                ArrayUtility.RemoveAt(ref brushTargets, i);
+                                modified = true;
+                            }
+                        }
+
+                        if(brushTargets.Length == 0)
+                        {
+                            brushTargets = Array.Empty<CSGBrush>();
+                        }
+                    }
+
+                    if(operationTargets != null && operationTargets.Length > 0)
+                    {
+                        for(int i = operationTargets.Length - 1; i >= 0; i--)
+                        {
+                            if(!operationTargets[i])
+                            {
+                                ArrayUtility.RemoveAt(ref operationTargets, i);
+                                modified = true;
+                            }
+                        }
+
+                        if(operationTargets.Length == 0)
+                        {
+                            operationTargets = Array.Empty<CSGOperation>();
+                        }
+                    }
+
+                    if(modelTargets != null && modelTargets.Length > 0)
+                    {
+                        for(int i = modelTargets.Length - 1; i >= 0; i--)
+                        {
+                            if(!modelTargets[i])
+                            {
+                                ArrayUtility.RemoveAt(ref modelTargets, i);
+                                modified = true;
+                            }
+                        }
+
+                        if(modelTargets.Length == 0)
+                        {
+                            modelTargets = Array.Empty<CSGModel>();
+                        }
+                    }
+                }
+            }
+
+            return modified;
+        }
+
+        public bool UpdateSelection(HashSet<CSGNode> newTargetNodes, HashSet<Transform> newTargetOthers)
+        {
+            if(newTargetNodes == null)
+            {
+                newTargetNodes = new HashSet<CSGNode>();
+            }
+
+            if(newTargetOthers == null)
+            {
+                newTargetOthers = new HashSet<Transform>();
+            }
+
+            removedNodes  = null;
+            removedOthers = null;
+
+            addedNodes  = null;
+            addedOthers = null;
+
+            List<CSGNode> foundRemovedNodes = new List<CSGNode>();
+
+            if(nodeTargets != null && nodeTargets.Length > 0)
+            {
+                if(newTargetNodes.Count == 0)
+                {
+                    foundRemovedNodes.AddRange(nodeTargets);
+                }
+                else
+                {
+                    for(int i = 0; i < nodeTargets.Length; i++)
+                    {
+                        if(!nodeTargets[i] || !newTargetNodes.Contains(nodeTargets[i]))
+                        {
+                            foundRemovedNodes.Add(nodeTargets[i]);
+                        }
+                    }
+                }
+            }
+
+            List<Transform> foundRemovedOthers = new List<Transform>();
+
+            if(otherTargets != null && otherTargets.Length > 0)
+            {
+                if(newTargetOthers.Count == 0)
+                {
+                    foundRemovedOthers.AddRange(otherTargets);
+                }
+                else
+                {
+                    for(int i = 0; i < otherTargets.Length; i++)
+                    {
+                        if(!otherTargets[i] || !newTargetOthers.Contains(otherTargets[i]))
+                        {
+                            foundRemovedOthers.Add(otherTargets[i]);
+                        }
+                    }
+                }
+            }
+
+            int originalTargetNodeCount  = nodeTargets == null ? 0 : nodeTargets.Length;
+            int originalTargetOtherCount = otherTargets == null ? 0 : otherTargets.Length;
+
+            // If our counts are the same and nothing is removed (and nothing could've been added), nothing has changed.
+            if(newTargetNodes.Count == originalTargetNodeCount && newTargetOthers.Count == originalTargetOtherCount && foundRemovedNodes.Count == 0 && foundRemovedOthers.Count == 0)
+            {
+                return false;
+            }
+
+            Validate();
+
+            foreach(CSGNode node in foundRemovedNodes)
+            {
+                ArrayUtility.Remove(ref nodeTargets, node);
+
+                CSGBrush brush = node as CSGBrush;
+
+                if(brush != null)
+                {
+                    ArrayUtility.Remove(ref brushTargets, brush);
+
+                    continue;
+                }
+
+                CSGOperation operation = node as CSGOperation;
+
+                if(node is CSGOperation)
+                {
+                    ArrayUtility.Remove(ref operationTargets, operation);
+
+                    continue;
+                }
+
+                CSGModel model = node as CSGModel;
+
+                if(node is CSGModel)
+                {
+                    ArrayUtility.Remove(ref modelTargets, model);
+                }
+            }
+
+            foreach(Transform other in foundRemovedOthers)
+            {
+                ArrayUtility.Remove(ref otherTargets, other);
+            }
+
+            List<CSGNode> foundAddedNodes = new List<CSGNode>();
+
+            foreach(CSGNode node in newTargetNodes)
+            {
+                if(nodeTargets != null &&
+                   ArrayUtility.Contains(nodeTargets, node))
+                {
+                    continue;
+                }
+
+                if(nodeTargets == null)
+                {
+                    nodeTargets = new[] { node };
+                }
+                else
+                {
+                    ArrayUtility.Add(ref nodeTargets, node);
+                }
+
+                foundAddedNodes.Add(node);
+
+                if(CSGPrefabUtility.IsPrefabAsset(node.gameObject))
+                {
+                    continue;
+                }
+
+                CSGBrush brush = node as CSGBrush;
+
+                if(brush != null)
+                {
+                    if(brushTargets == null)
+                    {
+                        brushTargets = new[] { brush };
+                    }
+                    else
+                    {
+                        ArrayUtility.Add(ref brushTargets, brush);
+                    }
+
+                    continue;
+                }
+
+                CSGOperation operation = node as CSGOperation;
+
+                if(node is CSGOperation)
+                {
+                    if(operationTargets == null)
+                    {
+                        operationTargets = new[] { operation };
+                    }
+                    else
+                    {
+                        ArrayUtility.Add(ref operationTargets, operation);
+                    }
+
+                    continue;
+                }
+
+                CSGModel model = node as CSGModel;
+
+                if(node is CSGModel)
+                {
+                    if(modelTargets == null)
+                    {
+                        modelTargets = new[] { model };
+                    }
+                    else
+                    {
+                        ArrayUtility.Add(ref modelTargets, model);
+                    }
+                }
+            }
+
+            List<Transform> foundAddedOthers = new List<Transform>();
+
+            foreach(Transform other in newTargetOthers)
+            {
+                if(otherTargets != null && ArrayUtility.Contains(otherTargets, other))
+                {
+                    continue;
+                }
+
+                if(otherTargets == null)
+                {
+                    otherTargets = new[] { other };
+                }
+                else
+                {
+                    ArrayUtility.Add(ref otherTargets, other);
+                }
+
+                foundAddedOthers.Add(other);
+            }
+
+            for(int i = foundAddedNodes.Count - 1; i >= 0; i--)
+            {
+                CSGNode  node  = foundAddedNodes[i];
+                CSGBrush brush = node as CSGBrush;
+
+                if(brush != null)
+                {
+                    if(brush.childData == null || brush.childData.model == null)
+                    {
+                        continue;
+                    }
+
+                    CSGModel childModel = brush.childData.model;
+
+                    if(ModelTraits.IsModelEditable(childModel))
+                    {
+                        SelectionUtility.LastUsedModel = childModel;
+                    }
+
+                    break;
+                }
+
+                CSGOperation operation = node as CSGOperation;
+
+                if(operation != null)
+                {
+                    if(operation.childData == null || operation.childData.model == null)
+                    {
+                        continue;
+                    }
+
+                    SelectionUtility.LastUsedModel = operation.childData.model;
+
+                    break;
+                }
+
+                CSGModel model = node as CSGModel;
+
+                if(ModelTraits.IsModelEditable(model))
+                {
+                    SelectionUtility.LastUsedModel = model;
+
+                    break;
+                }
+            }
+
+            removedNodes  = foundRemovedNodes.ToArray();
+            removedOthers = foundRemovedOthers.ToArray();
+
+            addedNodes  = foundAddedNodes.ToArray();
+            addedOthers = foundAddedOthers.ToArray();
+
+            return foundAddedNodes.Count > 0 || foundRemovedNodes.Count > 0 || foundAddedOthers.Count > 0 || foundRemovedOthers.Count > 0;
+        }
+    }
 }

@@ -104,14 +104,8 @@ public class Gun : Item, IAmmoHandler
                 readyToShootAlt = false;               
             if(gunConfig.timeBetweenShots == 0)
             {
-                PreShoot();
-                for(int i = 0; i < gunConfig.bulletsPerShot; i++)
-                {
-                    Shoot(SpreadDirection());
-                }
-                Knockback(direction);
-                if(lights.Length > 0)
-                    StartCoroutine(Light());
+                PreShoot();                     // instant: sound, animation, recoil, ammo...
+                StartCoroutine(FireShot());     // bullets leave after inputDelay (same frame if it's 0)
             }
             else
             {
@@ -127,32 +121,40 @@ public class Gun : Item, IAmmoHandler
         
     }
 
-    protected IEnumerator DelayedShoot()
+    // The actual shot: waits inputDelay, then the bullets, knockback and muzzle light happen.
+    // Aim/spread is sampled when the bullets leave, not when the button was pressed.
+    IEnumerator FireShot()
     {
-        if (animator != null)
-            animator.Play("Shoot", 0, 0);
+        if (gunConfig.inputDelay > 0)
+            yield return new WaitForSeconds(gunConfig.inputDelay);
 
-        yield return new WaitForSeconds(gunConfig.inputDelay);
-
-        shooting = true;
+        for(int i = 0; i < gunConfig.bulletsPerShot; i++)
+        {
+            Shoot(SpreadDirection());
+        }
+        
+        if(lights.Length > 0)
+            StartCoroutine(Light());
     }
-
-    
 
     IEnumerator TimedShooting()
     {
+        float delay = gunConfig.inputDelay;
         for(int i = 0; i < gunConfig.bulletsPerShot; i++)
         {
             if(GetAmmo() >= gunConfig.ammoPerShot)
             {
-                PreShoot();
+                PreShoot();                                 // instant
+                if (delay > 0)
+                    yield return new WaitForSeconds(delay); // delayed part below
                 Shoot(SpreadDirection());
                 Knockback(-direction);
                 if(lights.Length > 0)
                     StartCoroutine(Light());
-                yield return new WaitForSeconds(gunConfig.timeBetweenShots);
+                // subtract the delay so the time between PreShoot() calls stays timeBetweenShots
+                yield return new WaitForSeconds(Mathf.Max(0f, gunConfig.timeBetweenShots - delay));
             }
-            
+
         }
     }
 
@@ -197,10 +199,7 @@ public class Gun : Item, IAmmoHandler
                     bufferShooting = false;
                 }
 
-                if(bufferShooting && gunConfig.inputDelay > 0)
-                    StartCoroutine(DelayedShoot());
-                else
-                    shooting = bufferShooting;
+                shooting = bufferShooting;
             }
         }
         if(!Input.GetButton("Fire1"))
@@ -222,8 +221,6 @@ public class Gun : Item, IAmmoHandler
     private void ResetShot()
     {
         readyToShoot = true;
-        if(gunConfig.inputDelay > 0)
-            shooting = false;
     }
 
     protected void ResetAltShot()
@@ -239,13 +236,14 @@ public class Gun : Item, IAmmoHandler
         //{
         //    animancer.Play(gunConfig.shootAnimation).Time = 0;
         //}
-        if(animator != null && gunConfig.inputDelay == 0)
+        if(animator != null)
         {
             animator.Play("Shoot", 0, 0);
         }
         Player.Instance.CameraRecoil.ResetRecoil();
         cameraRecoil.ApplyRecoil(gunConfig.recoilAmountCamera, gunConfig.recoilSpeedCamera, gunConfig.returnSpeedCamera);
-        cameraRecoil.ApplyScreenShake(gunConfig.recoilAmountCamera);
+        cameraRecoil.ApplyScreenShake(gunConfig.recoilAmountCamera * 0.25f);
+        Knockback(cameraPivot.forward);
         SpawnMuzzleFlash();
         StartCoroutine(SpawnBulletCase());
         if(gunConfig.ammoPerShot != 0) 
@@ -283,7 +281,10 @@ public class Gun : Item, IAmmoHandler
 
         RaycastHit hit;
 
-        if (Physics.Raycast(start, dir, out hit, gunConfig.range, layerMask, QueryTriggerInteraction.Collide))
+        if (gunConfig.sphereCast ? 
+        Physics.Raycast(start, dir, out hit, gunConfig.range, layerMask, QueryTriggerInteraction.Collide) || 
+        Physics.SphereCast(start, 1, dir, out hit, gunConfig.range, layerMask, QueryTriggerInteraction.Collide) :
+        Physics.Raycast(start, dir, out hit, gunConfig.range, layerMask, QueryTriggerInteraction.Collide))
         {
             Debug.Log("HIT: " + hit.transform.name);
             target = hit.point;
@@ -296,6 +297,7 @@ public class Gun : Item, IAmmoHandler
             if (hit.transform.TryGetComponent<IDamageable>(out IDamageable victim))
             {
                 victim.TakeDamage(player.transform, Mathf.RoundToInt(gunConfig.damage * damageMultiplier), hit.point, hit.normal);
+                SoundManager.PlaySound(gunConfig.hitSFX, transform.position, 0.25f, 0);
             }
             else if(hit.transform.gameObject.layer == LayerMask.NameToLayer("Default") || hit.transform.gameObject.layer == LayerMask.NameToLayer("Interactable"))
             {
@@ -375,7 +377,9 @@ public class Gun : Item, IAmmoHandler
     private void Knockback(Vector3 dir)
     {
         Debug.DrawRay(player.transform.position, dir*10, Color.cyan, 2f);
+        //player.GetComponent<MovementController>().resetVelocity();
         player.GetComponent<MovementController>().addVelocity(dir * gunConfig.knockbackForce);
+        //player.GetComponent<MovementController>().Dash(dir, 0.5f * gunConfig.knockbackForce, 10 * gunConfig.knockbackForce, gunConfig.knockbackForce);
     }
 
     
@@ -398,6 +402,10 @@ public class Gun : Item, IAmmoHandler
 
     protected void SpawnMuzzleFlash()
     {
+        if(gunConfig.muzzleFlashPrefab == null)
+            return;
+
+
         GameObject particles = Instantiate(gunConfig.muzzleFlashPrefab, bulletStart.position, transform.rotation, transform);
         Destroy(particles, 0.5f);
     }

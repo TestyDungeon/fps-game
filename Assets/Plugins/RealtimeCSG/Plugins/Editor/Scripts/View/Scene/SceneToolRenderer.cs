@@ -1,68 +1,83 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using RealtimeCSG.Components;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace RealtimeCSG
 {
-	internal static class SceneToolRenderer
-	{
-		static int meshGeneration = -1;
+    internal static class SceneToolRenderer
+    {
+        private static int m_MeshGeneration = -1;
 
-		static LineMeshManager lineMeshManager = new LineMeshManager();
+        private static readonly LineMeshManager lineMeshManager = new LineMeshManager();
 
-		internal static void Cleanup()
-		{
-			meshGeneration = -1;
-			lineMeshManager.Destroy();
-		}
-
-		static bool forceOutlineUpdate = false;
-		internal static void SetOutlineDirty() { forceOutlineUpdate = false; }
-		
-		internal static void OnPaint(SceneView sceneView)
+        internal static void Cleanup()
         {
-            if (!sceneView)
+            m_MeshGeneration = -1;
+            lineMeshManager.Destroy();
+        }
+
+        private static bool m_ForceOutlineUpdate;
+
+        internal static void SetOutlineDirty()
+        {
+            m_ForceOutlineUpdate = false;
+        }
+
+        internal static void OnPaint(SceneView sceneView)
+        {
+            if(!sceneView)
+            {
                 return;
+            }
 
-            var camera = sceneView.camera;
-			SceneDragToolManager.OnPaint(camera);
+            Camera camera = sceneView.camera;
+            SceneDragToolManager.OnPaint(camera);
 
-			if (Event.current.type != EventType.Repaint)
-				return;
+            if(Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
 
-            if (RealtimeCSG.CSGSettings.GridVisible)
-				RealtimeCSG.CSGGrid.RenderGrid(camera);
-			
-			if (RealtimeCSG.CSGSettings.IsWireframeShown(sceneView))
-			{
-				if (forceOutlineUpdate || meshGeneration != InternalCSGModelManager.MeshGeneration)
-				{
-					forceOutlineUpdate = false;
-					meshGeneration = InternalCSGModelManager.MeshGeneration;
-					lineMeshManager.Begin();
-					for (int i = 0; i < InternalCSGModelManager.Brushes.Count; i++)
-					{
-						var brush = InternalCSGModelManager.Brushes[i];
-						if (!brush)
-							continue;
+            if(CSGSettings.GridVisible)
+            {
+                CSGGrid.RenderGrid(camera);
+            }
 
-						if (!brush.outlineColor.HasValue)
-							brush.outlineColor = ColorSettings.GetBrushOutlineColor(brush);
-						
-						var brush_transformation = brush.compareTransformation.localToWorldMatrix;
-						CSGRenderer.DrawSimpleOutlines(lineMeshManager, brush.brushNodeID, brush_transformation, brush.outlineColor.Value);
-					}
-					lineMeshManager.End();
-				}
+            if(CSGSettings.IsWireframeShown(sceneView))
+            {
+                if(m_ForceOutlineUpdate || m_MeshGeneration != InternalCSGModelManager.MeshGeneration)
+                {
+                    m_ForceOutlineUpdate = false;
+                    m_MeshGeneration     = InternalCSGModelManager.MeshGeneration;
+                    lineMeshManager.Begin();
 
-				MaterialUtility.LineDashMultiplier = 1.0f;
-				MaterialUtility.LineThicknessMultiplier = 1.0f;
-				MaterialUtility.LineAlphaMultiplier = 1.0f;
-				lineMeshManager.Render(MaterialUtility.NoZTestGenericLine);
-			}
-		}
-	}
+                    for(int i = 0; i < InternalCSGModelManager.Brushes.Count; i++)
+                    {
+                        CSGBrush brush = InternalCSGModelManager.Brushes[i];
+
+                        if(!brush)
+                        {
+                            continue;
+                        }
+
+                        if(!brush.outlineColor.HasValue)
+                        {
+                            brush.outlineColor = ColorSettings.GetBrushOutlineColor(brush);
+                        }
+
+                        Matrix4x4 brushTransformation = brush.compareTransformation.localToWorldMatrix;
+
+                        CSGRenderer.DrawSimpleOutlines(lineMeshManager, brush.brushNodeID, brushTransformation, brush.outlineColor.Value);
+                    }
+
+                    lineMeshManager.End();
+                }
+
+                MaterialUtility.LineDashMultiplier      = 1.0f;
+                MaterialUtility.LineThicknessMultiplier = 1.0f;
+                MaterialUtility.LineAlphaMultiplier     = 1.0f;
+                lineMeshManager.Render(MaterialUtility.NoZTestGenericLine);
+            }
+        }
+    }
 }

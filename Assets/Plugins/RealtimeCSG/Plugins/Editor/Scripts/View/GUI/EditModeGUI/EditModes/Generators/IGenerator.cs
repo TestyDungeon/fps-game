@@ -1,35 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 using RealtimeCSG.Foundation;
-using UnityEngine.SceneManagement;
 
 namespace RealtimeCSG
 {
-	internal interface IGenerator
-	{
-		bool HaveBrushes { get; }
-		bool CanCommit { get; }
+    internal interface IGenerator
+    {
+        bool HaveBrushes { get; }
+        bool CanCommit { get; }
 
-		CSGOperationType CurrentCSGOperationType { get; set; }
+        CSGOperationType CurrentCSGOperationType { get; set; }
 
-		void Init();
+        void Init();
 
-		bool HotKeyReleased();
+        bool HotKeyReleased();
 
-		bool UndoRedoPerformed();
-		void PerformDeselectAll();
+        bool UndoRedoPerformed();
+        void PerformDeselectAll();
 
-		void HandleEvents(SceneView sceneView, Rect sceneRect);
-		
-		bool OnShowGUI(bool isSceneGUI);
-		void StartGUI();
-		void FinishGUI();
+        void HandleEvents(SceneView sceneView, Rect sceneRect);
 
-		void DoCancel();
-		void DoCommit();
+        bool OnShowGUI(bool isSceneGUI);
+        void StartGUI();
+        void FinishGUI();
 
-		void OnDefaultMaterialModified();
-	}
+        void DoCancel();
+        void DoCommit();
+
+        void OnDefaultMaterialModified();
+    }
 }

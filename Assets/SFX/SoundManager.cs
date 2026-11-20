@@ -155,7 +155,7 @@ public class SoundManager : MonoBehaviour
         source.spatialBlend = spatialBlend; // fully 3D
         source.minDistance = 3f;
         source.maxDistance = 50f;
-        source.rolloffMode = AudioRolloffMode.Logarithmic;
+        source.rolloffMode = AudioRolloffMode.Linear;
 
         source.Play();
         Destroy(tempAudio, randomClip.length);
@@ -175,7 +175,7 @@ public class SoundManager : MonoBehaviour
         source.spatialBlend = spatialBlend; // fully 3D
         source.minDistance = 3f;
         source.maxDistance = 50f;
-        source.rolloffMode = AudioRolloffMode.Logarithmic;
+        source.rolloffMode = AudioRolloffMode.Linear;
 
         source.Play();
         Destroy(tempAudio, sound.length);
@@ -201,7 +201,7 @@ public class SoundManager : MonoBehaviour
         source.spatialBlend = spatialBlend; // fully 3D
         source.minDistance = 3f;
         source.maxDistance = 50f;
-        source.rolloffMode = AudioRolloffMode.Logarithmic;
+        source.rolloffMode = AudioRolloffMode.Linear;
 
         source.Play();
         Destroy(tempAudio, randomClip.length);

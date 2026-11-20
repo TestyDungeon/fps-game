@@ -837,25 +837,25 @@ PlayerSettings:
   webEnableSubmoduleStrippingCompatibility: 0
   webProgressiveAssetLoading: 0
   scriptingDefineSymbols:
-    Android: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    EmbeddedLinux: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    GameCoreScarlett: DOTWEEN;UNITY_POST_PROCESSING_STACK_V2;RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    GameCoreXboxOne: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    Kepler: UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    LinuxHeadlessSimulation: DOTWEEN;UNITY_POST_PROCESSING_STACK_V2;RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_6;RealtimeCSG_1_6_01
+    Android: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    EmbeddedLinux: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    GameCoreScarlett: DOTWEEN;UNITY_POST_PROCESSING_STACK_V2;RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    GameCoreXboxOne: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    Kepler: UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    LinuxHeadlessSimulation: DOTWEEN;UNITY_POST_PROCESSING_STACK_V2;RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_60;RealtimeCSG_1_60_1
     Nintendo Switch: UNITY_POST_PROCESSING_STACK_V2;DOTWEEN
-    Nintendo Switch 2: UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    PS4: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    PS5: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    QNX: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
+    Nintendo Switch 2: UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG;RealtimeCSG_1;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    PS4: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    PS5: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    QNX: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
     ReservedCFE: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    Standalone: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    VisionOS: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
-    WebGL: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
+    Standalone: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    VisionOS: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
+    WebGL: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
     Windows Store Apps: DOTWEEN
-    XboxOne: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
+    XboxOne: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
     iPhone: DOTWEEN
-    tvOS: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_6;RealtimeCSG_1_6_01
+    tvOS: RealtimeCSG;RealtimeCSG_1;UNITY_POST_PROCESSING_STACK_V2;DOTWEEN;RealtimeCSG_1_60;RealtimeCSG_1_60_1
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

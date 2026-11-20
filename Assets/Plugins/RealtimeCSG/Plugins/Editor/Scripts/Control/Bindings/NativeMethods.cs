@@ -1,224 +1,139 @@
 ﻿#if UNITY_EDITOR
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using RealtimeCSG.Foundation;
-using RealtimeCSG.Legacy;
 using RealtimeCSG.Components;
 
 namespace RealtimeCSG
 {
-	#region delegates
+#region delegates
 
-	#region Tree delegates
-	internal delegate bool GenerateModelDelegate			(Int32				userID,
-															 out Int32			generatedModelNodeID);
+#region Tree delegates
 
-	internal delegate bool SetModelDelegate					(Int32				modelNodeID,
-															 bool				isEnabled);
+    internal delegate bool GenerateModelDelegate(int userID, out int generatedModelNodeID);
+    internal delegate bool SetDirtyDelegate(int nodeID);
+    internal delegate bool SetModelEnabledDelegate(int modelNodeID, bool isEnabled);
 
-	internal delegate bool SetDirtyDelegate					(Int32				nodeID);
-	
-	internal delegate bool SetModelEnabledDelegate			(Int32				modelNodeID,
-															 bool				isEnabled);
-	#endregion
+#endregion
 
-	#region Selection delegates
-	internal delegate bool RayCastMultiDelegate				(int					modelCount,
-															 CSGModel[]				models,
-															 Vector3				rayStart,
-															 Vector3				rayEnd,
-															 bool					ignoreInvisiblePolygons,
-															 out LegacyBrushIntersection[] intersections,
-															 CSGBrush[]				ignoreBrushes = null);
+#region Selection delegates
 
-	internal delegate bool RayCastIntoModelMultiDelegate	(CSGModel				model, 
-															 Vector3				rayStart,
-															 Vector3				rayEnd,
-															 bool					ignoreInvisiblePolygons,
-															 out LegacyBrushIntersection[] intersections,
-															 CSGBrush[]				ignoreBrushes = null);
+    internal delegate bool RayCastMultiDelegate(int modelCount, CSGModel[] models, Vector3 rayStart, Vector3 rayEnd, bool ignoreInvisiblePolygons, out LegacyBrushIntersection[] intersections, CSGBrush[] ignoreBrushes = null);
+    internal delegate bool RayCastIntoModelMultiDelegate(CSGModel model, Vector3 rayStart, Vector3 rayEnd, bool ignoreInvisiblePolygons, out LegacyBrushIntersection[] intersections, CSGBrush[] ignoreBrushes = null);
+    internal delegate bool RayCastIntoBrushDelegate(int brushNodeID, Vector3 rayStart, Vector3 rayEnd, Matrix4x4 modelTransformation, out LegacyBrushIntersection intersection, bool ignoreInvisiblePolygons);
 
-	internal delegate bool RayCastIntoModelDelegate			(CSGModel				model, 
-															 Vector3				rayStart,
-															 Vector3				rayEnd,
-															 bool					ignoreInvisiblePolygons,
-															 out LegacyBrushIntersection	intersection,
-															 CSGBrush[]				ignoreBrushes = null);
-		
-	internal delegate bool RayCastIntoBrushDelegate			(Int32					brushNodeID, 
-															 Vector3				rayStart,
-															 Vector3				rayEnd,
-															 Matrix4x4				modelTransformation,
-															 out LegacyBrushIntersection	intersection,
-															 bool					ignoreInvisiblePolygons);
+    internal delegate bool RayCastIntoBrushSurfaceDelegate(int brushNodeID, int surfaceIndex, Vector3 rayStart, Vector3 rayEnd, Matrix4x4 modelTransformation, out LegacySurfaceIntersection intersection);
+    internal delegate bool GetItemsInFrustumDelegate(CSGModel model, Plane[] planes, HashSet<GameObject> gameObjects);
 
-	internal delegate bool RayCastIntoBrushSurfaceDelegate	(Int32							brushNodeID, 
-															 Int32							surfaceIndex,
-															 Vector3						rayStart,
-															 Vector3						rayEnd,
-															 Matrix4x4						modelTransformation,
-															 out LegacySurfaceIntersection	intersection);
+#endregion
 
-	internal delegate bool GetItemsInFrustumDelegate		(CSGModel				model, 
-															 Plane[]				planes, 
-															 HashSet<GameObject>	gameObjects);
-	#endregion
+    internal delegate bool SetChildNodesDelegate(int nodeID, int childCount, int[] childrenNodeIDs);
+    internal delegate bool DestroyNodeDelegate(int operationNodeID);
+    internal delegate bool DestroyNodesDelegate(int[] operationNodeIDs);
 
-	
-	internal delegate bool SetChildNodesDelegate			(Int32				nodeID,
-															 Int32				childCount,
-															 Int32[]			childrenNodeIDs);
-	internal delegate bool DestroyNodeDelegate				(Int32				operationNodeID);
+#region Operation delegates
 
-	internal delegate bool DestroyNodesDelegate				(Int32[]			operationNodeIDs);
+    internal delegate bool GenerateOperationDelegate(int userID, out int generatedOperationNodeID);
+    internal delegate bool SetOperationOperationTypeDelegate(int operationNodeID, CSGOperationType operation);
 
-	#region Operation delegates
-	internal delegate bool GenerateOperationDelegate		(Int32				userID,
-															 out Int32			generatedOperationNodeID);
+#endregion
 
-	internal delegate bool SetOperationOperationTypeDelegate(Int32				operationNodeID,
-															 CSGOperationType	operation);
+#region Brush delegates
 
-	#endregion
+    internal delegate bool GenerateBrushDelegate(int userID, out int generatedBrushNodeID);
+    internal delegate int GetBrushMeshIDDelegate(int brushNodeID);
+    internal delegate bool SetBrushMeshIDDelegate(int brushNodeID, int brushMeshIndex);
+    internal delegate CSGTreeBrushFlags GetBrushFlagsDelegate(int brushNodeID);
+    internal delegate bool SetBrushFlagsDelegate(int brushNodeID, CSGTreeBrushFlags flags);
+    internal delegate bool SetBrushOperationTypeDelegate(int brushNodeID, CSGOperationType operation);
+    internal delegate bool SetBrushToModelSpaceDelegate(int brushNodeID, Matrix4x4 localToModelSpace);
+    internal delegate int CreateBrushMeshDelegate(int userID, BrushMesh brushMesh);
+    internal delegate bool UpdateBrushMeshDelegate(int brushMeshIndex, BrushMesh brushMesh);
+    internal delegate bool DestroyBrushMeshDelegate(int brushMeshIndex);
 
-	#region Brush delegates	
-	internal delegate bool GenerateBrushDelegate			(Int32				userID,
-															 out Int32			generatedBrushNodeID);
+#endregion
 
-	internal delegate Int32 GetBrushMeshIDDelegate			(Int32				brushNodeID);
-	internal delegate bool SetBrushMeshIDDelegate			(Int32				brushNodeID, Int32 brushMeshIndex);
-	
-	internal delegate CSGTreeBrushFlags GetBrushFlagsDelegate(Int32				brushNodeID);
-	internal delegate bool SetBrushFlagsDelegate			(Int32				brushNodeID, CSGTreeBrushFlags flags);
+#region Misc
 
-	internal delegate bool SetBrushOperationTypeDelegate	(Int32				brushNodeID,
-															 Foundation.CSGOperationType operation);
+    internal delegate List<List<Vector2>> ConvexPartitionDelegate(Vector2[] points);
 
-	internal delegate bool SetBrushToModelSpaceDelegate		(Int32				brushNodeID,
-															 Matrix4x4			localToModelSpace);
+#endregion
 
-	internal delegate Int32 CreateBrushMeshDelegate			(Int32				userID, Foundation.BrushMesh brushMesh);
-	
-	internal delegate bool UpdateBrushMeshDelegate			(Int32				brushMeshIndex,
-															 Foundation.BrushMesh brushMesh);
+#region TexGen manipulation delegates
 
-	internal delegate bool DestroyBrushMeshDelegate			(Int32				brushMeshIndex);
-	#endregion
+    internal delegate bool GetSurfaceMinMaxTexCoordsDelegate(int brushNodeID, int surfaceIndex, Matrix4x4 modelLocalToWorldMatrix, out Vector2 minTextureCoordinate, out Vector2 maxTextureCoordinate);
+    internal delegate bool ConvertWorldToTextureCoordDelegate(int brushNodeID, int surfaceIndex, Matrix4x4 modelTransformation, Vector3 worldCoordinate, out Vector2 textureCoordinate);
+    internal delegate bool ConvertTextureToWorldCoordDelegate(int brushNodeID, int surfaceIndex, float textureCoordinateU, float textureCoordinateV, ref Matrix4x4 modelTransformation, ref float worldCoordinateX, ref float worldCoordinateY, ref float worldCoordinateZ);
 
-	#region Misc
-	internal delegate List<List<Vector2>> ConvexPartitionDelegate (Vector2[] points);
+#endregion
 
-	#endregion
+#region Outlines
 
-	#region TexGen manipulation delegates	
+    internal delegate ulong GetBrushOutlineGenerationDelegate(int brushNodeID);
+    internal delegate bool GetBrushOutlineDelegate(int brushNodeID, out GeometryWireframe geometryWireframe);
+    internal delegate bool GetSurfaceOutlineDelegate(int brushNodeID, int surfaceIndex, out GeometryWireframe outline);
 
-	internal delegate bool GetSurfaceMinMaxTexCoordsDelegate(Int32				brushNodeID,
-															 Int32				surfaceIndex,
-															 Matrix4x4			modelLocalToWorldMatrix,
-															 out Vector2		minTextureCoordinate, 
-															 out Vector2		maxTextureCoordinate);
+#endregion
 
-	internal delegate bool GetSurfaceMinMaxWorldCoordDelegate(Int32				brushNodeID,
-															 Int32				surfaceIndex, 
-															 out Vector3		minWorldCoordinate, 
-															 out Vector3		maxWorldCoordinate);
+#region Meshes
 
-	internal delegate bool ConvertWorldToTextureCoordDelegate(Int32				brushNodeID,
-															  Int32				surfaceIndex, 
-															  Matrix4x4			modelTransformation,
-															  Vector3			worldCoordinate, 
-															  out Vector2		textureCoordinate);
+    internal delegate void ResetCSGDelegate();
+    internal delegate bool UpdateAllModelMeshesDelegate();
+    internal delegate bool GetMeshDescriptionsDelegate(CSGModel model, ref GeneratedMeshDescription[] meshDescriptions);
+    internal delegate GeneratedMeshContents GetModelMeshDelegate(int modelNodeID, GeneratedMeshDescription meshDescription);
+    internal delegate bool GetModelMeshNoAllocDelegate(int modelNodeID, GeneratedMeshDescription meshDescription, ref GeneratedMeshContents generatedMeshData);
 
-	internal delegate bool ConvertTextureToWorldCoordDelegate(Int32				brushNodeID,
-															  Int32				surfaceIndex, 
-															  float				textureCoordinateU, 
-															  float				textureCoordinateV,
-															  // workaround for mac-osx related bug
-															  ref Matrix4x4		modelTransformation,
-															  ref float			worldCoordinateX, 
-															  ref float			worldCoordinateY, 
-															  ref float			worldCoordinateZ);
+#endregion
 
+#endregion
 
-	#endregion
+    internal sealed class NativeMethods
+    {
+        public ResetCSGDelegate resetCSG;
+        public ConvexPartitionDelegate convexPartition;
 
-	#region Outlines
-	internal delegate UInt64 GetBrushOutlineGenerationDelegate(Int32 brushNodeID);
-	internal delegate bool GetBrushOutlineDelegate			(Int32					brushNodeID,
-															 out GeometryWireframe	geometryWireframe);
-	internal delegate bool GetSurfaceOutlineDelegate		(Int32					brushNodeID,
-															 Int32					surfaceIndex,
-															 out GeometryWireframe	outline);
-	#endregion
+        public SetDirtyDelegate setDirty;
+        public SetChildNodesDelegate setChildNodes;
+        public DestroyNodeDelegate destroyNode;
+        public DestroyNodesDelegate destroyNodes;
 
-	#region Meshes
+        public GenerateModelDelegate generateModel;
+        public SetModelEnabledDelegate setModelEnabled;
 
-	internal delegate void ResetCSGDelegate();
+        public GenerateOperationDelegate generateOperation;
+        public SetOperationOperationTypeDelegate setOperationOperationType;
 
-	internal delegate bool UpdateAllModelMeshesDelegate		();
-	internal delegate bool ModelMeshesNeedUpdateDelegate	();
-	internal delegate bool GetMeshDescriptionsDelegate		(CSGModel		model,
-															 ref GeneratedMeshDescription[]	meshDescriptions);
+        public GenerateBrushDelegate generateBrush;
+        public GetBrushMeshIDDelegate getBrushMeshID;
+        public SetBrushMeshIDDelegate setBrushMeshID;
+        public GetBrushFlagsDelegate getBrushFlags;
+        public SetBrushFlagsDelegate setBrushFlags;
+        public SetBrushOperationTypeDelegate setBrushOperationType;
+        public SetBrushToModelSpaceDelegate setBrushToModelSpace;
 
-	internal delegate GeneratedMeshContents GetModelMeshDelegate(int modelNodeID, GeneratedMeshDescription meshDescription);
-	internal delegate bool GetModelMeshNoAllocDelegate(int modelNodeID, GeneratedMeshDescription meshDescription, ref GeneratedMeshContents generatedMeshData);
-	
-	#endregion
+        public CreateBrushMeshDelegate createBrushMesh;
+        public UpdateBrushMeshDelegate updateBrushMesh;
+        public DestroyBrushMeshDelegate destroyBrushMesh;
 
-	#endregion
-	
-	internal sealed class NativeMethods
-	{
-		public ResetCSGDelegate				        ResetCSG;
-		public ConvexPartitionDelegate              ConvexPartition;
+        public UpdateAllModelMeshesDelegate updateAllModelMeshes;
+        public GetMeshDescriptionsDelegate getMeshDescriptions;
 
-		public SetDirtyDelegate						SetDirty;
-		public SetChildNodesDelegate				SetChildNodes;
-		public DestroyNodeDelegate				    DestroyNode;
-		public DestroyNodesDelegate					DestroyNodes;
+        public GetModelMeshDelegate getModelMesh;
+        public GetModelMeshNoAllocDelegate getModelMeshNoAlloc;
 
-		public GenerateModelDelegate				GenerateModel;
-		public SetModelEnabledDelegate              SetModelEnabled;
+        public RayCastMultiDelegate rayCastMulti;
+        public RayCastIntoModelMultiDelegate rayCastIntoModelMulti;
+        public RayCastIntoBrushDelegate rayCastIntoBrush;
+        public RayCastIntoBrushSurfaceDelegate rayCastIntoBrushSurface;
+        public GetItemsInFrustumDelegate getItemsInFrustum;
 
-		public GenerateOperationDelegate			GenerateOperation;
-		public SetOperationOperationTypeDelegate	SetOperationOperationType;
-		
-		public GenerateBrushDelegate				GenerateBrush;
-		public GetBrushMeshIDDelegate				GetBrushMeshID;
-		public SetBrushMeshIDDelegate				SetBrushMeshID;
-		public GetBrushFlagsDelegate                GetBrushFlags;
-		public SetBrushFlagsDelegate				SetBrushFlags;
-		public SetBrushOperationTypeDelegate		SetBrushOperationType;
-		public SetBrushToModelSpaceDelegate         SetBrushToModelSpace;
+        public GetSurfaceMinMaxTexCoordsDelegate getSurfaceMinMaxTexCoords;
+        public ConvertWorldToTextureCoordDelegate convertModelToTextureSpace;
+        public ConvertTextureToWorldCoordDelegate convertTextureToModelSpace;
 
-		
-		public CreateBrushMeshDelegate				CreateBrushMesh;
-		public UpdateBrushMeshDelegate				UpdateBrushMesh;
-		public DestroyBrushMeshDelegate				DestroyBrushMesh;
-
-
-		public UpdateAllModelMeshesDelegate         UpdateAllModelMeshes;
-		public GetMeshDescriptionsDelegate          GetMeshDescriptions;
-
-		public GetModelMeshDelegate					GetModelMesh;
-		public GetModelMeshNoAllocDelegate          GetModelMeshNoAlloc;
-
-
-		public RayCastMultiDelegate					RayCastMulti;
-		public RayCastIntoModelMultiDelegate        RayCastIntoModelMulti;
-		public RayCastIntoBrushDelegate             RayCastIntoBrush;
-		public RayCastIntoBrushSurfaceDelegate      RayCastIntoBrushSurface;
-		public GetItemsInFrustumDelegate            GetItemsInFrustum;
-		
-		public GetSurfaceMinMaxTexCoordsDelegate	GetSurfaceMinMaxTexCoords;
-		public ConvertWorldToTextureCoordDelegate	ConvertModelToTextureSpace;
-		public ConvertTextureToWorldCoordDelegate	ConvertTextureToModelSpace;
-		
-				
-		public GetBrushOutlineGenerationDelegate	GetBrushOutlineGeneration;
-		public GetBrushOutlineDelegate				GetBrushOutline;
-		public GetSurfaceOutlineDelegate			GetSurfaceOutline;
-	}
+        public GetBrushOutlineGenerationDelegate getBrushOutlineGeneration;
+        public GetBrushOutlineDelegate getBrushOutline;
+        public GetSurfaceOutlineDelegate getSurfaceOutline;
+    }
 }
 #endif

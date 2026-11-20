@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-using UnityEditor;
-using RealtimeCSG;
+﻿using UnityEngine;
 
 namespace InternalRealtimeCSG
 {
@@ -11,34 +6,28 @@ namespace InternalRealtimeCSG
     {
         public static void Rotate(this TransformSelection selection, Vector3 rotationCenter, Vector3 rotationAxis, float rotationAngle)
         {
-            var rotationQuaternion = Quaternion.AngleAxis(rotationAngle, rotationAxis);
-            if (Mathf.Abs(rotationAngle) < MathConstants.EqualityEpsilon)
+            Quaternion rotationQuaternion = Quaternion.AngleAxis(rotationAngle, rotationAxis);
+
+            if(Mathf.Abs(rotationAngle) < MathConstants.EQUALITY_EPSILON)
             {
-                for (var t = 0; t < selection.Transforms.Length; t++)
+                for(int t = 0; t < selection.transforms.Length; t++)
                 {
-                    var targetTransform = selection.Transforms[t];
-                    targetTransform.position = selection.BackupPositions[t];
-                    targetTransform.rotation = selection.BackupRotations[t];
-                }
-            } else
-            {
-                for (var t = 0; t < selection.Transforms.Length; t++)
-                {
-                    var targetTransform = selection.Transforms[t];
-                    var originalCenter = targetTransform.InverseTransformPoint(rotationCenter);
-                    targetTransform.position = selection.BackupPositions[t];
-                    targetTransform.rotation = rotationQuaternion * selection.BackupRotations[t];
-                    var newCenter = targetTransform.TransformPoint(originalCenter);
-                    targetTransform.position += rotationCenter - newCenter;
+                    Transform targetTransform = selection.transforms[t];
+                    targetTransform.position = selection.backupPositions[t];
+                    targetTransform.rotation = selection.backupRotations[t];
                 }
             }
-        }
-
-        public static void Translate(this TransformSelection selection, Vector3 translation)
-        {
-            for (var t = 0; t < selection.Transforms.Length; t++)
+            else
             {
-                selection.Transforms[t].position = GridUtility.CleanPosition(selection.BackupPositions[t] + translation);
+                for(int t = 0; t < selection.transforms.Length; t++)
+                {
+                    Transform targetTransform = selection.transforms[t];
+                    Vector3   originalCenter  = targetTransform.InverseTransformPoint(rotationCenter);
+                    targetTransform.position = selection.backupPositions[t];
+                    targetTransform.rotation = rotationQuaternion * selection.backupRotations[t];
+                    Vector3 newCenter = targetTransform.TransformPoint(originalCenter);
+                    targetTransform.position += rotationCenter - newCenter;
+                }
             }
         }
     }

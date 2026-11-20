@@ -13,129 +13,153 @@ namespace InternalRealtimeCSG
     {
         public static void SnapToGrid(Camera camera, CSGBrush[] brushes)
         {
-            var worldDeltaMovement = MathConstants.zeroVector3;
+            Vector3 worldDeltaMovement = MathConstants.zeroVector3;
 
-            var transforms = new List<Transform>();
-            for (var b = 0; b < brushes.Length; b++)
+            List<Transform> transforms = new List<Transform>();
+
+            for(int b = 0; b < brushes.Length; b++)
             {
-                if (brushes[b] == null ||
-                    !brushes[b])
+                if(brushes[b] == null || !brushes[b])
                 {
                     continue;
                 }
 
-                var brushTransform = brushes[b].GetComponent<Transform>();
-                var brushLocalToWorld = brushTransform.localToWorldMatrix;
+                Transform brushTransform    = brushes[b].GetComponent<Transform>();
+                Matrix4x4 brushLocalToWorld = brushTransform.localToWorldMatrix;
 
                 transforms.Add(brushTransform);
 
-                var controlMesh = brushes[b].ControlMesh;
-                var points = controlMesh.Vertices;
+                ControlMesh controlMesh = brushes[b].controlMesh;
+                Vector3[]   points      = controlMesh.vertices;
+                Vector3[]   worldPoints = new Vector3[points.Length];
 
-                var worldPoints = new Vector3[points.Length];
-                for (var p = 0; p < points.Length; p++)
+                for(int p = 0; p < points.Length; p++)
                 {
                     worldPoints[p] = brushLocalToWorld.MultiplyPoint(points[p]);
                 }
 
-                worldDeltaMovement = RealtimeCSG.CSGGrid.SnapDeltaToGrid(camera, worldDeltaMovement, worldPoints.ToArray(), snapToGridPlane: false, snapToSelf: false);
+                worldDeltaMovement = CSGGrid.SnapDeltaToGrid(camera, worldDeltaMovement, worldPoints.ToArray(), false, false);
             }
 
-            if (worldDeltaMovement.x == 0.0f && worldDeltaMovement.y == 0.0f && worldDeltaMovement.z == 0.0f)
-                return;
-
-            for (var b = 0; b < transforms.Count; b++)
+            if(worldDeltaMovement.x == 0.0f && worldDeltaMovement.y == 0.0f && worldDeltaMovement.z == 0.0f)
             {
-                var transform = transforms[b];
+                return;
+            }
+
+            for(int b = 0; b < transforms.Count; b++)
+            {
+                Transform transform = transforms[b];
                 transform.position = GridUtility.CleanPosition(transform.position + worldDeltaMovement);
             }
         }
 
         public static void Flip(CSGBrush[] brushes, Matrix4x4 flipMatrix, string undoDescription = "Flip brushes")
         {
-            var fail = false;
             Undo.IncrementCurrentGroup();
             Undo.RegisterCompleteObjectUndo(brushes.ToArray<UnityEngine.Object>(), undoDescription);
 
-            var isGlobal = Tools.pivotRotation == PivotRotation.Global;
+            bool    isGlobal  = Tools.pivotRotation == PivotRotation.Global;
+            Vector3 centerAll = BoundsUtilities.GetCenter(brushes);
 
-            var centerAll = BoundsUtilities.GetCenter(brushes);
-            for (var t = 0; t < brushes.Length; t++)
+            for(int t = 0; t < brushes.Length; t++)
             {
-                var brush = brushes[t];
-                var position = brush.transform.position;
+                CSGBrush brush    = brushes[t];
+                Vector3  position = brush.transform.position;
 
                 Matrix4x4 brushFlip;
-                Vector3 brushCenter;
-                if (isGlobal)
+                Vector3   brushCenter;
+
+                if(isGlobal)
                 {
-                    brushFlip	= brush.transform.localToWorldMatrix *
-                                       flipMatrix *
-                                       brush.transform.worldToLocalMatrix;
+                    brushFlip = brush.transform.localToWorldMatrix * flipMatrix * brush.transform.worldToLocalMatrix;
+
                     brushCenter = brush.transform.InverseTransformPoint(centerAll) - position;
-                } else
+                }
+                else
                 {
-                    brushFlip	= flipMatrix;
+                    brushFlip   = flipMatrix;
                     brushCenter = brush.transform.InverseTransformPoint(centerAll);
                 }
 
-				brushFlip = Matrix4x4.TRS(brushCenter, Quaternion.identity, Vector3.one) *
-							brushFlip *
-							Matrix4x4.TRS(-brushCenter, Quaternion.identity, Vector3.one);
-				
+                brushFlip = Matrix4x4.TRS(brushCenter, Quaternion.identity, Vector3.one) * brushFlip * Matrix4x4.TRS(-brushCenter, Quaternion.identity, Vector3.one);
+
                 brush.EnsureInitialized();
-                var shape = brush.Shape;
-                for (var s = 0; s < shape.Surfaces.Length; s++)
+                Shape shape = brush.shape;
+
+                for(int s = 0; s < shape.surfaces.Length; s++)
                 {
-                    var plane = shape.Surfaces[s].Plane;
+                    CSGPlane plane = shape.surfaces[s].Plane;
 
-                    var normal		= brushFlip.MultiplyVector(plane.normal);
-                    var biNormal	= brushFlip.MultiplyVector(shape.Surfaces[s].BiNormal);
-                    var tangent		= brushFlip.MultiplyVector(shape.Surfaces[s].Tangent);
+                    Vector3 normal   = brushFlip.MultiplyVector(plane.Normal);
+                    Vector3 biNormal = brushFlip.MultiplyVector(shape.surfaces[s].BiNormal);
+                    Vector3 tangent  = brushFlip.MultiplyVector(shape.surfaces[s].Tangent);
 
-                    var pointOnPlane = plane.pointOnPlane;
+                    Vector3 pointOnPlane = plane.PointOnPlane;
                     pointOnPlane = brushFlip.MultiplyPoint(pointOnPlane);
 
-                    shape.Surfaces[s].Plane		= new CSGPlane(normal, pointOnPlane);
-                    shape.Surfaces[s].BiNormal	= biNormal;
-                    shape.Surfaces[s].Tangent	= tangent;
+                    shape.surfaces[s].Plane    = new CSGPlane(normal, pointOnPlane);
+                    shape.surfaces[s].BiNormal = biNormal;
+                    shape.surfaces[s].Tangent  = tangent;
                 }
 
-                var controlMesh = brush.ControlMesh;
-				var vertices = controlMesh.Vertices;
-				for (var v = 0; v < vertices.Length; v++)
-					vertices[v] = brushFlip.MultiplyPoint(vertices[v]);
+                ControlMesh controlMesh = brush.controlMesh;
+                Vector3[]   vertices    = controlMesh.vertices;
 
-				var polygons = controlMesh.Polygons;
-				for (var p = 0; p < polygons.Length; p++)
-					Array.Reverse(polygons[p].EdgeIndices);
+                for(int v = 0; v < vertices.Length; v++)
+                {
+                    vertices[v] = brushFlip.MultiplyPoint(vertices[v]);
+                }
 
-				var edges = controlMesh.Edges;
-				var twinVertices = new short[edges.Length];
-				for (var e = 0; e < edges.Length; e++)
-					twinVertices[e] = edges[edges[e].TwinIndex].VertexIndex;
-				
-				for (var e = 0; e < edges.Length; e++)
-					edges[e].VertexIndex = twinVertices[e];
+                Polygon[] polygons = controlMesh.polygons;
 
-                brush.ControlMesh.SetDirty();
+                for(int p = 0; p < polygons.Length; p++)
+                {
+                    Array.Reverse(polygons[p].edgeIndices);
+                }
+
+                HalfEdge[] edges        = controlMesh.edges;
+                short[]    twinVertices = new short[edges.Length];
+
+                for(int e = 0; e < edges.Length; e++)
+                {
+                    twinVertices[e] = edges[edges[e].twinIndex].vertexIndex;
+                }
+
+                for(int e = 0; e < edges.Length; e++)
+                {
+                    edges[e].vertexIndex = twinVertices[e];
+                }
+
+                brush.controlMesh.SetDirty();
                 EditorUtility.SetDirty(brush);
 
                 InternalCSGModelManager.CheckSurfaceModifications(brush, true);
 
                 ControlMeshUtility.RebuildShape(brush);
             }
-            if (fail)
-            {
-                Debug.LogWarning("Failed to perform operation");
-                Undo.RevertAllInCurrentGroup();
-            }
+
             InternalCSGModelManager.CheckForChanges();
         }
 
-        public static void FlipX(CSGBrush[] flipBrushes, string undoDescription = "Flip brushes on X Axis") { var flipMatrix = MathConstants.identityMatrix; flipMatrix.m00 = -1; Flip(flipBrushes, flipMatrix, "Flip brushes on X Axis"); }
-        public static void FlipY(CSGBrush[] flipBrushes, string undoDescription = "Flip brushes on Y Axis") { var flipMatrix = MathConstants.identityMatrix; flipMatrix.m11 = -1; Flip(flipBrushes, flipMatrix, "Flip brushes on Y Axis"); }
-        public static void FlipZ(CSGBrush[] flipBrushes, string undoDescription = "Flip brushes on Z Axis") { var flipMatrix = MathConstants.identityMatrix; flipMatrix.m22 = -1; Flip(flipBrushes, flipMatrix, "Flip brushes on Z Axis"); }
+        public static void FlipX(CSGBrush[] flipBrushes)
+        {
+            Matrix4x4 flipMatrix = MathConstants.identityMatrix;
+            flipMatrix.m00 = -1;
+            Flip(flipBrushes, flipMatrix, "Flip brushes on X Axis");
+        }
 
+        public static void FlipY(CSGBrush[] flipBrushes)
+        {
+            Matrix4x4 flipMatrix = MathConstants.identityMatrix;
+            flipMatrix.m11 = -1;
+            Flip(flipBrushes, flipMatrix, "Flip brushes on Y Axis");
+        }
+
+        public static void FlipZ(CSGBrush[] flipBrushes)
+        {
+            Matrix4x4 flipMatrix = MathConstants.identityMatrix;
+            flipMatrix.m22 = -1;
+            Flip(flipBrushes, flipMatrix, "Flip brushes on Z Axis");
+        }
     }
 }
